@@ -9,8 +9,12 @@ export interface Member {
   id: string;
   name: string;
   grade: number;
-  pin_code: string;
   role: MemberRole;
+}
+
+/** DB上のMember（pin_hash含む、APIでは使用しない） */
+export interface MemberWithHash extends Member {
+  pin_hash: string;
 }
 
 export interface Course {

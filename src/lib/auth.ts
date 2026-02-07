@@ -24,7 +24,3 @@ export function clearCurrentMember(): void {
     localStorage.removeItem(STORAGE_KEY);
   }
 }
-
-export function verifyPin(member: Member, pin: string): boolean {
-  return member.pin_code === pin;
-}

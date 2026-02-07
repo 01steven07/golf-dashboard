@@ -13,7 +13,7 @@ CREATE TABLE members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   grade INTEGER NOT NULL,
-  pin_code TEXT NOT NULL,
+  pin_hash TEXT NOT NULL,
   role member_role NOT NULL DEFAULT 'member',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
