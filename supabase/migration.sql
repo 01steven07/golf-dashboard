@@ -44,6 +44,7 @@ CREATE TABLE scores (
   round_id UUID NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
   hole_number INTEGER NOT NULL CHECK (hole_number BETWEEN 1 AND 18),
   par INTEGER NOT NULL CHECK (par IN (3, 4, 5)),
+  distance INTEGER CHECK (distance IS NULL OR (distance > 0 AND distance <= 700)),
   score INTEGER NOT NULL CHECK (score > 0),
   putts INTEGER NOT NULL DEFAULT 0 CHECK (putts >= 0),
   fairway_result fairway_result NOT NULL DEFAULT 'keep',
