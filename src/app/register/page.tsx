@@ -7,22 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import { Member } from "@/types/database";
 
-interface MemberOption {
-  id: string;
-  name: string;
-  grade: number;
-}
-
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { member: currentMember, login } = useAuth();
-  const [members, setMembers] = useState<MemberOption[]>([]);
-  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [name, setName] = useState("");
+  const [grade, setGrade] = useState<number>(1);
   const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,57 +26,47 @@ export default function LoginPage() {
     }
   }, [currentMember, router]);
 
-  useEffect(() => {
-    async function fetchMembers() {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, name, grade")
-        .order("grade", { ascending: true })
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("Failed to fetch members:", error);
-        return;
-      }
-      setMembers(data ?? []);
-    }
-    fetchMembers();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!selectedMemberId) {
-      setError("部員を選択してください");
+    if (!name.trim()) {
+      setError("名前を入力してください");
       return;
     }
+
     if (pin.length < 4 || pin.length > 8) {
       setError("PINコードは4〜8桁で入力してください");
+      return;
+    }
+
+    if (pin !== pinConfirm) {
+      setError("PINコードが一致しません");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ member_id: selectedMemberId, pin }),
+        body: JSON.stringify({ name: name.trim(), grade, pin }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "ログインに失敗しました");
+        setError(data.error || "登録に失敗しました");
         setIsLoading(false);
         return;
       }
 
+      // Auto login after registration
       login(data.member as Member);
       router.push("/");
     } catch {
-      setError("ログイン処理でエラーが発生しました");
+      setError("登録処理でエラーが発生しました");
       setIsLoading(false);
     }
   };
@@ -91,29 +75,39 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-[80vh]">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Golf Dashboard</CardTitle>
-          <p className="text-sm text-muted-foreground">部員を選択してログイン</p>
+          <CardTitle className="text-xl">新規登録</CardTitle>
+          <p className="text-sm text-muted-foreground">部員情報を入力してください</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="member">部員を選択</Label>
+              <Label htmlFor="name">名前</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="山田 太郎"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="grade">学年</Label>
               <select
-                id="member"
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
+                id="grade"
+                value={grade}
+                onChange={(e) => setGrade(Number(e.target.value))}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">選択してください</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.grade}年 - {m.name}
-                  </option>
-                ))}
+                <option value={1}>1年</option>
+                <option value={2}>2年</option>
+                <option value={3}>3年</option>
+                <option value={4}>4年</option>
+                <option value={5}>5年（院1）</option>
+                <option value={6}>6年（院2）</option>
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pin">PINコード（4〜8桁）</Label>
+              <Label htmlFor="pin">PINコード（4〜8桁の数字）</Label>
               <Input
                 id="pin"
                 type="password"
@@ -125,15 +119,28 @@ export default function LoginPage() {
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="pinConfirm">PINコード（確認）</Label>
+              <Input
+                id="pinConfirm"
+                type="password"
+                maxLength={8}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="0000"
+                value={pinConfirm}
+                onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "ログイン中..." : "ログイン"}
+              {isLoading ? "登録中..." : "登録する"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            <span className="text-muted-foreground">アカウントがない場合は</span>{" "}
-            <Link href="/register" className="text-primary hover:underline">
-              新規登録
+            <span className="text-muted-foreground">既にアカウントがある場合は</span>{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              ログイン
             </Link>
           </div>
         </CardContent>
