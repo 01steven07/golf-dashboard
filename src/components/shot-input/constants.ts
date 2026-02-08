@@ -73,15 +73,26 @@ export const SHOT_LIES: { value: ShotLie; label: string }[] = [
 ];
 
 export const SHOT_RESULTS: { value: ShotResult; label: string }[] = [
-  { value: "on-good", label: "ON (Good)" },
+  // グリーンON (9方向)
+  { value: "on-center", label: "ON ピン付近" },
   { value: "on-front", label: "ON 手前" },
   { value: "on-back", label: "ON 奥" },
   { value: "on-left", label: "ON 左" },
   { value: "on-right", label: "ON 右" },
+  { value: "on-front-left", label: "ON 手前左" },
+  { value: "on-front-right", label: "ON 手前右" },
+  { value: "on-back-left", label: "ON 奥左" },
+  { value: "on-back-right", label: "ON 奥右" },
+  // グリーン外し (8方向)
   { value: "miss-front", label: "外し 手前" },
   { value: "miss-back", label: "外し 奥" },
   { value: "miss-left", label: "外し 左" },
   { value: "miss-right", label: "外し 右" },
+  { value: "miss-front-left", label: "外し 手前左" },
+  { value: "miss-front-right", label: "外し 手前右" },
+  { value: "miss-back-left", label: "外し 奥左" },
+  { value: "miss-back-right", label: "外し 奥右" },
+  // OB/ペナルティ
   { value: "ob-left", label: "OB 左" },
   { value: "ob-right", label: "OB 右" },
   { value: "penalty-left", label: "ペナ 左" },
@@ -98,10 +109,14 @@ export const PUTT_LINES: { value: PuttLine; label: string }[] = [
 
 export const PUTT_RESULTS: { value: PuttResult; label: string }[] = [
   { value: "in", label: "カップイン" },
-  { value: "short", label: "ショート" },
-  { value: "long", label: "オーバー" },
+  { value: "front", label: "ショート" },
+  { value: "back", label: "オーバー" },
   { value: "left", label: "左" },
   { value: "right", label: "右" },
+  { value: "front-left", label: "ショート左" },
+  { value: "front-right", label: "ショート右" },
+  { value: "back-left", label: "オーバー左" },
+  { value: "back-right", label: "オーバー右" },
 ];
 
 export const RATINGS = [1, 2, 3, 4, 5] as const;

@@ -1,28 +1,21 @@
 "use client";
 
-import { ApproachShot, ShotLie, Slope } from "@/types/shot";
+import { ApproachShot, Slope } from "@/types/shot";
 import { ClubSelector } from "./club-selector";
 import { WindSelector } from "./wind-selector";
-import { DirectionSelector } from "./direction-selector";
+import { ShotResultSelector } from "./shot-result-selector";
+import { LieSelector } from "./lie-selector";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Star, Ruler, Mountain, TreePine, Waves } from "lucide-react";
+import { Star, Ruler, Mountain } from "lucide-react";
 
 interface ApproachShotInputProps {
   shot: ApproachShot;
   onChange: (shot: ApproachShot) => void;
   shotNumber: number;
 }
-
-const LIES: { value: ShotLie; label: string; icon: React.ReactNode }[] = [
-  { value: "fairway", label: "FW", icon: "🟢" },
-  { value: "left-rough", label: "左ラフ", icon: <TreePine className="w-4 h-4" /> },
-  { value: "right-rough", label: "右ラフ", icon: <TreePine className="w-4 h-4" /> },
-  { value: "left-bunker", label: "左バンカー", icon: <Waves className="w-4 h-4" /> },
-  { value: "right-bunker", label: "右バンカー", icon: <Waves className="w-4 h-4" /> },
-];
 
 const SLOPES: { value: Slope; label: string; icon: string }[] = [
   { value: "flat", label: "フラット", icon: "➖" },
@@ -92,28 +85,10 @@ export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotIn
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
           📍 ライ
         </Label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {LIES.map((lie) => (
-            <button
-              key={lie.value}
-              type="button"
-              onClick={() => onChange({ ...shot, lie: lie.value })}
-              className={cn(
-                "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all text-xs",
-                shot.lie === lie.value
-                  ? lie.value === "fairway"
-                    ? "bg-green-500 text-white shadow-md"
-                    : lie.value.includes("rough")
-                    ? "bg-yellow-500 text-white shadow-md"
-                    : "bg-amber-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              <span className="text-base">{typeof lie.icon === "string" ? lie.icon : lie.icon}</span>
-              <span className="mt-0.5 font-medium leading-tight">{lie.label}</span>
-            </button>
-          ))}
-        </div>
+        <LieSelector
+          value={shot.lie}
+          onChange={(lie) => onChange({ ...shot, lie })}
+        />
       </div>
 
       {/* 傾斜 */}
@@ -141,15 +116,14 @@ export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotIn
         </div>
       </div>
 
-      {/* 結果（グリーン周りの方向選択） */}
+      {/* 結果 */}
       <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
           🎯 結果
         </Label>
-        <DirectionSelector
-          type="fullDirection"
+        <ShotResultSelector
           value={shot.result}
-          onChange={(v) => onChange({ ...shot, result: v as ApproachShot["result"] })}
+          onChange={(result) => onChange({ ...shot, result })}
         />
       </div>
 

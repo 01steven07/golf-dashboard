@@ -1,12 +1,12 @@
 "use client";
 
-import { PuttShot, PuttLine } from "@/types/shot";
+import { PuttShot, PuttSlope, PuttBreak, PuttResult } from "@/types/shot";
 import { DirectionSelector } from "./direction-selector";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Star, Ruler, MoveRight } from "lucide-react";
+import { Star, Ruler, TrendingUp, MoveRight } from "lucide-react";
 
 interface PuttInputProps {
   shot: PuttShot;
@@ -14,12 +14,16 @@ interface PuttInputProps {
   puttNumber: number;
 }
 
-const PUTT_LINES: { value: PuttLine; label: string; icon: string }[] = [
-  { value: "straight", label: "ストレート", icon: "⬆️" },
-  { value: "left-to-right", label: "スライス", icon: "↗️" },
-  { value: "right-to-left", label: "フック", icon: "↖️" },
+const SLOPES: { value: PuttSlope; label: string; icon: string }[] = [
   { value: "uphill", label: "上り", icon: "📈" },
+  { value: "flat", label: "フラット", icon: "➖" },
   { value: "downhill", label: "下り", icon: "📉" },
+];
+
+const BREAKS: { value: PuttBreak; label: string; icon: string }[] = [
+  { value: "hook", label: "フック", icon: "↩️" },
+  { value: "straight", label: "ストレート", icon: "⬆️" },
+  { value: "slice", label: "スライス", icon: "↪️" },
 ];
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
@@ -28,6 +32,18 @@ const RATINGS = [1, 2, 3, 4, 5] as const;
 const DISTANCE_PRESETS = [1, 2, 3, 5, 7, 10];
 
 export function PuttInput({ shot, onChange, puttNumber }: PuttInputProps) {
+  // 8方向の結果からセンター（IN）かどうか判定
+  const isIn = shot.result === "in";
+
+  const handleResultChange = (direction: string) => {
+    // direction-selectorからの値をPuttResultに変換
+    if (direction === "center" || direction === "in") {
+      onChange({ ...shot, result: "in" });
+    } else {
+      onChange({ ...shot, result: direction as PuttResult });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* 距離 */}
@@ -66,40 +82,86 @@ export function PuttInput({ shot, onChange, puttNumber }: PuttInputProps) {
         </div>
       </div>
 
-      {/* ライン */}
+      {/* ライン選択（傾斜と曲がり） */}
       <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          <MoveRight className="w-4 h-4" /> ライン
+          <TrendingUp className="w-4 h-4" /> ライン
         </Label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {PUTT_LINES.map((line) => (
-            <button
-              key={line.value}
-              type="button"
-              onClick={() => onChange({ ...shot, line: line.value })}
-              className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
-                shot.line === line.value
-                  ? "bg-purple-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              <span className="text-lg">{line.icon}</span>
-              <span className="text-xs mt-1 font-medium">{line.label}</span>
-            </button>
-          ))}
+        <div className="p-4 bg-gray-50 rounded-xl space-y-4">
+          {/* 傾斜 */}
+          <div>
+            <div className="text-xs text-gray-500 mb-2 text-center">傾斜</div>
+            <div className="flex justify-center gap-2">
+              {SLOPES.map((slope) => (
+                <button
+                  key={slope.value}
+                  type="button"
+                  onClick={() => onChange({ ...shot, slope: slope.value })}
+                  className={cn(
+                    "flex flex-col items-center justify-center px-4 py-3 rounded-xl transition-all",
+                    shot.slope === slope.value
+                      ? slope.value === "uphill"
+                        ? "bg-blue-500 text-white shadow-md"
+                        : slope.value === "downhill"
+                        ? "bg-red-500 text-white shadow-md"
+                        : "bg-gray-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-400"
+                  )}
+                >
+                  <span className="text-lg">{slope.icon}</span>
+                  <span className="text-xs mt-1 font-medium">{slope.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 曲がり */}
+          <div>
+            <div className="text-xs text-gray-500 mb-2 text-center">曲がり</div>
+            <div className="flex justify-center gap-2">
+              {BREAKS.map((brk) => (
+                <button
+                  key={brk.value}
+                  type="button"
+                  onClick={() => onChange({ ...shot, break: brk.value })}
+                  className={cn(
+                    "flex flex-col items-center justify-center px-4 py-3 rounded-xl transition-all",
+                    shot.break === brk.value
+                      ? brk.value === "hook"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : brk.value === "slice"
+                        ? "bg-orange-500 text-white shadow-md"
+                        : "bg-green-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-400"
+                  )}
+                >
+                  <span className="text-lg">{brk.icon}</span>
+                  <span className="text-xs mt-1 font-medium">{brk.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 現在の選択表示 */}
+          <div className="text-center text-sm text-gray-600 pt-2 border-t">
+            選択中:
+            <span className="font-bold ml-1">
+              {SLOPES.find(s => s.value === shot.slope)?.label} × {BREAKS.find(b => b.value === shot.break)?.label}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* 結果（パット専用のグリッド） */}
+      {/* 結果（8方向 + IN） */}
       <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
           🕳️ 結果
         </Label>
         <DirectionSelector
           type="puttResult"
-          value={shot.result}
-          onChange={(v) => onChange({ ...shot, result: v as PuttShot["result"] })}
+          value={isIn ? "center" : shot.result}
+          onChange={handleResultChange}
+          centerLabel="🕳️IN"
         />
       </div>
 

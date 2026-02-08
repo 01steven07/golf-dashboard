@@ -6,12 +6,26 @@ import { DetailedRoundData, HoleData, Shot, TeeShot, ApproachShot, PuttShot, cre
 import { TeeShotInput } from "@/components/shot-input/tee-shot-input";
 import { ApproachShotInput } from "@/components/shot-input/approach-shot-input";
 import { PuttInput } from "@/components/shot-input/putt-input";
+import { ScoreDisplay } from "@/components/shot-input/score-display";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Save, RotateCcw, Plus, Trash2, Flag, Target, Circle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, RotateCcw, Plus, Trash2, Flag, Target, Circle, TreePine, Waves, CircleX, AlertTriangle } from "lucide-react";
+
+// スコア差分の表示テキスト
+function getScoreDiffText(score: number, par: number): string {
+  if (score === 0) return "";
+  const diff = score - par;
+  if (diff <= -3) return "🦅🦅";
+  if (diff === -2) return "🦅";
+  if (diff === -1) return "🐦";
+  if (diff === 0) return "○";
+  if (diff === 1) return "□";
+  if (diff === 2) return "□□";
+  return `+${diff}`;
+}
 
 // 初期状態：18ホール分
 function createInitialHoles(): HoleData[] {
@@ -223,22 +237,35 @@ export default function DetailedInputPage() {
 
         {/* ホールナビゲーション */}
         <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto">
-          {roundData.holes.map((h) => (
-            <button
-              key={h.holeNumber}
-              onClick={() => setCurrentHole(h.holeNumber)}
-              className={cn(
-                "flex-shrink-0 w-9 h-9 rounded-full text-sm font-medium transition-all",
-                currentHole === h.holeNumber
-                  ? "bg-green-600 text-white shadow-md"
-                  : h.shots.length > 0
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-500"
-              )}
-            >
-              {h.holeNumber}
-            </button>
-          ))}
+          {roundData.holes.map((h) => {
+            const holeScore = h.shots.length;
+            const scoreDiff = holeScore - h.par;
+            const scoreSymbol = holeScore === 0 ? "" : getScoreDiffText(holeScore, h.par);
+
+            return (
+              <button
+                key={h.holeNumber}
+                onClick={() => setCurrentHole(h.holeNumber)}
+                className={cn(
+                  "flex-shrink-0 min-w-[2.5rem] h-10 px-1 rounded-lg text-xs font-medium transition-all flex flex-col items-center justify-center",
+                  currentHole === h.holeNumber
+                    ? "bg-green-600 text-white shadow-md"
+                    : holeScore === 0
+                    ? "bg-gray-100 text-gray-500"
+                    : scoreDiff < 0
+                    ? "bg-blue-100 text-blue-700"
+                    : scoreDiff === 0
+                    ? "bg-green-100 text-green-700"
+                    : "bg-orange-100 text-orange-700"
+                )}
+              >
+                <span>{h.holeNumber}</span>
+                {holeScore > 0 && (
+                  <span className="text-[10px] leading-none">{scoreSymbol}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -291,12 +318,17 @@ export default function DetailedInputPage() {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-green-700">
-                  {currentHoleScore || "-"}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {currentHolePutts > 0 ? `${currentHolePutts}パット` : ""}
+              <div className="text-right flex items-center gap-2">
+                <ScoreDisplay score={currentHoleScore} par={hole.par} size="lg" />
+                <div className="text-left">
+                  <div className="text-xs text-gray-500">
+                    {currentHolePutts > 0 ? `${currentHolePutts}パット` : ""}
+                  </div>
+                  {currentHoleScore > 0 && (
+                    <div className="text-lg font-bold">
+                      {getScoreDiffText(currentHoleScore, hole.par)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
