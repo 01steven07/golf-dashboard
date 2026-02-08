@@ -431,6 +431,50 @@ export default function DetailedInputPage() {
               <p>上のボタンからショットを追加してください</p>
             </div>
           )}
+
+          {/* ショットがある場合は下部にも追加ボタンを表示 */}
+          {hole.shots.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
+              <div className="text-center text-sm text-gray-500 mb-3">
+                次のショットを追加
+              </div>
+              <div className="flex gap-2">
+                {/* ティーショットがない場合は表示 */}
+                {!hole.shots.some(s => s.type === "tee") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addShot("tee")}
+                    className="flex-1 h-11 text-green-700 border-green-300 bg-green-50"
+                  >
+                    <Flag className="w-4 h-4 mr-1" />
+                    ティー
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addShot("approach")}
+                  className="flex-1 h-11 text-blue-700 border-blue-300 bg-blue-50"
+                >
+                  <Target className="w-4 h-4 mr-1" />
+                  ショット
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addShot("putt")}
+                  className="flex-1 h-11 text-purple-700 border-purple-300 bg-purple-50"
+                >
+                  <Circle className="w-4 h-4 mr-1" />
+                  パット
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
