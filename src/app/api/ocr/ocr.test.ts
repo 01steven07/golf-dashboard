@@ -5,6 +5,7 @@ import {
   validateFairwayResult,
   normalizeOcrScores,
 } from "./route";
+import { OcrScoreData } from "@/types/ocr";
 
 describe("validatePar", () => {
   it("should return valid par values", () => {
@@ -153,11 +154,11 @@ describe("normalizeOcrScores", () => {
 
   it("should validate and reject invalid par", () => {
     const input = [
-      { hole_number: 1, par: 2 },
-      { hole_number: 2, par: 6 },
+      { hole_number: 1, par: 2 as 3 | 4 | 5 },
+      { hole_number: 2, par: 6 as 3 | 4 | 5 },
     ];
 
-    const result = normalizeOcrScores(input);
+    const result = normalizeOcrScores(input as Partial<OcrScoreData>[]);
 
     expect(result[0].par).toBe(4); // Default
     expect(result[1].par).toBe(4); // Default
