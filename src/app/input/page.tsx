@@ -111,7 +111,7 @@ function InputContent() {
     [handleFileSelect]
   );
 
-  const updateScore = (index: number, field: keyof OcrScoreData, value: number | FairwayResult) => {
+  const updateScore = (index: number, field: keyof OcrScoreData, value: number | FairwayResult | null) => {
     setScores((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -181,6 +181,7 @@ function InputContent() {
         round_id: round.id,
         hole_number: s.hole_number,
         par: s.par,
+        distance: s.distance,
         score: s.score,
         putts: s.putts,
         fairway_result: s.fairway_result,
@@ -325,6 +326,7 @@ function InputContent() {
                     <tr className="border-b">
                       <th className="py-2 px-1 text-left">Hole</th>
                       <th className="py-2 px-1 text-center">Par</th>
+                      <th className="py-2 px-1 text-center">Dist</th>
                       <th className="py-2 px-1 text-center">Score</th>
                       <th className="py-2 px-1 text-center">Putt</th>
                       <th className="py-2 px-1 text-center">FW</th>
@@ -345,6 +347,20 @@ function InputContent() {
                             <option value={4}>4</option>
                             <option value={5}>5</option>
                           </select>
+                        </td>
+                        <td className="py-2 px-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={700}
+                            value={s.distance ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateScore(i, "distance", val ? Number(val) : null);
+                            }}
+                            placeholder="-"
+                            className="w-16 h-8 text-center"
+                          />
                         </td>
                         <td className="py-2 px-1">
                           <Input

@@ -38,6 +38,7 @@ export interface Score {
   round_id: string;
   hole_number: number;
   par: 3 | 4 | 5;
+  distance: number | null;
   score: number;
   putts: number;
   fairway_result: FairwayResult;
