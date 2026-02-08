@@ -1,10 +1,14 @@
 "use client";
 
-import { ApproachShot } from "@/types/shot";
-import { CLUBS, WIND_DIRECTIONS, SHOT_LIES, SLOPES, SHOT_RESULTS, RATINGS } from "./constants";
+import { ApproachShot, ShotLie, Slope } from "@/types/shot";
+import { ClubSelector } from "./club-selector";
+import { WindSelector } from "./wind-selector";
+import { DirectionSelector } from "./direction-selector";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { Star, Ruler, Mountain, TreePine, Waves } from "lucide-react";
 
 interface ApproachShotInputProps {
   shot: ApproachShot;
@@ -12,63 +16,101 @@ interface ApproachShotInputProps {
   shotNumber: number;
 }
 
+const LIES: { value: ShotLie; label: string; icon: React.ReactNode }[] = [
+  { value: "fairway", label: "FW", icon: "🟢" },
+  { value: "left-rough", label: "左ラフ", icon: <TreePine className="w-4 h-4" /> },
+  { value: "right-rough", label: "右ラフ", icon: <TreePine className="w-4 h-4" /> },
+  { value: "left-bunker", label: "左バンカー", icon: <Waves className="w-4 h-4" /> },
+  { value: "right-bunker", label: "右バンカー", icon: <Waves className="w-4 h-4" /> },
+];
+
+const SLOPES: { value: Slope; label: string; icon: string }[] = [
+  { value: "flat", label: "フラット", icon: "➖" },
+  { value: "uphill", label: "つま先↑", icon: "⬆️" },
+  { value: "downhill", label: "つま先↓", icon: "⬇️" },
+  { value: "left", label: "左足↑", icon: "↖️" },
+  { value: "right", label: "左足↓", icon: "↘️" },
+];
+
+const RATINGS = [1, 2, 3, 4, 5] as const;
+
+// よく使う距離のプリセット
+const DISTANCE_PRESETS = [50, 80, 100, 120, 150, 180];
+
 export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotInputProps) {
   return (
-    <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-      <h4 className="font-semibold text-blue-800">
-        {shotNumber}打目（ショット/アプローチ）
-      </h4>
-
-      {/* クラブ */}
+    <div className="space-y-5">
+      {/* 残り距離 */}
       <div>
-        <Label className="text-sm text-gray-600">クラブ</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {CLUBS.filter((c) => c.value !== "PT").map((club) => (
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          <Ruler className="w-4 h-4" /> 残り距離 (yd)
+        </Label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            value={shot.distance}
+            onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
+            className="w-24 text-center text-lg font-bold"
+            min={0}
+            max={600}
+          />
+          <span className="text-gray-500">yd</span>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {DISTANCE_PRESETS.map((dist) => (
             <button
-              key={club.value}
+              key={dist}
               type="button"
-              onClick={() => onChange({ ...shot, club: club.value })}
-              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                shot.club === club.value
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-              }`}
+              onClick={() => onChange({ ...shot, distance: dist })}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                shot.distance === dist
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
             >
-              {club.label}
+              {dist}
             </button>
           ))}
         </div>
       </div>
 
-      {/* 残り距離 */}
+      {/* クラブ選択 */}
       <div>
-        <Label className="text-sm text-gray-600">残り距離 (yd)</Label>
-        <Input
-          type="number"
-          value={shot.distance}
-          onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
-          className="mt-1 w-24"
-          min={0}
-          max={600}
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          🏌️ クラブ
+        </Label>
+        <ClubSelector
+          value={shot.club}
+          onChange={(club) => onChange({ ...shot, club })}
+          excludePutter
         />
       </div>
 
       {/* ライ */}
       <div>
-        <Label className="text-sm text-gray-600">ライ</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {SHOT_LIES.map((lie) => (
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          📍 ライ
+        </Label>
+        <div className="grid grid-cols-5 gap-1.5">
+          {LIES.map((lie) => (
             <button
               key={lie.value}
               type="button"
               onClick={() => onChange({ ...shot, lie: lie.value })}
-              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+              className={cn(
+                "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all text-xs",
                 shot.lie === lie.value
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-              }`}
+                  ? lie.value === "fairway"
+                    ? "bg-green-500 text-white shadow-md"
+                    : lie.value.includes("rough")
+                    ? "bg-yellow-500 text-white shadow-md"
+                    : "bg-amber-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
             >
-              {lie.label}
+              <span className="text-base">{typeof lie.icon === "string" ? lie.icon : lie.icon}</span>
+              <span className="mt-0.5 font-medium leading-tight">{lie.label}</span>
             </button>
           ))}
         </div>
@@ -76,100 +118,90 @@ export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotIn
 
       {/* 傾斜 */}
       <div>
-        <Label className="text-sm text-gray-600">傾斜</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          <Mountain className="w-4 h-4" /> 傾斜
+        </Label>
+        <div className="grid grid-cols-5 gap-1.5">
           {SLOPES.map((slope) => (
             <button
               key={slope.value}
               type="button"
               onClick={() => onChange({ ...shot, slope: slope.value })}
-              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+              className={cn(
+                "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all",
                 shot.slope === slope.value
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-              }`}
+                  ? "bg-purple-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
             >
-              {slope.label}
+              <span className="text-base">{slope.icon}</span>
+              <span className="text-xs mt-0.5 font-medium">{slope.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* 結果 */}
+      {/* 結果（グリーン周りの方向選択） */}
       <div>
-        <Label className="text-sm text-gray-600">結果</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {SHOT_RESULTS.map((result) => (
-            <button
-              key={result.value}
-              type="button"
-              onClick={() => onChange({ ...shot, result: result.value })}
-              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                shot.result === result.value
-                  ? result.value.startsWith("on-")
-                    ? "bg-green-600 text-white border-green-600"
-                    : result.value.startsWith("ob-") || result.value.startsWith("penalty-")
-                    ? "bg-red-600 text-white border-red-600"
-                    : "bg-orange-500 text-white border-orange-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
-              }`}
-            >
-              {result.label}
-            </button>
-          ))}
-        </div>
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          🎯 結果
+        </Label>
+        <DirectionSelector
+          type="fullDirection"
+          value={shot.result}
+          onChange={(v) => onChange({ ...shot, result: v as ApproachShot["result"] })}
+        />
       </div>
 
       {/* 風 */}
       <div>
-        <Label className="text-sm text-gray-600">風</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {WIND_DIRECTIONS.map((wind) => (
-            <button
-              key={wind.value}
-              type="button"
-              onClick={() => onChange({ ...shot, wind: wind.value })}
-              className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                shot.wind === wind.value
-                  ? "bg-sky-500 text-white border-sky-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-sky-300"
-              }`}
-            >
-              {wind.label}
-            </button>
-          ))}
-        </div>
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          💨 風
+        </Label>
+        <WindSelector
+          value={shot.wind}
+          onChange={(wind) => onChange({ ...shot, wind })}
+        />
       </div>
 
       {/* 5点採点 */}
       <div>
-        <Label className="text-sm text-gray-600">評価</Label>
-        <div className="flex gap-2 mt-1">
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          <Star className="w-4 h-4" /> 自己評価
+        </Label>
+        <div className="flex justify-center gap-2">
           {RATINGS.map((rating) => (
             <button
               key={rating}
               type="button"
               onClick={() => onChange({ ...shot, rating })}
-              className={`w-10 h-10 text-sm rounded-full border transition-colors ${
+              className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all",
                 shot.rating === rating
-                  ? "bg-yellow-500 text-white border-yellow-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-yellow-400"
-              }`}
+                  ? "bg-yellow-400 text-yellow-900 shadow-lg ring-2 ring-yellow-500"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              )}
             >
               {rating}
             </button>
           ))}
         </div>
+        <div className="flex justify-between text-xs text-gray-400 mt-1 px-2">
+          <span>悪い</span>
+          <span>良い</span>
+        </div>
       </div>
 
       {/* メモ */}
       <div>
-        <Label className="text-sm text-gray-600">メモ</Label>
+        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+          📝 メモ
+        </Label>
         <Textarea
           value={shot.note}
           onChange={(e) => onChange({ ...shot, note: e.target.value })}
-          placeholder="例: ダフった、トップした"
-          className="mt-1 h-16"
+          placeholder="例: ダフった、トップした、風を読み違えた..."
+          className="h-16 resize-none"
         />
       </div>
     </div>
