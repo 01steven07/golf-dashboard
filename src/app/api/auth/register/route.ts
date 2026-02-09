@@ -6,7 +6,7 @@ const SALT_ROUNDS = 10;
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, grade, pin } = await request.json();
+    const { name, grade, gender, preferred_tee, pin, clubs } = await request.json();
 
     // Validation
     if (!name || !grade || !pin) {
@@ -60,10 +60,13 @@ export async function POST(request: NextRequest) {
       .insert({
         name: name.trim(),
         grade,
+        gender: gender || "male",
+        preferred_tee: preferred_tee || "white",
         pin_hash,
         role: "member",
+        clubs: Array.isArray(clubs) ? clubs : [],
       })
-      .select("id, name, grade, role")
+      .select("id, name, grade, role, clubs, gender, preferred_tee")
       .single();
 
     if (error) {

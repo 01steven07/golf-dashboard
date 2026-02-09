@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Club } from "@/types/shot";
+import { ClubType } from "@/types/database";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 interface ClubSelectorProps {
@@ -15,13 +17,11 @@ type ClubCategory = "wood" | "ut" | "iron" | "wedge" | "putter";
 const CLUB_CATEGORIES: {
   id: ClubCategory;
   name: string;
-  icon: string;
   clubs: { value: Club; label: string }[];
 }[] = [
   {
     id: "wood",
-    name: "ウッド",
-    icon: "🪵",
+    name: "W",
     clubs: [
       { value: "1W", label: "1W" },
       { value: "3W", label: "3W" },
@@ -32,14 +32,20 @@ const CLUB_CATEGORIES: {
   {
     id: "ut",
     name: "UT",
-    icon: "🔧",
-    clubs: [{ value: "UT", label: "UT" }],
+    clubs: [
+      { value: "UT2", label: "2U" },
+      { value: "UT3", label: "3U" },
+      { value: "UT4", label: "4U" },
+      { value: "UT5", label: "5U" },
+      { value: "UT6", label: "6U" },
+      { value: "UT7", label: "7U" },
+    ],
   },
   {
     id: "iron",
-    name: "アイアン",
-    icon: "⛳",
+    name: "I",
     clubs: [
+      { value: "2I", label: "2I" },
       { value: "3I", label: "3I" },
       { value: "4I", label: "4I" },
       { value: "5I", label: "5I" },
@@ -51,19 +57,22 @@ const CLUB_CATEGORIES: {
   },
   {
     id: "wedge",
-    name: "ウェッジ",
-    icon: "🎯",
+    name: "WG",
     clubs: [
       { value: "PW", label: "PW" },
-      { value: "AW", label: "AW" },
-      { value: "SW", label: "SW" },
-      { value: "LW", label: "LW" },
+      { value: "46", label: "46°" },
+      { value: "48", label: "48°" },
+      { value: "50", label: "50°" },
+      { value: "52", label: "52°" },
+      { value: "54", label: "54°" },
+      { value: "56", label: "56°" },
+      { value: "58", label: "58°" },
+      { value: "60", label: "60°" },
     ],
   },
   {
     id: "putter",
-    name: "パター",
-    icon: "🕳️",
+    name: "PT",
     clubs: [{ value: "PT", label: "PT" }],
   },
 ];
@@ -71,18 +80,34 @@ const CLUB_CATEGORIES: {
 // クラブからカテゴリを取得
 function getCategoryFromClub(club: Club): ClubCategory {
   if (["1W", "3W", "5W", "7W"].includes(club)) return "wood";
-  if (club === "UT") return "ut";
-  if (["3I", "4I", "5I", "6I", "7I", "8I", "9I"].includes(club)) return "iron";
-  if (["PW", "AW", "SW", "LW"].includes(club)) return "wedge";
+  if (club.startsWith("UT")) return "ut";
+  if (["2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I"].includes(club)) return "iron";
+  if (club === "PW" || ["46", "48", "50", "52", "54", "56", "58", "60"].includes(club)) return "wedge";
   return "putter";
 }
 
 export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorProps) {
+  const { member } = useAuth();
+  const memberClubs = member?.clubs;
   const [activeCategory, setActiveCategory] = useState<ClubCategory>(getCategoryFromClub(value));
 
-  const categories = excludePutter
-    ? CLUB_CATEGORIES.filter((c) => c.id !== "putter")
-    : CLUB_CATEGORIES;
+  const categories = useMemo(() => {
+    let cats = excludePutter
+      ? CLUB_CATEGORIES.filter((c) => c.id !== "putter")
+      : CLUB_CATEGORIES;
+
+    // メンバーがクラブセットを登録済みの場合、登録クラブのみ表示
+    if (memberClubs && memberClubs.length > 0) {
+      cats = cats
+        .map((cat) => ({
+          ...cat,
+          clubs: cat.clubs.filter((c) => memberClubs.includes(c.value as ClubType)),
+        }))
+        .filter((cat) => cat.clubs.length > 0);
+    }
+
+    return cats;
+  }, [excludePutter, memberClubs]);
 
   const activeClubs = categories.find((c) => c.id === activeCategory)?.clubs || [];
 
@@ -108,8 +133,7 @@ export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorPro
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
-              <span>{category.icon}</span>
-              <span>{category.name}</span>
+              {category.name}
             </button>
           );
         })}

@@ -1,15 +1,31 @@
 export type MemberRole = "admin" | "member";
 
+export type Gender = "male" | "female" | "other";
+
 export type TeeColor = "Blue" | "White" | "Red" | "Gold" | "Black";
+
+export type PreferredTee = "black" | "blue" | "white" | "red" | "green";
 
 /** フェアウェイ結果: keep=キープ, left=左ミス, right=右ミス */
 export type FairwayResult = "keep" | "left" | "right";
+
+/** クラブ種類（キャディバッグに入れるクラブ） */
+export type ClubType =
+  | "1W" | "3W" | "5W" | "7W"
+  | "UT2" | "UT3" | "UT4" | "UT5" | "UT6" | "UT7"
+  | "2I" | "3I" | "4I" | "5I" | "6I" | "7I" | "8I" | "9I"
+  | "PW"
+  | "46" | "48" | "50" | "52" | "54" | "56" | "58" | "60"
+  | "PT";
 
 export interface Member {
   id: string;
   name: string;
   grade: number;
   role: MemberRole;
+  clubs: ClubType[];
+  gender: Gender;
+  preferred_tee: PreferredTee;
 }
 
 /** DB上のMember（pin_hash含む、APIでは使用しない） */

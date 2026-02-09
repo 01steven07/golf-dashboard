@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // Fetch member by ID
     const { data: member, error } = await supabase
       .from("members")
-      .select("id, name, grade, pin_hash, role")
+      .select("id, name, grade, pin_hash, role, clubs, gender, preferred_tee")
       .eq("id", member_id)
       .single();
 
@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
         name: member.name,
         grade: member.grade,
         role: member.role,
+        clubs: member.clubs || [],
+        gender: member.gender || "male",
+        preferred_tee: member.preferred_tee || "white",
       },
     });
   } catch (error) {
