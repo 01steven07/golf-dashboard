@@ -41,7 +41,9 @@ ${holeAnalysis.map((h) => `- ${h.parType}: 平均${h.avgScore.toFixed(2)}打 (Pa
 
 回答は300文字以内で、励ましの言葉を添えて簡潔にまとめてください。`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL ?? "gemini-3.0-flash",
+    });
     const result = await model.generateContent(prompt);
     const response = result.response;
     const advice = response.text();
