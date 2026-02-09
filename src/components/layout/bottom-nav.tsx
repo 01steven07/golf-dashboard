@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Camera, Home, User } from "lucide-react";
+import { BarChart3, Camera, Home, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -10,7 +10,8 @@ const navItems = [
   { href: "/", label: "ランキング", icon: Home },
   { href: "/input", label: "入力", icon: Camera },
   { href: "/my-stats", label: "マイ", icon: BarChart3 },
-  { href: "/admin", label: "管理", icon: User, adminOnly: true },
+  { href: "/admin/courses", label: "コース", icon: MapPin, adminOnly: true },
+  { href: "/admin", label: "管理", icon: User, adminOnly: true, exact: true },
 ];
 
 export function BottomNav() {
@@ -26,7 +27,7 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-16">
         {filteredNavItems.map((item) => {
           const isActive =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            item.href === "/" || item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
