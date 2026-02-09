@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (member: Member) => void;
   logout: () => void;
+  updateMember: (updates: Partial<Member>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,8 +34,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMember(null);
   };
 
+  const updateMember = (updates: Partial<Member>) => {
+    if (member) {
+      const updated = { ...member, ...updates };
+      saveCurrentMember(updated);
+      setMember(updated);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ member, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ member, isLoading, login, logout, updateMember }}>
       {children}
     </AuthContext.Provider>
   );

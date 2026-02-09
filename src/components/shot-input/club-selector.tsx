@@ -33,13 +33,21 @@ const CLUB_CATEGORIES: {
     id: "ut",
     name: "UT",
     icon: "🔧",
-    clubs: [{ value: "UT", label: "UT" }],
+    clubs: [
+      { value: "UT2", label: "2U" },
+      { value: "UT3", label: "3U" },
+      { value: "UT4", label: "4U" },
+      { value: "UT5", label: "5U" },
+      { value: "UT6", label: "6U" },
+      { value: "UT7", label: "7U" },
+    ],
   },
   {
     id: "iron",
     name: "アイアン",
     icon: "⛳",
     clubs: [
+      { value: "2I", label: "2I" },
       { value: "3I", label: "3I" },
       { value: "4I", label: "4I" },
       { value: "5I", label: "5I" },
@@ -55,9 +63,14 @@ const CLUB_CATEGORIES: {
     icon: "🎯",
     clubs: [
       { value: "PW", label: "PW" },
-      { value: "AW", label: "AW" },
-      { value: "SW", label: "SW" },
-      { value: "LW", label: "LW" },
+      { value: "46", label: "46°" },
+      { value: "48", label: "48°" },
+      { value: "50", label: "50°" },
+      { value: "52", label: "52°" },
+      { value: "54", label: "54°" },
+      { value: "56", label: "56°" },
+      { value: "58", label: "58°" },
+      { value: "60", label: "60°" },
     ],
   },
   {
@@ -71,9 +84,9 @@ const CLUB_CATEGORIES: {
 // クラブからカテゴリを取得
 function getCategoryFromClub(club: Club): ClubCategory {
   if (["1W", "3W", "5W", "7W"].includes(club)) return "wood";
-  if (club === "UT") return "ut";
-  if (["3I", "4I", "5I", "6I", "7I", "8I", "9I"].includes(club)) return "iron";
-  if (["PW", "AW", "SW", "LW"].includes(club)) return "wedge";
+  if (club.startsWith("UT")) return "ut";
+  if (["2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I"].includes(club)) return "iron";
+  if (club === "PW" || ["46", "48", "50", "52", "54", "56", "58", "60"].includes(club)) return "wedge";
   return "putter";
 }
 

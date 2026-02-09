@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
-import { MemberStats } from "@/types/database";
+import { MemberStats, ClubType, Gender, PreferredTee } from "@/types/database";
 import { calculateMemberStats } from "@/utils/ranking";
 import { calculateRadarData, calculateHoleAnalysis, RadarChartData, HoleAnalysis } from "@/utils/stats";
-import { Loader2, Sparkles } from "lucide-react";
+import { ClubSetEditor } from "@/components/club-set-editor";
+import { Loader2, Sparkles, Settings, Check, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Radar,
   RadarChart,
@@ -34,7 +35,7 @@ export default function MyStatsPage() {
 }
 
 function MyStatsContent() {
-  const { member } = useAuth();
+  const { member, updateMember } = useAuth();
   const [myStats, setMyStats] = useState<MemberStats | null>(null);
   const [allStats, setAllStats] = useState<MemberStats[]>([]);
   const [radarData, setRadarData] = useState<RadarChartData[]>([]);
@@ -42,6 +43,60 @@ function MyStatsContent() {
   const [advice, setAdvice] = useState<string>("");
   const [isLoadingAdvice, setIsLoadingAdvice] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Profile editing state
+  const [isProfileSectionOpen, setIsProfileSectionOpen] = useState(false);
+  const [clubs, setClubs] = useState<ClubType[]>(member?.clubs || []);
+  const [gender, setGender] = useState<Gender>(member?.gender || "male");
+  const [preferredTee, setPreferredTee] = useState<PreferredTee>(member?.preferred_tee || "white");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null);
+
+  // Sync profile with member data
+  useEffect(() => {
+    if (member) {
+      setClubs(member.clubs || []);
+      setGender(member.gender || "male");
+      setPreferredTee(member.preferred_tee || "white");
+    }
+  }, [member]);
+
+  const handleSaveProfile = async () => {
+    if (!member) return;
+
+    setIsSavingProfile(true);
+    setProfileSaveMessage(null);
+
+    try {
+      const res = await fetch("/api/member/clubs", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId: member.id,
+          clubs,
+          gender,
+          preferred_tee: preferredTee,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save profile");
+      }
+
+      const data = await res.json();
+      updateMember({
+        clubs: data.member.clubs,
+        gender: data.member.gender,
+        preferred_tee: data.member.preferred_tee,
+      });
+      setProfileSaveMessage("保存しました");
+      setTimeout(() => setProfileSaveMessage(null), 2000);
+    } catch {
+      setProfileSaveMessage("保存に失敗しました");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   useEffect(() => {
     if (!member) return;
@@ -157,6 +212,98 @@ function MyStatsContent() {
           <CardContent className="py-12 text-center text-muted-foreground">
             まだラウンドデータがありません。スコアを入力してください。
           </CardContent>
+        </Card>
+
+        {/* Profile Settings - always show even without round data */}
+        <Card>
+          <CardHeader
+            className="cursor-pointer select-none"
+            onClick={() => setIsProfileSectionOpen(!isProfileSectionOpen)}
+          >
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                プロフィール設定
+              </span>
+              {isProfileSectionOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          {isProfileSectionOpen && (
+            <CardContent className="space-y-6">
+              {/* Gender & Tee */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">性別</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value as Gender)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="male">男性</option>
+                    <option value="female">女性</option>
+                    <option value="other">その他</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">利用ティー</label>
+                  <div className="flex gap-1">
+                    {[
+                      { value: "black", label: "黒", color: "bg-gray-800 text-white" },
+                      { value: "blue", label: "青", color: "bg-blue-500 text-white" },
+                      { value: "white", label: "白", color: "bg-white text-gray-800 border border-gray-300" },
+                      { value: "red", label: "赤", color: "bg-red-500 text-white" },
+                      { value: "green", label: "緑", color: "bg-green-500 text-white" },
+                    ].map((tee) => (
+                      <button
+                        key={tee.value}
+                        type="button"
+                        onClick={() => setPreferredTee(tee.value as PreferredTee)}
+                        className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${tee.color} ${
+                          preferredTee === tee.value
+                            ? "ring-2 ring-offset-1 ring-primary"
+                            : "opacity-50 hover:opacity-100"
+                        }`}
+                      >
+                        {tee.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Club Set */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">クラブセット ({clubs.length}本)</label>
+                <ClubSetEditor value={clubs} onChange={setClubs} />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      保存中...
+                    </>
+                  ) : (
+                    "保存"
+                  )}
+                </Button>
+                {profileSaveMessage && (
+                  <span className={`text-sm flex items-center gap-1 ${profileSaveMessage.includes("失敗") ? "text-destructive" : "text-green-600"}`}>
+                    {!profileSaveMessage.includes("失敗") && <Check className="h-4 w-4" />}
+                    {profileSaveMessage}
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          )}
         </Card>
       </div>
     );
@@ -299,6 +446,98 @@ function MyStatsContent() {
             </div>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Profile Settings */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer select-none"
+          onClick={() => setIsProfileSectionOpen(!isProfileSectionOpen)}
+        >
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              プロフィール設定
+            </span>
+            {isProfileSectionOpen ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {isProfileSectionOpen && (
+          <CardContent className="space-y-6">
+            {/* Gender & Tee */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">性別</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as Gender)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="male">男性</option>
+                  <option value="female">女性</option>
+                  <option value="other">その他</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">利用ティー</label>
+                <div className="flex gap-1">
+                  {[
+                    { value: "black", label: "黒", color: "bg-gray-800 text-white" },
+                    { value: "blue", label: "青", color: "bg-blue-500 text-white" },
+                    { value: "white", label: "白", color: "bg-white text-gray-800 border border-gray-300" },
+                    { value: "red", label: "赤", color: "bg-red-500 text-white" },
+                    { value: "green", label: "緑", color: "bg-green-500 text-white" },
+                  ].map((tee) => (
+                    <button
+                      key={tee.value}
+                      type="button"
+                      onClick={() => setPreferredTee(tee.value as PreferredTee)}
+                      className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${tee.color} ${
+                        preferredTee === tee.value
+                          ? "ring-2 ring-offset-1 ring-primary"
+                          : "opacity-50 hover:opacity-100"
+                      }`}
+                    >
+                      {tee.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Club Set */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">クラブセット ({clubs.length}本)</label>
+              <ClubSetEditor value={clubs} onChange={setClubs} />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleSaveProfile}
+                disabled={isSavingProfile}
+              >
+                {isSavingProfile ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  "保存"
+                )}
+              </Button>
+              {profileSaveMessage && (
+                <span className={`text-sm flex items-center gap-1 ${profileSaveMessage.includes("失敗") ? "text-destructive" : "text-green-600"}`}>
+                  {!profileSaveMessage.includes("失敗") && <Check className="h-4 w-4" />}
+                  {profileSaveMessage}
+                </span>
+              )}
+            </div>
+          </CardContent>
+        )}
       </Card>
     </div>
   );

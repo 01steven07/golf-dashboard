@@ -1,12 +1,19 @@
 import { Club, WindDirection, LeftRight, Direction, Slope, TeeResult, ShotLie, ShotResult, PuttLine, PuttResult } from "@/types/shot";
 
 export const CLUBS: { value: Club; label: string }[] = [
+  // Woods
   { value: "1W", label: "1W" },
   { value: "3W", label: "3W" },
   { value: "5W", label: "5W" },
   { value: "7W", label: "7W" },
-  { value: "UT", label: "UT" },
-  { value: "1I", label: "1I" },
+  // Utilities
+  { value: "UT2", label: "2U" },
+  { value: "UT3", label: "3U" },
+  { value: "UT4", label: "4U" },
+  { value: "UT5", label: "5U" },
+  { value: "UT6", label: "6U" },
+  { value: "UT7", label: "7U" },
+  // Irons
   { value: "2I", label: "2I" },
   { value: "3I", label: "3I" },
   { value: "4I", label: "4I" },
@@ -15,10 +22,17 @@ export const CLUBS: { value: Club; label: string }[] = [
   { value: "7I", label: "7I" },
   { value: "8I", label: "8I" },
   { value: "9I", label: "9I" },
+  // Wedges
   { value: "PW", label: "PW" },
-  { value: "AW", label: "AW" },
-  { value: "SW", label: "SW" },
-  { value: "LW", label: "LW" },
+  { value: "46", label: "46°" },
+  { value: "48", label: "48°" },
+  { value: "50", label: "50°" },
+  { value: "52", label: "52°" },
+  { value: "54", label: "54°" },
+  { value: "56", label: "56°" },
+  { value: "58", label: "58°" },
+  { value: "60", label: "60°" },
+  // Putter
   { value: "PT", label: "PT" },
 ];
 

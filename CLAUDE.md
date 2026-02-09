@@ -112,7 +112,7 @@ npm run format:check # Prettierチェック (CI用)
 
 ## 7. 開発ワークフロー
 
-1.  **Git:** 必須。機能単位でこまめにコミットする。
+1.  **Git:** 必須。機能単位でこまめにコミットする。対応する機能のissueを作り、それに紐づくブランチを作り、機能を開発した後、コミットしてプッシュしてプルリクを作るところまで。
 2.  **Lint:** ESLint, Prettierの設定に従う。型定義（TypeScript）は厳格に守る（`any` 禁止）。
 3.  **Deployment:** VercelへのPushによる自動デプロイ。
 
