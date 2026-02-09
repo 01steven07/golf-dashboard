@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CourseWithDetails } from "@/types/database";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Course, CourseWithDetails } from "@/types/database";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Search, X, Loader2 } from "lucide-react";
 
 interface CourseSelectorProps {
   onCourseSelect: (course: CourseWithDetails | null) => void;
@@ -17,15 +18,20 @@ export function CourseSelector({
   onManualInput,
   courseName,
 }: CourseSelectorProps) {
-  const [courses, setCourses] = useState<CourseWithDetails[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingDetail, setIsFetchingDetail] = useState(false);
   const [mode, setMode] = useState<"select" | "manual">("select");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // 軽量な一覧取得（名前・都道府県のみ）
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("/api/courses?detailed=true");
+        const res = await fetch("/api/courses");
         if (res.ok) {
           const data = await res.json();
           setCourses(data);
@@ -39,16 +45,69 @@ export function CourseSelector({
     fetchCourses();
   }, []);
 
-  const handleCourseChange = (courseId: string) => {
+  // 外側クリックでドロップダウンを閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 検索とグルーピング
+  const groupedCourses = useMemo(() => {
+    const filtered = courses.filter((course) =>
+      course.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const grouped = new Map<string, Course[]>();
+    filtered.forEach((course) => {
+      const pref = course.pref || "その他";
+      if (!grouped.has(pref)) {
+        grouped.set(pref, []);
+      }
+      grouped.get(pref)!.push(course);
+    });
+
+    return Array.from(grouped.entries()).sort(([a], [b]) => {
+      if (a === "その他") return 1;
+      if (b === "その他") return -1;
+      return a.localeCompare(b, "ja");
+    });
+  }, [courses, searchQuery]);
+
+  const selectedCourse = courses.find((c) => c.id === selectedCourseId);
+
+  // 選択時に詳細をフェッチ
+  const handleCourseChange = async (courseId: string) => {
     setSelectedCourseId(courseId);
+    setIsDropdownOpen(false);
+    setSearchQuery("");
     if (!courseId) {
       onCourseSelect(null);
       return;
     }
-    const course = courses.find((c) => c.id === courseId);
-    if (course) {
-      onCourseSelect(course);
+
+    setIsFetchingDetail(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}`);
+      if (res.ok) {
+        const detail: CourseWithDetails = await res.json();
+        onCourseSelect(detail);
+      }
+    } catch {
+      console.error("コース詳細の取得に失敗しました");
+    } finally {
+      setIsFetchingDetail(false);
     }
+  };
+
+  const handleClear = () => {
+    setSelectedCourseId("");
+    setSearchQuery("");
+    onCourseSelect(null);
   };
 
   return (
@@ -59,6 +118,7 @@ export function CourseSelector({
           onClick={() => {
             setMode("select");
             setSelectedCourseId("");
+            setSearchQuery("");
             onCourseSelect(null);
           }}
           className={cn(
@@ -75,6 +135,8 @@ export function CourseSelector({
           onClick={() => {
             setMode("manual");
             setSelectedCourseId("");
+            setSearchQuery("");
+            setIsDropdownOpen(false);
             onCourseSelect(null);
           }}
           className={cn(
@@ -100,19 +162,77 @@ export function CourseSelector({
               登録済みコースがありません
             </div>
           ) : (
-            <select
-              value={selectedCourseId}
-              onChange={(e) => handleCourseChange(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <option value="">コースを選択</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.pref ? ` (${c.pref})` : ""}
-                </option>
-              ))}
-            </select>
+            <div ref={containerRef} className="relative">
+              {/* 選択済み表示 or 検索ボックス */}
+              {selectedCourse && !isDropdownOpen ? (
+                <div className="flex items-center h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                  {isFetchingDetail ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400 mr-2" />
+                  ) : null}
+                  <span
+                    className="flex-1 truncate cursor-pointer"
+                    onClick={() => setIsDropdownOpen(true)}
+                  >
+                    {selectedCourse.name}
+                    {selectedCourse.pref ? ` (${selectedCourse.pref})` : ""}
+                  </span>
+                  <button type="button" onClick={handleClear} className="ml-2 text-gray-400 hover:text-gray-600">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    placeholder="コース名で検索..."
+                    className="h-9 text-sm pl-9"
+                  />
+                </div>
+              )}
+
+              {/* ドロップダウン */}
+              {isDropdownOpen && (
+                <div className="absolute z-30 mt-1 w-full max-h-64 overflow-y-auto border rounded-md bg-white shadow-lg">
+                  {groupedCourses.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-400 text-center">
+                      該当するコースがありません
+                    </div>
+                  ) : (
+                    groupedCourses.map(([pref, prefCourses]) => (
+                      <div key={pref} className="border-b last:border-b-0">
+                        <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-600 sticky top-0">
+                          {pref}
+                        </div>
+                        <div>
+                          {prefCourses.map((course) => (
+                            <button
+                              key={course.id}
+                              type="button"
+                              onClick={() => handleCourseChange(course.id)}
+                              className={cn(
+                                "w-full px-3 py-2 text-left text-sm hover:bg-green-50 transition-colors",
+                                selectedCourseId === course.id
+                                  ? "bg-green-100 text-green-800 font-medium"
+                                  : "text-gray-700"
+                              )}
+                            >
+                              {course.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : (

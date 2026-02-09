@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, Upload, Loader2, ClipboardEdit } from "lucide-react";
+import { Camera, Upload, Loader2, ClipboardEdit, Search, X } from "lucide-react";
 import Link from "next/link";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { OcrResult, OcrScoreData } from "@/types/ocr";
 import { Course, FairwayResult } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 type Step = "upload" | "processing" | "confirm";
 
@@ -39,6 +40,20 @@ function InputContent() {
   const [scores, setScores] = useState<OcrScoreData[]>([]);
   const [error, setError] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [courseSearchQuery, setCourseSearchQuery] = useState<string>("");
+  const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
+  const courseDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 外側クリックでドロップダウンを閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (courseDropdownRef.current && !courseDropdownRef.current.contains(e.target as Node)) {
+        setIsCourseDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleFileSelect = useCallback(async (file: File) => {
     setImageFile(file);
@@ -207,6 +222,31 @@ function InputContent() {
   const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
   const totalPar = scores.reduce((sum, s) => sum + s.par, 0);
 
+  // 検索とグルーピング
+  const groupedCourses = useMemo(() => {
+    // 検索フィルタリング
+    const filtered = courses.filter((course) =>
+      course.name.toLowerCase().includes(courseSearchQuery.toLowerCase())
+    );
+
+    // 都道府県別にグルーピング
+    const grouped = new Map<string, Course[]>();
+    filtered.forEach((course) => {
+      const pref = course.pref || "その他";
+      if (!grouped.has(pref)) {
+        grouped.set(pref, []);
+      }
+      grouped.get(pref)!.push(course);
+    });
+
+    // ソート: 都道府県名でソート
+    return Array.from(grouped.entries()).sort(([a], [b]) => {
+      if (a === "その他") return 1;
+      if (b === "その他") return -1;
+      return a.localeCompare(b, "ja");
+    });
+  }, [courses, courseSearchQuery]);
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">スコア入力</h2>
@@ -295,24 +335,102 @@ function InputContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>コース</Label>
-                  <select
-                    value={selectedCourseId}
-                    onChange={(e) => {
-                      setSelectedCourseId(e.target.value);
-                      if (e.target.value) setNewCourseName("");
-                    }}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">新規コースを入力</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+
+                  <div ref={courseDropdownRef} className="relative">
+                    {/* 選択済み表示 or 検索ボックス */}
+                    {selectedCourseId && !isCourseDropdownOpen ? (
+                      <div className="flex items-center h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <span
+                          className="flex-1 truncate cursor-pointer"
+                          onClick={() => setIsCourseDropdownOpen(true)}
+                        >
+                          {courses.find((c) => c.id === selectedCourseId)?.name ?? ""}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCourseId("");
+                            setCourseSearchQuery("");
+                          }}
+                          className="ml-2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          value={courseSearchQuery}
+                          onChange={(e) => {
+                            setCourseSearchQuery(e.target.value);
+                            setIsCourseDropdownOpen(true);
+                          }}
+                          onFocus={() => setIsCourseDropdownOpen(true)}
+                          placeholder="コース名で検索..."
+                          className="pl-9"
+                        />
+                      </div>
+                    )}
+
+                    {/* ドロップダウン */}
+                    {isCourseDropdownOpen && (
+                      <div className="absolute z-30 mt-1 w-full max-h-64 overflow-y-auto border rounded-md bg-white shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCourseId("");
+                            setCourseSearchQuery("");
+                            setIsCourseDropdownOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors border-b text-gray-500"
+                        >
+                          新規コースを入力
+                        </button>
+
+                        {groupedCourses.length === 0 && courseSearchQuery ? (
+                          <div className="p-3 text-sm text-gray-400 text-center">
+                            該当するコースがありません
+                          </div>
+                        ) : (
+                          groupedCourses.map(([pref, prefCourses]) => (
+                            <div key={pref} className="border-b last:border-b-0">
+                              <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-600 sticky top-0">
+                                {pref}
+                              </div>
+                              <div>
+                                {prefCourses.map((course) => (
+                                  <button
+                                    key={course.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCourseId(course.id);
+                                      setNewCourseName("");
+                                      setCourseSearchQuery("");
+                                      setIsCourseDropdownOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full px-3 py-2 text-left text-sm hover:bg-green-50 transition-colors",
+                                      selectedCourseId === course.id
+                                        ? "bg-green-100 text-green-800 font-medium"
+                                        : "text-gray-700"
+                                    )}
+                                  >
+                                    {course.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {!selectedCourseId && (
                     <Input
-                      placeholder="コース名を入力"
+                      placeholder="新規コース名を入力"
                       value={newCourseName}
                       onChange={(e) => setNewCourseName(e.target.value)}
                     />
