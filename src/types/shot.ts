@@ -148,7 +148,7 @@ export type Shot = TeeShot | ApproachShot | PuttShot;
 /** ホールデータ */
 export interface HoleData {
   holeNumber: number;
-  par: 3 | 4 | 5;
+  par: 3 | 4 | 5 | 6;
   distance: number | null;
   shots: Shot[];
 }
@@ -159,6 +159,8 @@ export interface DetailedRoundData {
   courseName: string;
   date: string;
   teeColor: string;
+  teeId: string | null;
+  subCourseIds: string[];
   holes: HoleData[];
 }
 
@@ -204,7 +206,7 @@ export function createDefaultPutt(): PuttShot {
 }
 
 /** デフォルトのホールデータ */
-export function createDefaultHole(holeNumber: number, par: 3 | 4 | 5 = 4): HoleData {
+export function createDefaultHole(holeNumber: number, par: 3 | 4 | 5 | 6 = 4): HoleData {
   return {
     holeNumber,
     par,

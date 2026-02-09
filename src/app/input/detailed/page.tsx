@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DetailedRoundData, HoleData, Shot, TeeShot, ApproachShot, PuttShot, createDefaultHole, createDefaultTeeShot, createDefaultApproachShot, createDefaultPutt } from "@/types/shot";
+import { CourseWithDetails, SubCourseWithHoles } from "@/types/database";
+import { CourseSelector } from "@/components/course/course-selector";
+import { SubCourseSelector } from "@/components/course/sub-course-selector";
 import { TeeShotInput } from "@/components/shot-input/tee-shot-input";
 import { ApproachShotInput } from "@/components/shot-input/approach-shot-input";
 import { PuttInput } from "@/components/shot-input/putt-input";
@@ -12,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Save, RotateCcw, Plus, Trash2, Flag, Target, Circle, TreePine, Waves, CircleX, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, RotateCcw, Plus, Trash2, Flag, Target, Circle } from "lucide-react";
 
 // スコア差分の表示テキスト
 function getScoreDiffText(score: number, par: number): string {
@@ -33,6 +36,31 @@ function createInitialHoles(): HoleData[] {
   return defaultPars.map((par, i) => createDefaultHole(i + 1, par));
 }
 
+/** コースデータからホールを生成 */
+function createHolesFromCourse(
+  subCourses: SubCourseWithHoles[],
+  selectedSubCourseIds: string[],
+  teeName: string | null
+): HoleData[] {
+  const holes: HoleData[] = [];
+  let holeNum = 1;
+  for (const sc of subCourses) {
+    if (!selectedSubCourseIds.includes(sc.id)) continue;
+    for (const h of sc.holes) {
+      const distance = teeName && h.distances[teeName] ? h.distances[teeName] : null;
+      holes.push(
+        createDefaultHole(
+          holeNum,
+          (h.par >= 3 && h.par <= 6 ? h.par : 4) as 3 | 4 | 5 | 6
+        )
+      );
+      holes[holes.length - 1].distance = distance;
+      holeNum++;
+    }
+  }
+  return holes.length > 0 ? holes : createInitialHoles();
+}
+
 export default function DetailedInputPage() {
   const router = useRouter();
   const [currentHole, setCurrentHole] = useState(1);
@@ -41,12 +69,116 @@ export default function DetailedInputPage() {
     courseName: "",
     date: new Date().toISOString().split("T")[0],
     teeColor: "White",
+    teeId: null,
+    subCourseIds: [],
     holes: createInitialHoles(),
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showRoundInfo, setShowRoundInfo] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
 
   const hole = roundData.holes[currentHole - 1];
+  const totalHoles = roundData.holes.length;
+
+  // コース選択時のコールバック
+  const handleCourseSelect = useCallback((course: CourseWithDetails | null) => {
+    setSelectedCourse(course);
+    if (course) {
+      // デフォルトで全サブコースを選択
+      const allSubCourseIds = course.sub_courses.map((sc) => sc.id);
+      const defaultTee = course.tees.length > 0 ? course.tees[0] : null;
+      const teeName = defaultTee?.name ?? null;
+
+      const newHoles = createHolesFromCourse(
+        course.sub_courses,
+        allSubCourseIds,
+        teeName
+      );
+
+      setRoundData((prev) => ({
+        ...prev,
+        courseId: course.id,
+        courseName: course.name,
+        teeColor: defaultTee?.name ?? "White",
+        teeId: defaultTee?.id ?? null,
+        subCourseIds: allSubCourseIds,
+        holes: newHoles,
+      }));
+      setCurrentHole(1);
+    } else {
+      setRoundData((prev) => ({
+        ...prev,
+        courseId: null,
+        courseName: "",
+        teeId: null,
+        subCourseIds: [],
+        holes: createInitialHoles(),
+      }));
+      setCurrentHole(1);
+    }
+  }, []);
+
+  const handleManualInput = useCallback((name: string) => {
+    setRoundData((prev) => ({
+      ...prev,
+      courseId: null,
+      courseName: name,
+    }));
+  }, []);
+
+  const handleSubCourseToggle = useCallback((subCourseId: string) => {
+    if (!selectedCourse) return;
+
+    setRoundData((prev) => {
+      const newIds = prev.subCourseIds.includes(subCourseId)
+        ? prev.subCourseIds.filter((id) => id !== subCourseId)
+        : [...prev.subCourseIds, subCourseId];
+
+      // sort by original order
+      const sortedIds = selectedCourse.sub_courses
+        .filter((sc) => newIds.includes(sc.id))
+        .map((sc) => sc.id);
+
+      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+      const teeName = selectedTee?.name ?? null;
+
+      const newHoles = createHolesFromCourse(
+        selectedCourse.sub_courses,
+        sortedIds,
+        teeName
+      );
+
+      return {
+        ...prev,
+        subCourseIds: sortedIds,
+        holes: newHoles,
+      };
+    });
+    setCurrentHole(1);
+  }, [selectedCourse]);
+
+  const handleTeeSelect = useCallback((teeId: string) => {
+    if (!selectedCourse) return;
+
+    const tee = selectedCourse.tees.find((t) => t.id === teeId);
+    if (!tee) return;
+
+    setRoundData((prev) => {
+      const newHoles = createHolesFromCourse(
+        selectedCourse.sub_courses,
+        prev.subCourseIds,
+        tee.name
+      );
+
+      return {
+        ...prev,
+        teeId: teeId,
+        teeColor: tee.name,
+        holes: newHoles,
+      };
+    });
+    setCurrentHole(1);
+  }, [selectedCourse]);
 
   const updateHole = (updatedHole: HoleData) => {
     setRoundData({
@@ -84,22 +216,48 @@ export default function DetailedInputPage() {
     updateHole({ ...hole, shots: newShots });
   };
 
+  // サブコース情報を計算
+  const subCourseInfo = useMemo(() => {
+    if (!selectedCourse || roundData.subCourseIds.length === 0) {
+      // 手動入力モード: 前半9ホール/後半9ホール
+      const firstHalf = roundData.holes.slice(0, Math.ceil(totalHoles / 2));
+      const secondHalf = roundData.holes.slice(Math.ceil(totalHoles / 2));
+      return [
+        { name: "OUT", holes: firstHalf },
+        { name: "IN", holes: secondHalf },
+      ].filter((s) => s.holes.length > 0);
+    }
+
+    // コース選択モード: サブコース別に分割
+    const result: { name: string; holes: HoleData[] }[] = [];
+    let offset = 0;
+    for (const sc of selectedCourse.sub_courses) {
+      if (!roundData.subCourseIds.includes(sc.id)) continue;
+      result.push({
+        name: sc.name,
+        holes: roundData.holes.slice(offset, offset + sc.hole_count),
+      });
+      offset += sc.hole_count;
+    }
+    return result;
+  }, [selectedCourse, roundData.subCourseIds, roundData.holes, totalHoles]);
+
   // スコア集計
   const stats = useMemo(() => {
-    const outHoles = roundData.holes.slice(0, 9);
-    const inHoles = roundData.holes.slice(9);
+    const sectionScores = subCourseInfo.map((s) => ({
+      name: s.name,
+      score: s.holes.reduce((sum, h) => sum + h.shots.length, 0),
+    }));
 
-    const outScore = outHoles.reduce((sum, h) => sum + h.shots.length, 0);
-    const inScore = inHoles.reduce((sum, h) => sum + h.shots.length, 0);
-    const totalScore = outScore + inScore;
+    const totalScore = roundData.holes.reduce((sum, h) => sum + h.shots.length, 0);
     const totalPar = roundData.holes.reduce((sum, h) => sum + h.par, 0);
     const totalPutts = roundData.holes.reduce(
       (sum, h) => sum + h.shots.filter((s) => s.type === "putt").length,
       0
     );
 
-    return { outScore, inScore, totalScore, totalPar, totalPutts };
-  }, [roundData.holes]);
+    return { sectionScores, totalScore, totalPar, totalPutts };
+  }, [roundData.holes, subCourseInfo]);
 
   const currentHoleScore = hole.shots.length;
   const currentHolePutts = hole.shots.filter((s) => s.type === "putt").length;
@@ -149,18 +307,12 @@ export default function DetailedInputPage() {
         {/* ラウンド情報（折りたたみ可能） */}
         {showRoundInfo && (
           <div className="px-4 py-3 bg-gray-50 border-t space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-gray-500">コース</Label>
-                <Input
-                  value={roundData.courseName}
-                  onChange={(e) =>
-                    setRoundData({ ...roundData, courseName: e.target.value })
-                  }
-                  placeholder="コース名"
-                  className="h-9 text-sm"
-                />
-              </div>
+            <div className="space-y-2">
+              <CourseSelector
+                onCourseSelect={handleCourseSelect}
+                onManualInput={handleManualInput}
+                courseName={roundData.courseName}
+              />
               <div>
                 <Label className="text-xs text-gray-500">日付</Label>
                 <Input
@@ -173,40 +325,53 @@ export default function DetailedInputPage() {
                 />
               </div>
             </div>
-            <div className="flex gap-1 overflow-x-auto pb-1">
-              {["Back", "Regular", "White", "Gold", "Red"].map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setRoundData({ ...roundData, teeColor: color })}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
-                    roundData.teeColor === color
-                      ? "bg-green-600 text-white"
-                      : "bg-white text-gray-600 border"
-                  )}
-                >
-                  {color}
-                </button>
-              ))}
-            </div>
+            {/* コース選択時: サブコース＋ティー選択 */}
+            {selectedCourse && selectedCourse.sub_courses.length > 0 && (
+              <SubCourseSelector
+                subCourses={selectedCourse.sub_courses}
+                tees={selectedCourse.tees}
+                selectedSubCourseIds={roundData.subCourseIds}
+                selectedTeeId={roundData.teeId}
+                onSubCourseToggle={handleSubCourseToggle}
+                onTeeSelect={handleTeeSelect}
+              />
+            )}
+            {/* 手動入力時: ティー色選択 */}
+            {!selectedCourse && (
+              <div className="flex gap-1 overflow-x-auto pb-1">
+                {["Back", "Regular", "White", "Gold", "Red"].map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setRoundData({ ...roundData, teeColor: color })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                      roundData.teeColor === color
+                        ? "bg-green-600 text-white"
+                        : "bg-white text-gray-600 border"
+                    )}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* スコア概要 */}
-        <div className="grid grid-cols-5 gap-1 px-4 py-2 bg-green-50 text-center text-sm">
-          <div>
-            <div className="text-xs text-gray-500">OUT</div>
-            <div className="font-bold text-green-700">
-              {stats.outScore || "-"}
+        <div className={cn(
+          "grid gap-1 px-4 py-2 bg-green-50 text-center text-sm",
+          `grid-cols-${Math.min(stats.sectionScores.length + 3, 7)}`
+        )} style={{ gridTemplateColumns: `repeat(${stats.sectionScores.length + 3}, minmax(0, 1fr))` }}>
+          {stats.sectionScores.map((section) => (
+            <div key={section.name}>
+              <div className="text-xs text-gray-500">{section.name}</div>
+              <div className="font-bold text-green-700">
+                {section.score || "-"}
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">IN</div>
-            <div className="font-bold text-green-700">
-              {stats.inScore || "-"}
-            </div>
-          </div>
+          ))}
           <div>
             <div className="text-xs text-gray-500">TOTAL</div>
             <div className="font-bold text-lg text-green-800">
@@ -284,11 +449,11 @@ export default function DetailedInputPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">Par</span>
                     <div className="flex gap-1">
-                      {[3, 4, 5].map((par) => (
+                      {[3, 4, 5, 6].map((par) => (
                         <button
                           key={par}
                           type="button"
-                          onClick={() => updateHole({ ...hole, par: par as 3 | 4 | 5 })}
+                          onClick={() => updateHole({ ...hole, par: par as 3 | 4 | 5 | 6 })}
                           className={cn(
                             "w-8 h-8 rounded-lg text-sm font-bold transition-all",
                             hole.par === par
@@ -527,18 +692,27 @@ export default function DetailedInputPage() {
 
           <div className="text-center">
             <div className="text-sm text-gray-500">
-              {currentHole <= 9 ? "OUT" : "IN"}
+              {(() => {
+                let offset = 0;
+                for (const section of subCourseInfo) {
+                  if (currentHole <= offset + section.holes.length) {
+                    return section.name;
+                  }
+                  offset += section.holes.length;
+                }
+                return "";
+              })()}
             </div>
             <div className="font-bold text-green-700">
-              Hole {currentHole} / 18
+              Hole {currentHole} / {totalHoles}
             </div>
           </div>
 
           <Button
             variant="outline"
             size="lg"
-            onClick={() => setCurrentHole(Math.min(18, currentHole + 1))}
-            disabled={currentHole === 18}
+            onClick={() => setCurrentHole(Math.min(totalHoles, currentHole + 1))}
+            disabled={currentHole === totalHoles}
             className="w-24"
           >
             次へ

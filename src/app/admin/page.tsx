@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -16,14 +18,19 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>コース管理</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground">
-            コースマスタの管理
-          </CardContent>
-        </Card>
+        <Link href="/admin/courses">
+          <Card className="hover:border-green-300 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                コース管理
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground">
+              コースマスタの管理（ホール別パー・距離設定）
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
