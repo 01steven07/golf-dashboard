@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { CourseWithDetails } from "@/types/database";
+import { Course, CourseWithDetails } from "@/types/database";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Search, X } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 
 interface CourseSelectorProps {
   onCourseSelect: (course: CourseWithDetails | null) => void;
@@ -18,18 +18,20 @@ export function CourseSelector({
   onManualInput,
   courseName,
 }: CourseSelectorProps) {
-  const [courses, setCourses] = useState<CourseWithDetails[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingDetail, setIsFetchingDetail] = useState(false);
   const [mode, setMode] = useState<"select" | "manual">("select");
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // 軽量な一覧取得（名前・都道府県のみ）
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("/api/courses?detailed=true");
+        const res = await fetch("/api/courses");
         if (res.ok) {
           const data = await res.json();
           setCourses(data);
@@ -60,7 +62,7 @@ export function CourseSelector({
       course.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const grouped = new Map<string, CourseWithDetails[]>();
+    const grouped = new Map<string, Course[]>();
     filtered.forEach((course) => {
       const pref = course.pref || "その他";
       if (!grouped.has(pref)) {
@@ -78,7 +80,8 @@ export function CourseSelector({
 
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
-  const handleCourseChange = (courseId: string) => {
+  // 選択時に詳細をフェッチ
+  const handleCourseChange = async (courseId: string) => {
     setSelectedCourseId(courseId);
     setIsDropdownOpen(false);
     setSearchQuery("");
@@ -86,9 +89,18 @@ export function CourseSelector({
       onCourseSelect(null);
       return;
     }
-    const course = courses.find((c) => c.id === courseId);
-    if (course) {
-      onCourseSelect(course);
+
+    setIsFetchingDetail(true);
+    try {
+      const res = await fetch(`/api/courses/${courseId}`);
+      if (res.ok) {
+        const detail: CourseWithDetails = await res.json();
+        onCourseSelect(detail);
+      }
+    } catch {
+      console.error("コース詳細の取得に失敗しました");
+    } finally {
+      setIsFetchingDetail(false);
     }
   };
 
@@ -154,6 +166,9 @@ export function CourseSelector({
               {/* 選択済み表示 or 検索ボックス */}
               {selectedCourse && !isDropdownOpen ? (
                 <div className="flex items-center h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm">
+                  {isFetchingDetail ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400 mr-2" />
+                  ) : null}
                   <span
                     className="flex-1 truncate cursor-pointer"
                     onClick={() => setIsDropdownOpen(true)}
