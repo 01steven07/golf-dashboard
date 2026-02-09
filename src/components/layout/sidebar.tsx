@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Camera, Home, LogOut, User } from "lucide-react";
+import { BarChart3, Camera, Home, LogOut, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ const navItems = [
   { href: "/", label: "ランキング", icon: Home },
   { href: "/input", label: "スコア入力", icon: Camera },
   { href: "/my-stats", label: "マイページ", icon: BarChart3 },
-  { href: "/admin", label: "管理", icon: User, adminOnly: true },
+  { href: "/admin/courses", label: "コース管理", icon: MapPin, adminOnly: true },
+  { href: "/admin", label: "管理", icon: User, adminOnly: true, exact: true },
 ];
 
 export function Sidebar() {
@@ -36,7 +37,7 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {filteredNavItems.map((item) => {
           const isActive =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            item.href === "/" || item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

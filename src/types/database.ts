@@ -37,6 +37,42 @@ export interface Course {
   id: string;
   name: string;
   pref: string | null;
+  green_types: string[] | null;
+  source_url: string | null;
+}
+
+export interface CourseTee {
+  id: string;
+  course_id: string;
+  name: string;
+  color: string | null;
+  sort_order: number;
+}
+
+export interface CourseSubCourse {
+  id: string;
+  course_id: string;
+  name: string;
+  hole_count: number;
+  sort_order: number;
+}
+
+export interface CourseHole {
+  id: string;
+  sub_course_id: string;
+  hole_number: number;
+  par: 3 | 4 | 5 | 6;
+  handicap: number | null;
+  distances: Record<string, number>;
+}
+
+export interface SubCourseWithHoles extends CourseSubCourse {
+  holes: CourseHole[];
+}
+
+export interface CourseWithDetails extends Course {
+  tees: CourseTee[];
+  sub_courses: SubCourseWithHoles[];
 }
 
 export interface Round {
