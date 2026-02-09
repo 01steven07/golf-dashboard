@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Club } from "@/types/shot";
+import { ClubType } from "@/types/database";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 interface ClubSelectorProps {
@@ -15,13 +17,11 @@ type ClubCategory = "wood" | "ut" | "iron" | "wedge" | "putter";
 const CLUB_CATEGORIES: {
   id: ClubCategory;
   name: string;
-  icon: string;
   clubs: { value: Club; label: string }[];
 }[] = [
   {
     id: "wood",
-    name: "ウッド",
-    icon: "🪵",
+    name: "W",
     clubs: [
       { value: "1W", label: "1W" },
       { value: "3W", label: "3W" },
@@ -32,7 +32,6 @@ const CLUB_CATEGORIES: {
   {
     id: "ut",
     name: "UT",
-    icon: "🔧",
     clubs: [
       { value: "UT2", label: "2U" },
       { value: "UT3", label: "3U" },
@@ -44,8 +43,7 @@ const CLUB_CATEGORIES: {
   },
   {
     id: "iron",
-    name: "アイアン",
-    icon: "⛳",
+    name: "I",
     clubs: [
       { value: "2I", label: "2I" },
       { value: "3I", label: "3I" },
@@ -59,8 +57,7 @@ const CLUB_CATEGORIES: {
   },
   {
     id: "wedge",
-    name: "ウェッジ",
-    icon: "🎯",
+    name: "WG",
     clubs: [
       { value: "PW", label: "PW" },
       { value: "46", label: "46°" },
@@ -75,8 +72,7 @@ const CLUB_CATEGORIES: {
   },
   {
     id: "putter",
-    name: "パター",
-    icon: "🕳️",
+    name: "PT",
     clubs: [{ value: "PT", label: "PT" }],
   },
 ];
@@ -91,11 +87,27 @@ function getCategoryFromClub(club: Club): ClubCategory {
 }
 
 export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorProps) {
+  const { member } = useAuth();
+  const memberClubs = member?.clubs;
   const [activeCategory, setActiveCategory] = useState<ClubCategory>(getCategoryFromClub(value));
 
-  const categories = excludePutter
-    ? CLUB_CATEGORIES.filter((c) => c.id !== "putter")
-    : CLUB_CATEGORIES;
+  const categories = useMemo(() => {
+    let cats = excludePutter
+      ? CLUB_CATEGORIES.filter((c) => c.id !== "putter")
+      : CLUB_CATEGORIES;
+
+    // メンバーがクラブセットを登録済みの場合、登録クラブのみ表示
+    if (memberClubs && memberClubs.length > 0) {
+      cats = cats
+        .map((cat) => ({
+          ...cat,
+          clubs: cat.clubs.filter((c) => memberClubs.includes(c.value as ClubType)),
+        }))
+        .filter((cat) => cat.clubs.length > 0);
+    }
+
+    return cats;
+  }, [excludePutter, memberClubs]);
 
   const activeClubs = categories.find((c) => c.id === activeCategory)?.clubs || [];
 
@@ -121,8 +133,7 @@ export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorPro
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
-              <span>{category.icon}</span>
-              <span>{category.name}</span>
+              {category.name}
             </button>
           );
         })}
