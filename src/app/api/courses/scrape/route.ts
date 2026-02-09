@@ -159,8 +159,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gemini 2.0 Flash で解析
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Gemini で解析
+    const model = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL ?? "gemini-3.0-flash",
+    });
     const result = await model.generateContent([PROMPT, text]);
 
     const responseText = result.response.text();
