@@ -82,7 +82,7 @@ export default function DashboardPage() {
       <p className="text-sm text-muted-foreground">直近5ラウンドの成績で集計</p>
 
       <Tabs defaultValue="gross">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto gap-1">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto gap-1 p-1">
           {rankingCategories.map((cat) => (
             <TabsTrigger key={cat.value} value={cat.value}>
               {cat.label}
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         {rankingCategories.map((cat) => {
           const rankedStats = getRankedStats(stats, cat.value);
           return (
-            <TabsContent key={cat.value} value={cat.value}>
+            <TabsContent key={cat.value} value={cat.value} className="mt-2">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">

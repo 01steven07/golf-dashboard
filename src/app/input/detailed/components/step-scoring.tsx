@@ -40,12 +40,12 @@ import {
 function getScoreDiffText(score: number, par: number): string {
   if (score === 0) return "";
   const diff = score - par;
-  if (diff <= -3) return "🦅🦅";
-  if (diff === -2) return "🦅";
-  if (diff === -1) return "🐦";
-  if (diff === 0) return "○";
-  if (diff === 1) return "□";
-  if (diff === 2) return "□□";
+  if (diff <= -3) return "◎◎";
+  if (diff === -2) return "◎";
+  if (diff === -1) return "○";
+  if (diff === 0) return "-";
+  if (diff === 1) return "△";
+  if (diff === 2) return "□";
   return `+${diff}`;
 }
 
@@ -88,8 +88,9 @@ export function StepScoring({
 
     const result: { name: string; holes: HoleData[] }[] = [];
     let offset = 0;
-    for (const sc of selectedCourse.sub_courses) {
-      if (!roundData.subCourseIds.includes(sc.id)) continue;
+    for (const scId of roundData.subCourseIds) {
+      const sc = selectedCourse.sub_courses.find((s) => s.id === scId);
+      if (!sc) continue;
       result.push({
         name: sc.name,
         holes: roundData.holes.slice(offset, offset + sc.hole_count),

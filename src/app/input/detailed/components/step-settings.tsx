@@ -18,6 +18,7 @@ interface StepSettingsProps {
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
   onSubCourseToggle: (subCourseId: string) => void;
+  onSubCourseReorder: (reorderedIds: string[]) => void;
   onTeeSelect: (teeId: string) => void;
   onDateChange: (date: string) => void;
   onTeeColorChange: (color: string) => void;
@@ -30,6 +31,7 @@ export function StepSettings({
   onCourseSelect,
   onManualInput,
   onSubCourseToggle,
+  onSubCourseReorder,
   onTeeSelect,
   onDateChange,
   onTeeColorChange,
@@ -76,6 +78,7 @@ export function StepSettings({
                 selectedSubCourseIds={roundData.subCourseIds}
                 selectedTeeId={roundData.teeId}
                 onSubCourseToggle={onSubCourseToggle}
+                onSubCourseReorder={onSubCourseReorder}
                 onTeeSelect={onTeeSelect}
               />
             )}

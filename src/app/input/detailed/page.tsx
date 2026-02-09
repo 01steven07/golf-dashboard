@@ -14,7 +14,7 @@ function createInitialHoles(): HoleData[] {
   return defaultPars.map((par, i) => createDefaultHole(i + 1, par));
 }
 
-/** コースデータからホールを生成 */
+/** コースデータからホールを生成（selectedSubCourseIdsの順序を尊重） */
 function createHolesFromCourse(
   subCourses: SubCourseWithHoles[],
   selectedSubCourseIds: string[],
@@ -22,8 +22,9 @@ function createHolesFromCourse(
 ): HoleData[] {
   const holes: HoleData[] = [];
   let holeNum = 1;
-  for (const sc of subCourses) {
-    if (!selectedSubCourseIds.includes(sc.id)) continue;
+  for (const scId of selectedSubCourseIds) {
+    const sc = subCourses.find((s) => s.id === scId);
+    if (!sc) continue;
     for (const h of sc.holes) {
       const distance = teeName && h.distances[teeName] ? h.distances[teeName] : null;
       holes.push(
@@ -107,22 +108,40 @@ export default function DetailedInputPage() {
         ? prev.subCourseIds.filter((id) => id !== subCourseId)
         : [...prev.subCourseIds, subCourseId];
 
-      const sortedIds = selectedCourse.sub_courses
-        .filter((sc) => newIds.includes(sc.id))
-        .map((sc) => sc.id);
-
       const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
       const teeName = selectedTee?.name ?? null;
 
       const newHoles = createHolesFromCourse(
         selectedCourse.sub_courses,
-        sortedIds,
+        newIds,
         teeName
       );
 
       return {
         ...prev,
-        subCourseIds: sortedIds,
+        subCourseIds: newIds,
+        holes: newHoles,
+      };
+    });
+    setCurrentHole(1);
+  }, [selectedCourse]);
+
+  const handleSubCourseReorder = useCallback((reorderedIds: string[]) => {
+    if (!selectedCourse) return;
+
+    setRoundData((prev) => {
+      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+      const teeName = selectedTee?.name ?? null;
+
+      const newHoles = createHolesFromCourse(
+        selectedCourse.sub_courses,
+        reorderedIds,
+        teeName
+      );
+
+      return {
+        ...prev,
+        subCourseIds: reorderedIds,
         holes: newHoles,
       };
     });
@@ -194,6 +213,7 @@ export default function DetailedInputPage() {
         onCourseSelect={handleCourseSelect}
         onManualInput={handleManualInput}
         onSubCourseToggle={handleSubCourseToggle}
+        onSubCourseReorder={handleSubCourseReorder}
         onTeeSelect={handleTeeSelect}
         onDateChange={handleDateChange}
         onTeeColorChange={handleTeeColorChange}
