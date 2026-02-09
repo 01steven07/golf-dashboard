@@ -82,7 +82,7 @@ export default function DashboardPage() {
       <p className="text-sm text-muted-foreground">直近5ラウンドの成績で集計</p>
 
       <Tabs defaultValue="gross">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto gap-1">
           {rankingCategories.map((cat) => (
             <TabsTrigger key={cat.value} value={cat.value}>
               {cat.label}
@@ -96,7 +96,7 @@ export default function DashboardPage() {
             <TabsContent key={cat.value} value={cat.value}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span>{cat.label} ランキング</span>
                     <span className="text-sm font-normal text-muted-foreground">
                       {getCategoryDescription(cat.value)}

@@ -145,11 +145,24 @@ export interface PuttShot {
 /** ショット（いずれかのタイプ） */
 export type Shot = TeeShot | ApproachShot | PuttShot;
 
+/** ピン位置（グリーン9分割） */
+export type PinPosition =
+  | "front-left"
+  | "front-center"
+  | "front-right"
+  | "middle-left"
+  | "center"
+  | "middle-right"
+  | "back-left"
+  | "back-center"
+  | "back-right";
+
 /** ホールデータ */
 export interface HoleData {
   holeNumber: number;
   par: 3 | 4 | 5 | 6;
   distance: number | null;
+  pinPosition: PinPosition | null;
   shots: Shot[];
 }
 
@@ -211,6 +224,7 @@ export function createDefaultHole(holeNumber: number, par: 3 | 4 | 5 | 6 = 4): H
     holeNumber,
     par,
     distance: null,
+    pinPosition: null,
     shots: [],
   };
 }
