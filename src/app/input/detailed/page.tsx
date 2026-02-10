@@ -6,6 +6,10 @@ import { DetailedRoundData, HoleData, createDefaultHole } from "@/types/shot";
 import { CourseWithDetails, SubCourseWithHoles } from "@/types/database";
 import { StepSettings } from "./components/step-settings";
 import { StepScoring } from "./components/step-scoring";
+import { RequireAuth } from "@/components/auth/require-auth";
+import { useAuth } from "@/contexts/auth-context";
+import { supabase } from "@/lib/supabase";
+import { aggregateHoleData } from "@/utils/shot-aggregation";
 
 type InputStep = "settings" | "scoring";
 
@@ -76,7 +80,16 @@ function clearDraft() {
 }
 
 export default function DetailedInputPage() {
+  return (
+    <RequireAuth>
+      <DetailedInputContent />
+    </RequireAuth>
+  );
+}
+
+function DetailedInputContent() {
   const router = useRouter();
+  const { member } = useAuth();
   const [step, setStep] = useState<InputStep>("settings");
   const [currentHole, setCurrentHole] = useState(1);
   const [roundData, setRoundData] = useState<DetailedRoundData>({
@@ -89,6 +102,7 @@ export default function DetailedInputPage() {
     holes: createInitialHoles(),
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ courseName: string; date: string } | null>(null);
 
@@ -259,10 +273,87 @@ export default function DetailedInputPage() {
   }, []);
 
   const handleSave = async () => {
+    if (!member) return;
+    setError("");
     setIsSaving(true);
-    console.log("保存データ:", roundData);
-    alert("詳細ショットデータの保存は未実装です");
-    setIsSaving(false);
+
+    try {
+      // バリデーション
+      if (!roundData.courseName) {
+        setError("コース名を入力してください");
+        setIsSaving(false);
+        return;
+      }
+
+      const emptyHoles = roundData.holes.filter((h) => h.shots.length === 0);
+      if (emptyHoles.length > 0) {
+        setError(
+          `ホール ${emptyHoles.map((h) => h.holeNumber).join(", ")} にショットが入力されていません`
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      // course_id の解決
+      let courseId: string | null = roundData.courseId;
+      if (!courseId && roundData.courseName) {
+        // コース名でDB検索
+        const { data: existingCourse } = await supabase
+          .from("courses")
+          .select("id")
+          .eq("name", roundData.courseName)
+          .single();
+        courseId = existingCourse?.id ?? null;
+      }
+
+      // rounds テーブルに insert
+      const { data: round, error: roundError } = await supabase
+        .from("rounds")
+        .insert({
+          member_id: member.id,
+          course_id: courseId,
+          date: roundData.date,
+          tee_color: roundData.teeColor,
+        })
+        .select()
+        .single();
+
+      if (roundError) throw roundError;
+
+      // 各ホールを集約して scores テーブルに一括 insert
+      const scoreRecords = roundData.holes.map((hole) => {
+        const agg = aggregateHoleData(hole);
+        return {
+          round_id: round.id,
+          hole_number: agg.hole_number,
+          par: agg.par,
+          distance: agg.distance,
+          score: agg.score,
+          putts: agg.putts,
+          fairway_result: agg.fairway_result,
+          ob: agg.ob,
+          bunker: agg.bunker,
+          penalty: agg.penalty,
+          pin_position: agg.pin_position,
+          shots_detail: agg.shots_detail,
+        };
+      });
+
+      const { error: scoresError } = await supabase
+        .from("scores")
+        .insert(scoreRecords);
+
+      if (scoresError) throw scoresError;
+
+      // 成功: ドラフト削除してリダイレクト
+      clearDraft();
+      router.push("/my-stats");
+    } catch (err) {
+      console.error(err);
+      setError("保存に失敗しました");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -334,6 +425,7 @@ export default function DetailedInputPage() {
       selectedCourse={selectedCourse}
       currentHole={currentHole}
       isSaving={isSaving}
+      error={error}
       onCurrentHoleChange={setCurrentHole}
       onUpdateHole={handleUpdateHole}
       onSave={handleSave}
