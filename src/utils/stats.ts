@@ -78,6 +78,39 @@ export function calculateRadarData(
   ];
 }
 
+export interface HoleScoreTrend {
+  hole: number;
+  avgOverPar: number;
+  count: number;
+}
+
+/**
+ * ホール番号別の平均オーバーパー推移を計算
+ */
+export function calculateHoleScoreTrend(
+  scores: { hole_number: number; par: number; score: number }[]
+): HoleScoreTrend[] {
+  const grouped = new Map<number, { totalOverPar: number; count: number }>();
+
+  for (const s of scores) {
+    if (s.hole_number < 1 || s.hole_number > 18) continue;
+    const entry = grouped.get(s.hole_number) || { totalOverPar: 0, count: 0 };
+    entry.totalOverPar += s.score - s.par;
+    entry.count += 1;
+    grouped.set(s.hole_number, entry);
+  }
+
+  return Array.from({ length: 18 }, (_, i) => {
+    const hole = i + 1;
+    const entry = grouped.get(hole);
+    return {
+      hole,
+      avgOverPar: entry ? entry.totalOverPar / entry.count : 0,
+      count: entry?.count ?? 0,
+    };
+  });
+}
+
 export interface HoleAnalysis {
   parType: string;
   avgScore: number;
