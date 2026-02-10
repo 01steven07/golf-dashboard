@@ -90,7 +90,7 @@ export interface CourseWithDetails extends Course {
 export interface Round {
   id: string;
   member_id: string;
-  course_id: string;
+  course_id: string | null;
   date: string;
   tee_color: TeeColor;
   weather: string | null;
@@ -101,7 +101,7 @@ export interface Score {
   id: string;
   round_id: string;
   hole_number: number;
-  par: 3 | 4 | 5;
+  par: 3 | 4 | 5 | 6;
   distance: number | null;
   score: number;
   putts: number;
@@ -110,11 +110,12 @@ export interface Score {
   bunker: number;
   penalty: number;
   pin_position: PinPosition | null;
+  shots_detail: unknown[] | null;
 }
 
 /** Round with nested scores and course info */
 export interface RoundWithDetails extends Round {
-  course: Course;
+  course: Course | null;
   scores: Score[];
 }
 

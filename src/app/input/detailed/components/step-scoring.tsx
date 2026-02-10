@@ -56,6 +56,7 @@ interface StepScoringProps {
   selectedCourse: CourseWithDetails | null;
   currentHole: number;
   isSaving: boolean;
+  error: string;
   onCurrentHoleChange: (hole: number) => void;
   onUpdateHole: (hole: HoleData) => void;
   onSave: () => void;
@@ -70,6 +71,7 @@ export function StepScoring({
   selectedCourse,
   currentHole,
   isSaving,
+  error,
   onCurrentHoleChange,
   onUpdateHole,
   onSave,
@@ -501,6 +503,13 @@ export function StepScoring({
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
         </div>
+
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="px-4 pb-2">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
 
         {/* 操作ボタン */}
         <div className="flex gap-2 px-4 pb-4">
