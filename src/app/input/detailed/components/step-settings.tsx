@@ -15,7 +15,7 @@ import { ChevronLeft, ChevronRight, RotateCcw, PlayCircle } from "lucide-react";
 interface StepSettingsProps {
   roundData: DetailedRoundData;
   selectedCourse: CourseWithDetails | null;
-  hasDraft: boolean;
+  draftInfo: { courseName: string; date: string } | null;
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
   onSubCourseAdd: (subCourseId: string) => void;
@@ -32,7 +32,7 @@ interface StepSettingsProps {
 export function StepSettings({
   roundData,
   selectedCourse,
-  hasDraft,
+  draftInfo,
   onCourseSelect,
   onManualInput,
   onSubCourseAdd,
@@ -67,11 +67,14 @@ export function StepSettings({
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         {/* ドラフト復元バナー */}
-        {hasDraft && (
+        {draftInfo && (
           <Card className="border-2 border-amber-300 bg-amber-50">
             <CardContent className="p-4">
-              <p className="text-sm text-amber-800 font-medium mb-3">
+              <p className="text-sm text-amber-800 font-medium mb-1">
                 中断中の入力データがあります
+              </p>
+              <p className="text-xs text-amber-700 mb-3">
+                {draftInfo.courseName || "コース未設定"} / {draftInfo.date}
               </p>
               <div className="flex gap-2">
                 <Button

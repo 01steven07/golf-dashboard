@@ -90,13 +90,16 @@ export default function DetailedInputPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
-  const [hasDraft, setHasDraft] = useState(false);
+  const [draftInfo, setDraftInfo] = useState<{ courseName: string; date: string } | null>(null);
 
   // 起動時にドラフトを確認
   useEffect(() => {
     const draft = loadDraft();
     if (draft) {
-      setHasDraft(true);
+      setDraftInfo({
+        courseName: draft.roundData.courseName,
+        date: draft.roundData.date,
+      });
     }
   }, []);
 
@@ -295,13 +298,13 @@ export default function DetailedInputPage() {
       setRoundData(draft.roundData);
       // Note: selectedCourse はlocalStorageに保存しないため
       // コース選択はStep 1に戻って行う必要がある場合がある
-      setHasDraft(false);
+      setDraftInfo(null);
     }
   }, []);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
-    setHasDraft(false);
+    setDraftInfo(null);
   }, []);
 
   if (step === "settings") {
@@ -309,7 +312,7 @@ export default function DetailedInputPage() {
       <StepSettings
         roundData={roundData}
         selectedCourse={selectedCourse}
-        hasDraft={hasDraft}
+        draftInfo={draftInfo}
         onCourseSelect={handleCourseSelect}
         onManualInput={handleManualInput}
         onSubCourseAdd={handleSubCourseAdd}
