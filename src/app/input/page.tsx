@@ -254,12 +254,12 @@ function InputContent() {
       {/* 入力方法の選択 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-2 border-green-200 bg-green-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-full bg-green-100">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-green-100 shrink-0">
                 <Camera className="h-6 w-6 text-green-700" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-green-800">OCR自動入力</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   スコアカードの写真から自動でスコアを読み取り
@@ -271,12 +271,12 @@ function InputContent() {
 
         <Link href="/input/detailed">
           <Card className="border-2 border-blue-200 bg-blue-50/50 hover:border-blue-400 transition-colors cursor-pointer h-full">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-full bg-blue-100">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-blue-100 shrink-0">
                   <ClipboardEdit className="h-6 w-6 text-blue-700" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-blue-800">詳細ショット入力</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     全ショットを手動で詳細に記録

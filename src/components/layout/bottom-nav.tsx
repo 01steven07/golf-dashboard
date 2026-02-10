@@ -18,6 +18,9 @@ export function BottomNav() {
   const pathname = usePathname();
   const { member } = useAuth();
 
+  // 詳細入力ページでは専用フッターがあるため非表示
+  if (pathname.startsWith("/input/detailed")) return null;
+
   const filteredNavItems = navItems.filter(
     (item) => !item.adminOnly || member?.role === "admin"
   );

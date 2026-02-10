@@ -9,6 +9,18 @@ export type PreferredTee = "black" | "blue" | "white" | "red" | "green";
 /** フェアウェイ結果: keep=キープ, left=左ミス, right=右ミス */
 export type FairwayResult = "keep" | "left" | "right";
 
+/** ピン位置（グリーン9分割） */
+export type PinPosition =
+  | "front-left"
+  | "front-center"
+  | "front-right"
+  | "middle-left"
+  | "center"
+  | "middle-right"
+  | "back-left"
+  | "back-center"
+  | "back-right";
+
 /** クラブ種類（キャディバッグに入れるクラブ） */
 export type ClubType =
   | "1W" | "3W" | "5W" | "7W"
@@ -97,6 +109,7 @@ export interface Score {
   ob: number;
   bunker: number;
   penalty: number;
+  pin_position: PinPosition | null;
 }
 
 /** Round with nested scores and course info */
