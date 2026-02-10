@@ -82,7 +82,7 @@ export default function DashboardPage() {
       <p className="text-sm text-muted-foreground">直近5ラウンドの成績で集計</p>
 
       <Tabs defaultValue="gross">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto gap-1 p-1">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full !h-auto gap-1 p-1">
           {rankingCategories.map((cat) => (
             <TabsTrigger key={cat.value} value={cat.value}>
               {cat.label}

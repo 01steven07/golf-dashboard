@@ -35,6 +35,8 @@ import {
   Target,
   Circle,
   Settings,
+  Pause,
+  X,
 } from "lucide-react";
 
 function getScoreDiffText(score: number, par: number): string {
@@ -59,6 +61,8 @@ interface StepScoringProps {
   onSave: () => void;
   onReset: () => void;
   onBackToSettings: () => void;
+  onSuspend: () => void;
+  onDiscard: () => void;
 }
 
 export function StepScoring({
@@ -71,6 +75,8 @@ export function StepScoring({
   onSave,
   onReset,
   onBackToSettings,
+  onSuspend,
+  onDiscard,
 }: StepScoringProps) {
   const hole = roundData.holes[currentHole - 1];
   const totalHoles = roundData.holes.length;
@@ -506,9 +512,21 @@ export function StepScoring({
           >
             <Settings className="w-4 h-4" />
           </Button>
-          <Button variant="outline" onClick={onReset} className="flex-1">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            リセット
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSuspend}
+            className="px-3 text-amber-600 border-amber-300 hover:bg-amber-50"
+          >
+            <Pause className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDiscard}
+            className="px-3 text-red-600 border-red-300 hover:bg-red-50"
+          >
+            <X className="w-4 h-4" />
           </Button>
           <Button
             onClick={onSave}

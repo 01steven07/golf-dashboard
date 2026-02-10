@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DetailedRoundData, HoleData, createDefaultHole } from "@/types/shot";
 import { CourseWithDetails, SubCourseWithHoles } from "@/types/database";
 import { StepSettings } from "./components/step-settings";
 import { StepScoring } from "./components/step-scoring";
 
 type InputStep = "settings" | "scoring";
+
+const STORAGE_KEY = "detailed-input-draft";
 
 // 初期状態：18ホール分
 function createInitialHoles(): HoleData[] {
@@ -40,7 +43,40 @@ function createHolesFromCourse(
   return holes.length > 0 ? holes : createInitialHoles();
 }
 
+interface DraftData {
+  step: InputStep;
+  currentHole: number;
+  roundData: DetailedRoundData;
+}
+
+function saveDraft(data: DraftData) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function loadDraft(): DraftData | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored) as DraftData;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export default function DetailedInputPage() {
+  const router = useRouter();
   const [step, setStep] = useState<InputStep>("settings");
   const [currentHole, setCurrentHole] = useState(1);
   const [roundData, setRoundData] = useState<DetailedRoundData>({
@@ -54,6 +90,15 @@ export default function DetailedInputPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // 起動時にドラフトを確認
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setHasDraft(true);
+    }
+  }, []);
 
   // コース選択時のコールバック
   const handleCourseSelect = useCallback((course: CourseWithDetails | null) => {
@@ -100,13 +145,35 @@ export default function DetailedInputPage() {
     }));
   }, []);
 
-  const handleSubCourseToggle = useCallback((subCourseId: string) => {
+  const handleSubCourseAdd = useCallback((subCourseId: string) => {
     if (!selectedCourse) return;
 
     setRoundData((prev) => {
-      const newIds = prev.subCourseIds.includes(subCourseId)
-        ? prev.subCourseIds.filter((id) => id !== subCourseId)
-        : [...prev.subCourseIds, subCourseId];
+      const newIds = [...prev.subCourseIds, subCourseId];
+
+      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+      const teeName = selectedTee?.name ?? null;
+
+      const newHoles = createHolesFromCourse(
+        selectedCourse.sub_courses,
+        newIds,
+        teeName
+      );
+
+      return {
+        ...prev,
+        subCourseIds: newIds,
+        holes: newHoles,
+      };
+    });
+    setCurrentHole(1);
+  }, [selectedCourse]);
+
+  const handleSubCourseRemove = useCallback((index: number) => {
+    if (!selectedCourse) return;
+
+    setRoundData((prev) => {
+      const newIds = prev.subCourseIds.filter((_, i) => i !== index);
 
       const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
       const teeName = selectedTee?.name ?? null;
@@ -205,19 +272,55 @@ export default function DetailedInputPage() {
     }
   };
 
+  // 中断: localStorageに保存して離脱
+  const handleSuspend = useCallback(() => {
+    saveDraft({ step, currentHole, roundData });
+    router.push("/input");
+  }, [step, currentHole, roundData, router]);
+
+  // 破棄: データを消して離脱
+  const handleDiscard = useCallback(() => {
+    if (confirm("入力内容を破棄しますか？この操作は取り消せません。")) {
+      clearDraft();
+      router.push("/input");
+    }
+  }, [router]);
+
+  // ドラフト復元
+  const handleResumeDraft = useCallback(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setStep(draft.step);
+      setCurrentHole(draft.currentHole);
+      setRoundData(draft.roundData);
+      // Note: selectedCourse はlocalStorageに保存しないため
+      // コース選択はStep 1に戻って行う必要がある場合がある
+      setHasDraft(false);
+    }
+  }, []);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setHasDraft(false);
+  }, []);
+
   if (step === "settings") {
     return (
       <StepSettings
         roundData={roundData}
         selectedCourse={selectedCourse}
+        hasDraft={hasDraft}
         onCourseSelect={handleCourseSelect}
         onManualInput={handleManualInput}
-        onSubCourseToggle={handleSubCourseToggle}
+        onSubCourseAdd={handleSubCourseAdd}
+        onSubCourseRemove={handleSubCourseRemove}
         onSubCourseReorder={handleSubCourseReorder}
         onTeeSelect={handleTeeSelect}
         onDateChange={handleDateChange}
         onTeeColorChange={handleTeeColorChange}
         onStartScoring={() => setStep("scoring")}
+        onResumeDraft={handleResumeDraft}
+        onDiscardDraft={handleDiscardDraft}
       />
     );
   }
@@ -233,6 +336,8 @@ export default function DetailedInputPage() {
       onSave={handleSave}
       onReset={handleReset}
       onBackToSettings={() => setStep("settings")}
+      onSuspend={handleSuspend}
+      onDiscard={handleDiscard}
     />
   );
 }

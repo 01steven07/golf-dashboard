@@ -10,32 +10,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, PlayCircle } from "lucide-react";
 
 interface StepSettingsProps {
   roundData: DetailedRoundData;
   selectedCourse: CourseWithDetails | null;
+  hasDraft: boolean;
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
-  onSubCourseToggle: (subCourseId: string) => void;
+  onSubCourseAdd: (subCourseId: string) => void;
+  onSubCourseRemove: (index: number) => void;
   onSubCourseReorder: (reorderedIds: string[]) => void;
   onTeeSelect: (teeId: string) => void;
   onDateChange: (date: string) => void;
   onTeeColorChange: (color: string) => void;
   onStartScoring: () => void;
+  onResumeDraft: () => void;
+  onDiscardDraft: () => void;
 }
 
 export function StepSettings({
   roundData,
   selectedCourse,
+  hasDraft,
   onCourseSelect,
   onManualInput,
-  onSubCourseToggle,
+  onSubCourseAdd,
+  onSubCourseRemove,
   onSubCourseReorder,
   onTeeSelect,
   onDateChange,
   onTeeColorChange,
   onStartScoring,
+  onResumeDraft,
+  onDiscardDraft,
 }: StepSettingsProps) {
   const router = useRouter();
 
@@ -58,6 +66,36 @@ export function StepSettings({
       </div>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+        {/* ドラフト復元バナー */}
+        {hasDraft && (
+          <Card className="border-2 border-amber-300 bg-amber-50">
+            <CardContent className="p-4">
+              <p className="text-sm text-amber-800 font-medium mb-3">
+                中断中の入力データがあります
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={onResumeDraft}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  size="sm"
+                >
+                  <PlayCircle className="w-4 h-4 mr-1" />
+                  再開する
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onDiscardDraft}
+                  size="sm"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  <RotateCcw className="w-4 h-4 mr-1" />
+                  破棄
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* コース選択 */}
         <Card>
           <CardHeader className="pb-3">
@@ -77,7 +115,8 @@ export function StepSettings({
                 tees={selectedCourse.tees}
                 selectedSubCourseIds={roundData.subCourseIds}
                 selectedTeeId={roundData.teeId}
-                onSubCourseToggle={onSubCourseToggle}
+                onSubCourseAdd={onSubCourseAdd}
+                onSubCourseRemove={onSubCourseRemove}
                 onSubCourseReorder={onSubCourseReorder}
                 onTeeSelect={onTeeSelect}
               />
