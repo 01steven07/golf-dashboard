@@ -222,6 +222,12 @@ function InputContent() {
 
   const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
   const totalPar = scores.reduce((sum, s) => sum + s.par, 0);
+  const totalPutts = scores.reduce((sum, s) => sum + s.putts, 0);
+  const totalOb = scores.reduce((sum, s) => sum + s.ob, 0);
+  const totalBunker = scores.reduce((sum, s) => sum + s.bunker, 0);
+  const totalPenalty = scores.reduce((sum, s) => sum + s.penalty, 0);
+  const fwKeepCount = scores.filter((s) => s.fairway_result === "keep").length;
+  const par4or5Count = scores.filter((s) => s.par >= 4).length;
 
   // 検索とグルーピング
   const groupedCourses = useMemo(() => {
@@ -452,11 +458,12 @@ function InputContent() {
                     onChange={(e) => setTeeColor(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
+                    <option value="Black">Black</option>
                     <option value="Blue">Blue</option>
                     <option value="White">White</option>
-                    <option value="Red">Red</option>
+                    <option value="Green">Green</option>
                     <option value="Gold">Gold</option>
-                    <option value="Black">Black</option>
+                    <option value="Red">Red</option>
                   </select>
                 </div>
               </div>
@@ -474,6 +481,38 @@ function InputContent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4 text-center text-sm">
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">Putt</div>
+                  <div className="font-bold">{totalPutts}</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">FW Keep</div>
+                  <div className="font-bold">
+                    {par4or5Count > 0 ? `${Math.round((fwKeepCount / par4or5Count) * 100)}%` : "-"}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">OB</div>
+                  <div className={cn("font-bold", totalOb > 0 && "text-red-600")}>{totalOb}</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">Bunker</div>
+                  <div className={cn("font-bold", totalBunker > 0 && "text-orange-600")}>{totalBunker}</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">Penalty</div>
+                  <div className={cn("font-bold", totalPenalty > 0 && "text-red-600")}>{totalPenalty}</div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <div className="text-muted-foreground text-xs">Par3/4/5</div>
+                  <div className="font-bold">
+                    {scores.filter((s) => s.par === 3).length}/
+                    {scores.filter((s) => s.par === 4).length}/
+                    {scores.filter((s) => s.par === 5).length}
+                  </div>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>

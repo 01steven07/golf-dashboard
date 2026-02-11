@@ -42,7 +42,7 @@ export function getScoreSymbol(score: number, par: number): ScoreSymbolInfo {
     return { label: "D.Bogey", symbol: "□", color: "text-red-600", bgColor: "bg-red-100" };
   }
   if (diff === 3) {
-    return { label: "T.Bogey", symbol: "□□", color: "text-red-700", bgColor: "bg-red-200" };
+    return { label: "+3", symbol: "+3", color: "text-red-700", bgColor: "bg-red-200" };
   }
   return { label: `+${diff}`, symbol: `+${diff}`, color: "text-red-800", bgColor: "bg-red-300" };
 }
