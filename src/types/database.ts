@@ -95,6 +95,8 @@ export interface Round {
   tee_color: TeeColor;
   weather: string | null;
   image_url: string | null;
+  out_course_name: string | null;
+  in_course_name: string | null;
 }
 
 export interface Score {

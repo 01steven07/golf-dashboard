@@ -8,7 +8,9 @@ export const PROMPT = `あなたはゴルフスコアカードを解析するAI�
 画像からスコアカードの情報を読み取り、以下のJSON形式で出力してください。
 
 {
-  "course_name": "コース名",
+  "course_name": "ゴルフ場名（施設全体の名前）",
+  "out_course_name": "前半9ホール（H1-9）のコース名（例: 東コース, OUT, 西, 南 など）",
+  "in_course_name": "後半9ホール（H10-18）のコース名（例: 西コース, IN, 東, 北 など）",
   "date": "YYYY-MM-DD形式の日付（読み取れない場合は空文字）",
   "tee_color": "ティーの色（Blue, White, Red, Gold, Blackのいずれか。不明な場合はWhite）",
   "scores": [
@@ -27,6 +29,8 @@ export const PROMPT = `あなたはゴルフスコアカードを解析するAI�
 }
 
 重要なルール:
+- course_nameはゴルフ場の施設名（例: "太平洋クラブ御殿場コース"）
+- out_course_nameとin_course_nameは、36ホール以上あるゴルフ場で東/西/南/北/A/Bなどのコース区分がある場合にそのコース名を抽出する。スコアカードに"OUT""IN"としか書かれていない場合は"OUT""IN"とする。読み取れない場合は空文字
 - scoresは必ず18ホール分（hole_number 1〜18）を出力
 - parは3, 4, 5のいずれか
 - distanceはホールの距離（ヤード単位の整数）。読み取れない場合はnull
@@ -133,6 +137,8 @@ export async function POST(request: NextRequest) {
     // スコアデータを正規化
     const ocrResult: OcrResult = {
       course_name: rawResult.course_name ?? "",
+      out_course_name: rawResult.out_course_name ?? "",
+      in_course_name: rawResult.in_course_name ?? "",
       date: rawResult.date ?? "",
       tee_color: rawResult.tee_color ?? "White",
       scores: normalizeOcrScores(rawResult.scores ?? []),

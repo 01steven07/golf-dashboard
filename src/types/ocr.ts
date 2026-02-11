@@ -14,6 +14,8 @@ export interface OcrScoreData {
 
 export interface OcrResult {
   course_name: string;
+  out_course_name: string;
+  in_course_name: string;
   date: string;
   tee_color: string;
   scores: OcrScoreData[];

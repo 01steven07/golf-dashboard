@@ -38,6 +38,8 @@ function InputContent() {
   const [newCourseName, setNewCourseName] = useState<string>("");
   const [roundDate, setRoundDate] = useState<string>("");
   const [teeColor, setTeeColor] = useState<string>("White");
+  const [outCourseName, setOutCourseName] = useState<string>("");
+  const [inCourseName, setInCourseName] = useState<string>("");
   const [scores, setScores] = useState<OcrScoreData[]>([]);
   const [error, setError] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
@@ -89,6 +91,8 @@ function InputContent() {
       setScores(result.scores);
       setRoundDate(result.date || new Date().toISOString().split("T")[0]);
       setTeeColor(result.tee_color || "White");
+      setOutCourseName(result.out_course_name || "");
+      setInCourseName(result.in_course_name || "");
 
       // Try to match course name
       const matchedCourse = coursesData?.find(
@@ -187,6 +191,8 @@ function InputContent() {
           date: roundDate,
           tee_color: teeColor,
           image_url: imageUrl,
+          out_course_name: outCourseName || null,
+          in_course_name: inCourseName || null,
         })
         .select()
         .single();
@@ -465,6 +471,24 @@ function InputContent() {
                     <option value="Gold">Gold</option>
                     <option value="Red">Red</option>
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>コース構成（前半 / 後半）</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="前半 (例: OUT, 東)"
+                      value={outCourseName}
+                      onChange={(e) => setOutCourseName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <span className="flex items-center text-muted-foreground">/</span>
+                    <Input
+                      placeholder="後半 (例: IN, 西)"
+                      value={inCourseName}
+                      onChange={(e) => setInCourseName(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
