@@ -338,7 +338,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            ゴルフ場のコース紹介ページのURLを入力すると、コース情報を自動で取得します
+            ゴルフ場のコース紹介ページのURLを入力すると、コース情報を自動で取得します。GORAやGDO、公式ページのコース情報URLがおすすめです
           </p>
         </CardContent>
       </Card>
