@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { OcrResult, OcrScoreData } from "@/types/ocr";
 import { Course, FairwayResult } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { getScoreSymbol, getFairwaySymbol } from "@/utils/golf-symbols";
 
 type Step = "upload" | "processing" | "confirm";
 
@@ -477,87 +478,123 @@ function InputContent() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="py-2 px-1 text-left">Hole</th>
+                      <th className="py-2 px-1 text-left">H</th>
                       <th className="py-2 px-1 text-center">Par</th>
                       <th className="py-2 px-1 text-center">Dist</th>
                       <th className="py-2 px-1 text-center">Score</th>
                       <th className="py-2 px-1 text-center">Putt</th>
                       <th className="py-2 px-1 text-center">FW</th>
                       <th className="py-2 px-1 text-center">OB</th>
+                      <th className="py-2 px-1 text-center">Bk</th>
+                      <th className="py-2 px-1 text-center">Pn</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {scores.map((s, i) => (
-                      <tr key={s.hole_number} className="border-b">
-                        <td className="py-2 px-1 font-medium">{s.hole_number}</td>
-                        <td className="py-2 px-1">
-                          <select
-                            value={s.par}
-                            onChange={(e) => updateScore(i, "par", Number(e.target.value) as 3 | 4 | 5)}
-                            className="w-14 h-8 rounded border text-center"
-                          >
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={5}>5</option>
-                          </select>
-                        </td>
-                        <td className="py-2 px-1">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={700}
-                            value={s.distance ?? ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateScore(i, "distance", val ? Number(val) : null);
-                            }}
-                            placeholder="-"
-                            className="w-16 h-8 text-center"
-                          />
-                        </td>
-                        <td className="py-2 px-1">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={15}
-                            value={s.score}
-                            onChange={(e) => updateScore(i, "score", Number(e.target.value))}
-                            className="w-14 h-8 text-center"
-                          />
-                        </td>
-                        <td className="py-2 px-1">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={10}
-                            value={s.putts}
-                            onChange={(e) => updateScore(i, "putts", Number(e.target.value))}
-                            className="w-14 h-8 text-center"
-                          />
-                        </td>
-                        <td className="py-2 px-1">
-                          <select
-                            value={s.fairway_result}
-                            onChange={(e) => updateScore(i, "fairway_result", e.target.value as FairwayResult)}
-                            className="w-16 h-8 rounded border text-center text-xs"
-                          >
-                            <option value="keep">Keep</option>
-                            <option value="left">Left</option>
-                            <option value="right">Right</option>
-                          </select>
-                        </td>
-                        <td className="py-2 px-1">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={5}
-                            value={s.ob}
-                            onChange={(e) => updateScore(i, "ob", Number(e.target.value))}
-                            className="w-14 h-8 text-center"
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {scores.map((s, i) => {
+                      const scoreInfo = getScoreSymbol(s.score, s.par);
+                      const fwInfo = getFairwaySymbol(s.fairway_result);
+                      return (
+                        <tr key={s.hole_number} className="border-b">
+                          <td className="py-2 px-1 font-medium">{s.hole_number}</td>
+                          <td className="py-2 px-1">
+                            <select
+                              value={s.par}
+                              onChange={(e) => updateScore(i, "par", Number(e.target.value) as 3 | 4 | 5)}
+                              className="w-14 h-8 rounded border text-center"
+                            >
+                              <option value={3}>3</option>
+                              <option value={4}>4</option>
+                              <option value={5}>5</option>
+                            </select>
+                          </td>
+                          <td className="py-2 px-1">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={700}
+                              value={s.distance ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateScore(i, "distance", val ? Number(val) : null);
+                              }}
+                              placeholder="-"
+                              className="w-16 h-8 text-center"
+                            />
+                          </td>
+                          <td className="py-2 px-1">
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                min={1}
+                                max={15}
+                                value={s.score}
+                                onChange={(e) => updateScore(i, "score", Number(e.target.value))}
+                                className="w-14 h-8 text-center"
+                              />
+                              {s.score > 0 && (
+                                <span className={cn("text-sm font-bold", scoreInfo.color)}>
+                                  {scoreInfo.symbol}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2 px-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={10}
+                              value={s.putts}
+                              onChange={(e) => updateScore(i, "putts", Number(e.target.value))}
+                              className="w-14 h-8 text-center"
+                            />
+                          </td>
+                          <td className="py-2 px-1">
+                            <select
+                              value={s.fairway_result}
+                              onChange={(e) => updateScore(i, "fairway_result", e.target.value as FairwayResult)}
+                              className={cn(
+                                "w-14 h-8 rounded border text-center text-sm font-bold",
+                                fwInfo.color
+                              )}
+                            >
+                              <option value="keep">◯</option>
+                              <option value="left">←</option>
+                              <option value="right">→</option>
+                            </select>
+                          </td>
+                          <td className="py-2 px-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={5}
+                              value={s.ob}
+                              onChange={(e) => updateScore(i, "ob", Number(e.target.value))}
+                              className="w-12 h-8 text-center"
+                            />
+                          </td>
+                          <td className="py-2 px-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={5}
+                              value={s.bunker}
+                              onChange={(e) => updateScore(i, "bunker", Number(e.target.value))}
+                              className="w-12 h-8 text-center"
+                            />
+                          </td>
+                          <td className="py-2 px-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={5}
+                              value={s.penalty}
+                              onChange={(e) => updateScore(i, "penalty", Number(e.target.value))}
+                              className="w-12 h-8 text-center"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

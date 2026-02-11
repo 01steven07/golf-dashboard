@@ -2,23 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { HoleData } from "@/types/shot";
+import { getScoreSymbol } from "@/utils/golf-symbols";
 
 interface HoleNavigationProps {
   holes: HoleData[];
   currentHole: number;
   onHoleSelect: (holeNumber: number) => void;
-}
-
-function getScoreDiffText(score: number, par: number): string {
-  if (score === 0) return "";
-  const diff = score - par;
-  if (diff <= -3) return "◎◎";
-  if (diff === -2) return "◎";
-  if (diff === -1) return "○";
-  if (diff === 0) return "-";
-  if (diff === 1) return "△";
-  if (diff === 2) return "□";
-  return `+${diff}`;
 }
 
 export function HoleNavigation({
@@ -31,7 +20,7 @@ export function HoleNavigation({
       {holes.map((h) => {
         const holeScore = h.shots.length;
         const scoreDiff = holeScore - h.par;
-        const scoreSymbol = holeScore === 0 ? "" : getScoreDiffText(holeScore, h.par);
+        const scoreSymbol = holeScore === 0 ? "" : getScoreSymbol(holeScore, h.par).symbol;
 
         return (
           <button
