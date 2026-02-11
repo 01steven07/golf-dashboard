@@ -9,14 +9,19 @@ export default function AdminPage() {
       <p className="text-sm text-muted-foreground">部員・コースの管理</p>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>部員管理</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground">
-            部員の追加・編集・削除
-          </CardContent>
-        </Card>
+        <Link href="/admin/members">
+          <Card className="hover:border-green-300 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                部員管理
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground">
+              部員の一覧・権限管理・編集・削除
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/admin/courses">
           <Card className="hover:border-green-300 transition-colors cursor-pointer">
