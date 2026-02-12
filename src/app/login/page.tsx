@@ -91,7 +91,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-[80vh]">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Golf Dashboard</CardTitle>
+          <CardTitle className="text-xl">UT golf score app</CardTitle>
           <p className="text-sm text-muted-foreground">部員を選択してログイン</p>
         </CardHeader>
         <CardContent>

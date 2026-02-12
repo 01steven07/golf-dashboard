@@ -17,7 +17,7 @@ export function MobileHeader() {
   return (
     <header className="md:hidden sticky top-0 z-50 bg-sidebar text-sidebar-foreground border-b border-sidebar-border">
       <div className="flex items-center justify-between h-12 px-4">
-        <h1 className="text-base font-bold tracking-tight">Golf Dashboard</h1>
+        <h1 className="text-base font-bold tracking-tight">UT golf score app</h1>
         {member && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-sidebar-foreground/70">
