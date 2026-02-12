@@ -18,8 +18,12 @@ import {
   calculateTeeShotTendency,
   calculateApproachClubs,
   calculatePinPositionScores,
+  calculateCourseScoringStats,
+  calculateCoursePuttingStats,
+  calculateCourseShotStats,
   CourseBasicStats,
 } from "@/utils/course-stats";
+import { StatGroupSection } from "@/components/stat-group-section";
 import {
   ResponsiveContainer,
   PieChart,
@@ -198,6 +202,20 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
     [allMyScores]
   );
 
+  // Extended stats
+  const courseScoringStats = useMemo(
+    () => calculateCourseScoringStats(myRounds),
+    [myRounds]
+  );
+  const coursePuttingStats = useMemo(
+    () => calculateCoursePuttingStats(myRounds),
+    [myRounds]
+  );
+  const courseShotStats = useMemo(
+    () => calculateCourseShotStats(myRounds),
+    [myRounds]
+  );
+
   // Hole-specific calculations
   const holeTendency = useMemo(
     () => (selectedHole ? calculateTeeShotTendency(allMyScores, selectedHole) : null),
@@ -309,7 +327,7 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                 statKey="avgPutts"
               />
               <StatCard
-                label="GIR率"
+                label="パーオン率"
                 value={`${myBasicStats.girRate.toFixed(1)}%`}
                 myStats={myBasicStats}
                 teamStats={teamBasicStats}
@@ -426,6 +444,42 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                   データが不足しています
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Extended course stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle>詳細スタッツ</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <StatGroupSection
+                title="スコアリング"
+                stats={[
+                  { label: "Par3平均", value: courseScoringStats.par3Avg.toFixed(1), description: "Par3ホールの平均スコア" },
+                  { label: "Par4平均", value: courseScoringStats.par4Avg.toFixed(1), description: "Par4ホールの平均スコア" },
+                  { label: "Par5平均", value: courseScoringStats.par5Avg.toFixed(1), description: "Par5ホールの平均スコア" },
+                  { label: "バウンスバック率", value: `${courseScoringStats.bounceBackRate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率" },
+                  { label: "ボギー回避率", value: `${courseScoringStats.bogeyAvoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合" },
+                ]}
+              />
+
+              <StatGroupSection
+                title="パッティング"
+                stats={[
+                  { label: "パーオン時パット", value: coursePuttingStats.puttsPerGir.toFixed(1), description: "パーオンホールでの平均パット数" },
+                  { label: "3パット回避率", value: `${coursePuttingStats.threePuttAvoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合" },
+                  { label: "1パット率", value: `${coursePuttingStats.onePuttRate.toFixed(1)}%`, description: "1パットで沈めた割合" },
+                ]}
+              />
+
+              <StatGroupSection
+                title="ショット"
+                stats={[
+                  { label: "パーオン率(FW)", value: `${courseShotStats.girFromFairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率" },
+                  { label: "パーオン率(ラフ)", value: `${courseShotStats.girFromRough.toFixed(1)}%`, description: "ラフからのパーオン率" },
+                ]}
+              />
             </CardContent>
           </Card>
 

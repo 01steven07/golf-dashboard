@@ -224,6 +224,149 @@ export function calculatePinPositionScores(scores: ScoreRow[], holeNumber: numbe
   }));
 }
 
+// コーススコアリングスタッツ
+export interface CourseScoringStats {
+  bounceBackRate: number;
+  bogeyAvoidance: number;
+  doubleBogeyAvoidance: number;
+  par3Avg: number;
+  par4Avg: number;
+  par5Avg: number;
+}
+
+// コースパッティングスタッツ
+export interface CoursePuttingStats {
+  puttsPerGir: number;
+  threePuttAvoidance: number;
+  onePuttRate: number;
+}
+
+// コースショットスタッツ
+export interface CourseShotStats {
+  girFromFairway: number;
+  girFromRough: number;
+}
+
+/**
+ * コース別スコアリングスタッツを算出
+ */
+export function calculateCourseScoringStats(rounds: RoundScores[]): CourseScoringStats {
+  const defaultStats: CourseScoringStats = {
+    bounceBackRate: 0,
+    bogeyAvoidance: 0,
+    doubleBogeyAvoidance: 0,
+    par3Avg: 0,
+    par4Avg: 0,
+    par5Avg: 0,
+  };
+
+  if (rounds.length === 0) return defaultStats;
+
+  let totalHoles = 0;
+  let bogeyOrWorseCount = 0;
+  let doubleBogeyOrWorseCount = 0;
+  let bounceBackOpportunities = 0;
+  let bounceBackSuccess = 0;
+  let par3Total = 0, par3Count = 0;
+  let par4Total = 0, par4Count = 0;
+  let par5Total = 0, par5Count = 0;
+
+  for (const round of rounds) {
+    const sorted = [...round.scores].sort((a, b) => a.hole_number - b.hole_number);
+
+    for (let i = 0; i < sorted.length; i++) {
+      const s = sorted[i];
+      totalHoles++;
+      const overPar = s.score - s.par;
+
+      if (overPar >= 1) bogeyOrWorseCount++;
+      if (overPar >= 2) doubleBogeyOrWorseCount++;
+
+      if (s.par === 3) { par3Total += s.score; par3Count++; }
+      else if (s.par === 4) { par4Total += s.score; par4Count++; }
+      else if (s.par === 5) { par5Total += s.score; par5Count++; }
+
+      if (i > 0) {
+        const prev = sorted[i - 1];
+        if (prev.score - prev.par >= 1) {
+          bounceBackOpportunities++;
+          if (overPar <= 0) bounceBackSuccess++;
+        }
+      }
+    }
+  }
+
+  return {
+    bounceBackRate: bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
+    bogeyAvoidance: totalHoles > 0 ? ((totalHoles - bogeyOrWorseCount) / totalHoles) * 100 : 0,
+    doubleBogeyAvoidance: totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
+    par3Avg: par3Count > 0 ? par3Total / par3Count : 0,
+    par4Avg: par4Count > 0 ? par4Total / par4Count : 0,
+    par5Avg: par5Count > 0 ? par5Total / par5Count : 0,
+  };
+}
+
+/**
+ * コース別パッティングスタッツを算出
+ */
+export function calculateCoursePuttingStats(rounds: RoundScores[]): CoursePuttingStats {
+  if (rounds.length === 0) return { puttsPerGir: 0, threePuttAvoidance: 0, onePuttRate: 0 };
+
+  let totalHoles = 0;
+  let puttsOnGir = 0;
+  let girHoles = 0;
+  let threePuttCount = 0;
+  let onePuttCount = 0;
+
+  for (const round of rounds) {
+    for (const s of round.scores) {
+      totalHoles++;
+      const isGir = s.score - s.putts <= s.par - 2;
+      if (isGir) {
+        puttsOnGir += s.putts;
+        girHoles++;
+      }
+      if (s.putts >= 3) threePuttCount++;
+      if (s.putts === 1) onePuttCount++;
+    }
+  }
+
+  return {
+    puttsPerGir: girHoles > 0 ? puttsOnGir / girHoles : 0,
+    threePuttAvoidance: totalHoles > 0 ? ((totalHoles - threePuttCount) / totalHoles) * 100 : 0,
+    onePuttRate: totalHoles > 0 ? (onePuttCount / totalHoles) * 100 : 0,
+  };
+}
+
+/**
+ * コース別ショットスタッツ（GIR from FW/Rough）を算出
+ */
+export function calculateCourseShotStats(rounds: RoundScores[]): CourseShotStats {
+  if (rounds.length === 0) return { girFromFairway: 0, girFromRough: 0 };
+
+  let fwHoles = 0, girFromFw = 0;
+  let roughHoles = 0, girFromRough = 0;
+
+  for (const round of rounds) {
+    for (const s of round.scores) {
+      if (s.par < 4) continue;
+      const isGir = s.score - s.putts <= s.par - 2;
+      if (s.fairway_result === "keep") {
+        fwHoles++;
+        if (isGir) girFromFw++;
+      } else if (s.fairway_result === "left" || s.fairway_result === "right") {
+        roughHoles++;
+        if (isGir) girFromRough++;
+      }
+    }
+  }
+
+  return {
+    girFromFairway: fwHoles > 0 ? (girFromFw / fwHoles) * 100 : 0,
+    girFromRough: roughHoles > 0 ? (girFromRough / roughHoles) * 100 : 0,
+  };
+}
+
 /**
  * ティーショットのクラブ集計（shots_detailから）
  */

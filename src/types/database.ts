@@ -126,10 +126,42 @@ export interface MemberStats {
   member_id: string;
   member_name: string;
   round_count: number;
+  // Core stats
   avg_score: number;
   avg_putts: number;
   gir_rate: number;
   fairway_keep_rate: number;
   avg_birdies: number;
   scramble_rate: number;
+  // Scoring stats
+  par3_avg: number;
+  par4_avg: number;
+  par5_avg: number;
+  bounce_back_rate: number;
+  bogey_avoidance: number;
+  double_bogey_avoidance: number;
+  // Putting stats
+  putts_per_gir: number;
+  three_putt_avoidance: number;
+  one_putt_rate: number;
+  // Shot stats
+  gir_from_fairway: number;
+  gir_from_rough: number;
+  sand_save_rate: number | null;
+  avg_driving_distance: number | null;
+}
+
+/** 距離帯別の成功率データ */
+export interface DistanceBucket {
+  label: string;
+  rate: number;
+  count: number;
+}
+
+/** Detailed stats requiring shots_detail data */
+export interface DetailedMemberStats {
+  sand_save_rate: number | null;
+  avg_driving_distance: number | null;
+  make_pct_by_distance: DistanceBucket[];
+  gir_by_distance: DistanceBucket[];
 }
