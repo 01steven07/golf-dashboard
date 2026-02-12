@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "東大ゴルフ部スコアアプリ",
+  title: "UT golf score app",
   description: "東大ゴルフ部スコア管理・分析アプリ",
   icons: {
     icon: "/favicon.svg",
