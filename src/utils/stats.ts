@@ -61,7 +61,7 @@ export function calculateRadarData(
       fullMark: 80,
     },
     {
-      category: "GIR",
+      category: "パーオン",
       value: calculateDeviation(myStats.gir_rate, avgGir, calculateStdDev(girs)),
       fullMark: 80,
     },
@@ -75,6 +75,36 @@ export function calculateRadarData(
       value: calculateDeviation(myStats.scramble_rate, avgScramble, calculateStdDev(scrambles)),
       fullMark: 80,
     },
+  ];
+}
+
+/**
+ * 拡張レーダーチャートデータ（ボギー回避, バウンスバック, Putts/GIR, 1パット率, 3パット回避）
+ */
+export function calculateExtendedRadarData(
+  myStats: MemberStats,
+  allStats: MemberStats[]
+): RadarChartData[] {
+  const deviationData = (
+    label: string,
+    getter: (s: MemberStats) => number,
+    inverse: boolean
+  ) => {
+    const values = allStats.map(getter);
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    return {
+      category: label,
+      value: calculateDeviation(getter(myStats), avg, calculateStdDev(values), inverse),
+      fullMark: 80,
+    };
+  };
+
+  return [
+    deviationData("ボギー回避", (s) => s.bogey_avoidance, false),
+    deviationData("バウンスバック", (s) => s.bounce_back_rate, false),
+    deviationData("GIR時パット", (s) => s.putts_per_gir, true),
+    deviationData("1パット率", (s) => s.one_putt_rate, false),
+    deviationData("3パット回避", (s) => s.three_putt_avoidance, false),
   ];
 }
 
