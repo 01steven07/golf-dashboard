@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { MobileHeader } from "@/components/layout/mobile-header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Sidebar />
+          <MobileHeader />
           <main className="md:ml-60 min-h-screen pb-20 md:pb-0">
             <div className="container mx-auto px-4 py-6 max-w-5xl">
               {children}
