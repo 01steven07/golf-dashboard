@@ -81,7 +81,7 @@ export default function CoursesPage() {
             ゴルフ場のコース情報を管理します
           </p>
         </div>
-        <Link href="/admin/courses/new">
+        <Link href="/courses/new">
           <Button className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 mr-2" />
             新規登録
@@ -138,7 +138,7 @@ export default function CoursesPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Link href={`/admin/courses/${course.id}/edit`}>
+                            <Link href={`/courses/${course.id}/edit`}>
                               <Button variant="outline" size="sm">
                                 <Pencil className="w-4 h-4" />
                               </Button>

@@ -290,7 +290,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
         return;
       }
 
-      router.push("/admin/courses");
+      router.push("/courses");
     } catch {
       setError("保存に失敗しました");
     } finally {
@@ -506,7 +506,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/admin/courses")}
+            onClick={() => router.push("/courses")}
             className="flex-1"
           >
             キャンセル

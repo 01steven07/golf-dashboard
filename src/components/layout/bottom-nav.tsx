@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Camera, Home, User } from "lucide-react";
+import { BarChart3, Camera, Home, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/", label: "ランキング", icon: Home },
   { href: "/input", label: "入力", icon: Camera },
   { href: "/my-stats", label: "マイ", icon: BarChart3 },
+  { href: "/courses", label: "コース", icon: MapPin },
   { href: "/admin", label: "管理", icon: User, adminOnly: true, exact: true },
 ];
 
