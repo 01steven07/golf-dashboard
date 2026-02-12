@@ -24,19 +24,19 @@ export function Sidebar() {
     router.push("/login");
   };
 
-  const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || member?.role === "admin"
-  );
+  const filteredNavItems = navItems.filter((item) => !item.adminOnly || member?.role === "admin");
 
   return (
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold tracking-tight">Golf Dashboard</h1>
+        <h1 className="text-lg font-bold tracking-tight">UT golf score app</h1>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {filteredNavItems.map((item) => {
           const isActive =
-            item.href === "/" || item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            item.href === "/" || item.exact
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
