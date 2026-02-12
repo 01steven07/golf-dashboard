@@ -299,7 +299,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
   };
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-40 md:pb-24">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
@@ -501,7 +501,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
       </Card>
 
       {/* 保存ボタン */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-60 bg-white border-t p-4 shadow-lg z-40">
         <div className="max-w-3xl mx-auto flex gap-3">
           <Button
             type="button"
