@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   title: "UT golf score app",
   description: "東大ゴルフ部スコア管理・分析アプリ",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.png",
     apple: "/icons/icon-192x192.png",
   },
   appleWebApp: {
