@@ -16,8 +16,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Golf Dashboard",
-  description: "大学ゴルフ部スコア管理・分析アプリ",
+  title: "東大ゴルフ部スコアアプリ",
+  description: "東大ゴルフ部スコア管理・分析アプリ",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -27,15 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <Sidebar />
           <main className="md:ml-60 min-h-screen pb-20 md:pb-0">
-            <div className="container mx-auto px-4 py-6 max-w-5xl">
-              {children}
-            </div>
+            <div className="container mx-auto px-4 py-6 max-w-5xl">{children}</div>
           </main>
           <BottomNav />
         </AuthProvider>

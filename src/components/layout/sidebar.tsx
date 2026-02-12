@@ -31,7 +31,7 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="flex items-center h-16 px-6 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold tracking-tight">Golf Dashboard</h1>
+        <h1 className="text-lg font-bold tracking-tight">東大ゴルフ部スコアアプリ</h1>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {filteredNavItems.map((item) => {
