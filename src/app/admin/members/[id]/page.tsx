@@ -16,6 +16,7 @@ import {
   MemberRole,
   PreferredTee,
 } from "@/types/database";
+import { authFetch } from "@/lib/api-client";
 
 export default function AdminMemberDetailPage() {
   const params = useParams();
@@ -36,7 +37,7 @@ export default function AdminMemberDetailPage() {
 
   const fetchMember = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/members/${memberId}`);
+      const res = await authFetch(`/api/admin/members/${memberId}`);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "部員情報の取得に失敗しました");
@@ -67,7 +68,7 @@ export default function AdminMemberDetailPage() {
     setIsSaving(true);
 
     try {
-      const res = await fetch(`/api/admin/members/${memberId}`, {
+      const res = await authFetch(`/api/admin/members/${memberId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

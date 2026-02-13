@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Course } from "@/types/database";
 import { Plus, Pencil, Trash2, Loader2, MapPin, Search } from "lucide-react";
+import { authFetch } from "@/lib/api-client";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -58,7 +59,7 @@ export default function CoursesPage() {
 
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
+      const res = await authFetch(`/api/courses/${id}`, { method: "DELETE" });
       if (res.ok) {
         setCourses(courses.filter((c) => c.id !== id));
       } else {

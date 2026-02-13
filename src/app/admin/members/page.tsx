@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Shield, ShieldOff, Trash2 } from "lucide-react";
 import { Member } from "@/types/database";
+import { authFetch } from "@/lib/api-client";
 
 type MemberWithCreatedAt = Member & { created_at: string };
 
@@ -26,7 +27,7 @@ export default function AdminMembersPage() {
 
   const fetchMembers = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/members");
+      const res = await authFetch("/api/admin/members");
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "部員一覧の取得に失敗しました");
@@ -54,7 +55,7 @@ export default function AdminMembersPage() {
     if (!confirm(confirmMessage)) return;
 
     try {
-      const res = await fetch(`/api/admin/members/${member.id}`, {
+      const res = await authFetch(`/api/admin/members/${member.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
@@ -79,7 +80,7 @@ export default function AdminMembersPage() {
       return;
 
     try {
-      const res = await fetch("/api/admin/members", {
+      const res = await authFetch("/api/admin/members", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: member.id }),

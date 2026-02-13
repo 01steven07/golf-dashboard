@@ -14,6 +14,7 @@ import {
 } from "@/types/course";
 import { CourseHoleTable } from "./course-hole-table";
 import { cn } from "@/lib/utils";
+import { authFetch } from "@/lib/api-client";
 import {
   Plus,
   Trash2,
@@ -346,7 +347,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
       const url = isEdit ? `/api/courses/${courseId}` : "/api/courses";
       const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

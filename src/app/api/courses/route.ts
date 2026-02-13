@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { CourseWithDetails } from "@/types/database";
+import { requireAuth, isAuthError } from "@/lib/api-auth";
 
 /** GET /api/courses - コース一覧取得 */
 export async function GET(request: NextRequest) {
@@ -75,6 +76,9 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/courses - コース新規登録（全データ一括） */
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const body = await request.json();
     const { name, pref, source_url, green_types, tees, sub_courses } = body;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireAuth, isAuthError } from "@/lib/api-auth";
 
 /** GET /api/courses/[id] - コース詳細取得 */
 export async function GET(
@@ -67,6 +68,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -154,9 +158,12 @@ export async function PUT(
 
 /** DELETE /api/courses/[id] - コース削除 */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
 

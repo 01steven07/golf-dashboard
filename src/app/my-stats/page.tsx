@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
+import { authFetch } from "@/lib/api-client";
 import { MemberStats, DetailedMemberStats, ClubType, Gender, PreferredTee } from "@/types/database";
 import { calculateMemberStats, calculateDetailedStats, DetailedRoundData } from "@/utils/ranking";
 import { calculateRadarData, calculateExtendedRadarData, calculateHoleAnalysis, calculateHoleScoreTrend, RadarChartData, HoleAnalysis, HoleScoreTrend } from "@/utils/stats";
@@ -80,7 +81,7 @@ function MyStatsContent() {
     setProfileSaveMessage(null);
 
     try {
-      const res = await fetch("/api/member/clubs", {
+      const res = await authFetch("/api/member/clubs", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
