@@ -14,6 +14,7 @@ import { StatGroupSection } from "@/components/stat-group-section";
 import { DistanceRateChart } from "@/components/distance-rate-chart";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { CourseAnalysisTab } from "@/components/course-analysis-tab";
+import { RoundHistoryTab } from "@/components/round-history/round-list";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Sparkles, Settings, Check, ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -350,9 +351,10 @@ function MyStatsContent() {
       </p>
 
       <Tabs defaultValue="overall">
-        <TabsList className="grid grid-cols-2 w-full">
+        <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="overall">総合分析</TabsTrigger>
-          <TabsTrigger value="course">コース詳細分析</TabsTrigger>
+          <TabsTrigger value="course">コース分析</TabsTrigger>
+          <TabsTrigger value="rounds">ラウンド履歴</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overall" className="space-y-6 mt-4">
@@ -629,6 +631,10 @@ function MyStatsContent() {
 
         <TabsContent value="course" className="mt-4">
           <CourseAnalysisTab memberId={member!.id} />
+        </TabsContent>
+
+        <TabsContent value="rounds" className="mt-4">
+          <RoundHistoryTab memberId={member!.id} />
         </TabsContent>
       </Tabs>
 
