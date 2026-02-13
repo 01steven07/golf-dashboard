@@ -15,6 +15,7 @@ import { OcrResult, OcrScoreData } from "@/types/ocr";
 import { Course, FairwayResult } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { getScoreSymbol, getFairwaySymbol } from "@/utils/golf-symbols";
+import { validateScores } from "@/utils/score-validation";
 
 type Step = "select" | "upload" | "processing" | "confirm";
 
@@ -263,6 +264,14 @@ function InputContent() {
     if (!member) return;
     setError("");
     setIsSaving(true);
+
+    // バリデーション
+    const validationErrors = validateScores(scores);
+    if (validationErrors.length > 0) {
+      setError(validationErrors.map((e) => e.message).join("\n"));
+      setIsSaving(false);
+      return;
+    }
 
     try {
       let courseId = selectedCourseId;
