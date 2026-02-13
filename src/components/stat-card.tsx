@@ -8,9 +8,12 @@ interface StatCardProps {
   value: string;
   description?: string;
   unavailable?: boolean;
+  clubAvg?: string;
+  rank?: number;
+  totalMembers?: number;
 }
 
-export function StatCard({ label, value, description, unavailable }: StatCardProps) {
+export function StatCard({ label, value, description, unavailable, clubAvg, rank, totalMembers }: StatCardProps) {
   const [showDescription, setShowDescription] = useState(false);
 
   return (
@@ -34,6 +37,12 @@ export function StatCard({ label, value, description, unavailable }: StatCardPro
       <p className="text-2xl font-bold mt-1">
         {unavailable ? "-" : value}
       </p>
+      {!unavailable && clubAvg && rank && totalMembers && (
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-muted-foreground">部平均 {clubAvg}</span>
+          <span className="text-xs font-medium">{rank}位/{totalMembers}人</span>
+        </div>
+      )}
       {showDescription && description && (
         <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
           {description}

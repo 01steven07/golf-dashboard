@@ -279,6 +279,7 @@ export type RankingCategory =
   | "par5_avg"
   | "bounce_back"
   | "bogey_avoidance"
+  | "double_bogey_avoidance"
   | "putts_per_gir"
   | "three_putt_avoidance"
   | "one_putt_rate"
@@ -288,7 +289,7 @@ export type RankingCategory =
   | "driving_distance";
 
 /** MemberStatsからカテゴリに対応する数値を取得 */
-function getStatNumericValue(
+export function getStatNumericValue(
   stat: MemberStats,
   category: RankingCategory
 ): number {
@@ -315,6 +316,8 @@ function getStatNumericValue(
       return stat.bounce_back_rate;
     case "bogey_avoidance":
       return stat.bogey_avoidance;
+    case "double_bogey_avoidance":
+      return stat.double_bogey_avoidance;
     case "putts_per_gir":
       return stat.putts_per_gir;
     case "three_putt_avoidance":

@@ -7,6 +7,9 @@ interface StatItem {
   value: string;
   description?: string;
   unavailable?: boolean;
+  clubAvg?: string;
+  rank?: number;
+  totalMembers?: number;
 }
 
 interface StatGroupSectionProps {
@@ -26,6 +29,9 @@ export function StatGroupSection({ title, stats }: StatGroupSectionProps) {
             value={stat.value}
             description={stat.description}
             unavailable={stat.unavailable}
+            clubAvg={stat.clubAvg}
+            rank={stat.rank}
+            totalMembers={stat.totalMembers}
           />
         ))}
       </div>
