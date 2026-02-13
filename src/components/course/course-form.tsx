@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,46 +46,114 @@ interface CourseFormProps {
   courseId?: string;
 }
 
+const DRAFT_KEY_PREFIX = "course-form-draft:";
+
+function getDraftKey(courseId?: string) {
+  return `${DRAFT_KEY_PREFIX}${courseId || "new"}`;
+}
+
+function loadDraft(courseId?: string): CourseFormData | null {
+  try {
+    const raw = localStorage.getItem(getDraftKey(courseId));
+    if (!raw) return null;
+    return JSON.parse(raw) as CourseFormData;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(courseId: string | undefined, data: CourseFormData) {
+  try {
+    localStorage.setItem(getDraftKey(courseId), JSON.stringify(data));
+  } catch {
+    // storage full — ignore
+  }
+}
+
+function clearDraft(courseId?: string) {
+  localStorage.removeItem(getDraftKey(courseId));
+}
+
+const DEFAULT_FORM_DATA: CourseFormData = {
+  name: "",
+  pref: "",
+  source_url: "",
+  green_types: [],
+  tees: [
+    { name: "バック", color: "Blue", sort_order: 0 },
+    { name: "レギュラー", color: "White", sort_order: 1 },
+  ],
+  sub_courses: [
+    {
+      name: "OUT",
+      hole_count: 9,
+      sort_order: 0,
+      holes: createDefaultHoles(9),
+    },
+    {
+      name: "IN",
+      hole_count: 9,
+      sort_order: 1,
+      holes: createDefaultHoles(9),
+    },
+  ],
+};
+
 export function CourseForm({ initialData, courseId }: CourseFormProps) {
   const router = useRouter();
   const isEdit = !!courseId;
 
-  const [formData, setFormData] = useState<CourseFormData>(
-    initialData ?? {
-      name: "",
-      pref: "",
-      source_url: "",
-      green_types: [],
-      tees: [
-        { name: "バック", color: "Blue", sort_order: 0 },
-        { name: "レギュラー", color: "White", sort_order: 1 },
-      ],
-      sub_courses: [
-        {
-          name: "OUT",
-          hole_count: 9,
-          sort_order: 0,
-          holes: createDefaultHoles(9),
-        },
-        {
-          name: "IN",
-          hole_count: 9,
-          sort_order: 1,
-          holes: createDefaultHoles(9),
-        },
-      ],
-    }
-  );
+  const [formData, setFormData] = useState<CourseFormData>(() => {
+    const draft = loadDraft(courseId);
+    if (draft) return draft;
+    return initialData ?? DEFAULT_FORM_DATA;
+  });
 
+  const [hasDraft, setHasDraft] = useState(() => !!loadDraft(courseId));
   const [isSaving, setIsSaving] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isDirty = useRef(false);
+
+  // 自動保存: formData 変更時に localStorage へ保存
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleFormDataChange = useCallback(
+    (data: CourseFormData) => {
+      setFormData(data);
+      isDirty.current = true;
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = setTimeout(() => saveDraft(courseId, data), 500);
+    },
+    [courseId]
+  );
+
+  // ページ離脱時の警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      clearTimeout(saveTimeout.current);
+    };
+  }, []);
+
+  const discardDraft = () => {
+    clearDraft(courseId);
+    setHasDraft(false);
+    const fresh = initialData ?? DEFAULT_FORM_DATA;
+    setFormData(fresh);
+    isDirty.current = false;
+  };
 
   const teeNames = formData.tees.map((t) => t.name);
 
   // --- ティー操作 ---
   const addTee = () => {
-    setFormData({
+    handleFormDataChange({
       ...formData,
       tees: [
         ...formData.tees,
@@ -97,11 +165,11 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
   const updateTee = (index: number, field: keyof TeeFormData, value: string | number) => {
     const updated = [...formData.tees];
     updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, tees: updated });
+    handleFormDataChange({ ...formData, tees: updated });
   };
 
   const removeTee = (index: number) => {
-    setFormData({
+    handleFormDataChange({
       ...formData,
       tees: formData.tees.filter((_, i) => i !== index),
     });
@@ -115,7 +183,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
       sort_order: formData.sub_courses.length,
       holes: createDefaultHoles(9),
     };
-    setFormData({
+    handleFormDataChange({
       ...formData,
       sub_courses: [...formData.sub_courses, newSc],
     });
@@ -150,11 +218,11 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
     } else {
       updated[index] = { ...updated[index], [field]: value };
     }
-    setFormData({ ...formData, sub_courses: updated });
+    handleFormDataChange({ ...formData, sub_courses: updated });
   };
 
   const removeSubCourse = (index: number) => {
-    setFormData({
+    handleFormDataChange({
       ...formData,
       sub_courses: formData.sub_courses.filter((_, i) => i !== index),
     });
@@ -163,19 +231,19 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
   const updateSubCourseHoles = (index: number, holes: HoleFormData[]) => {
     const updated = [...formData.sub_courses];
     updated[index] = { ...updated[index], holes };
-    setFormData({ ...formData, sub_courses: updated });
+    handleFormDataChange({ ...formData, sub_courses: updated });
   };
 
   // --- グリーン種類 ---
   const toggleGreenType = (type: string) => {
     const current = formData.green_types;
     if (current.includes(type)) {
-      setFormData({
+      handleFormDataChange({
         ...formData,
         green_types: current.filter((t) => t !== type),
       });
     } else {
-      setFormData({ ...formData, green_types: [...current, type] });
+      handleFormDataChange({ ...formData, green_types: [...current, type] });
     }
   };
 
@@ -201,7 +269,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
       const result = await res.json();
 
       // スクレイピング結果をフォームに反映
-      setFormData({
+      handleFormDataChange({
         ...formData,
         name: result.course_name || formData.name,
         pref: result.pref || formData.pref,
@@ -290,6 +358,8 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
         return;
       }
 
+      clearDraft(courseId);
+      isDirty.current = false;
       router.push("/courses");
     } catch {
       setError("保存に失敗しました");
@@ -300,6 +370,19 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
 
   return (
     <div className="space-y-6 pb-40 md:pb-24">
+      {hasDraft && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
+          <span>前回の入力内容を復元しました</span>
+          <button
+            type="button"
+            onClick={discardDraft}
+            className="text-blue-600 underline text-xs ml-2 whitespace-nowrap"
+          >
+            破棄する
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
@@ -319,7 +402,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             <Input
               value={formData.source_url}
               onChange={(e) =>
-                setFormData({ ...formData, source_url: e.target.value })
+                handleFormDataChange({ ...formData, source_url: e.target.value })
               }
               placeholder="ゴルフ場のコース紹介ページURL"
               className="flex-1"
@@ -354,7 +437,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             <Input
               value={formData.name}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                handleFormDataChange({ ...formData, name: e.target.value })
               }
               placeholder="○○ゴルフクラブ"
             />
@@ -364,7 +447,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             <select
               value={formData.pref}
               onChange={(e) =>
-                setFormData({ ...formData, pref: e.target.value })
+                handleFormDataChange({ ...formData, pref: e.target.value })
               }
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -506,7 +589,11 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/courses")}
+            onClick={() => {
+              clearDraft(courseId);
+              isDirty.current = false;
+              router.push("/courses");
+            }}
             className="flex-1"
           >
             キャンセル
