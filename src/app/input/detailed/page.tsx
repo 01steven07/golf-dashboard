@@ -10,6 +10,7 @@ import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
 import { aggregateHoleData } from "@/utils/shot-aggregation";
+import { validateScores } from "@/utils/score-validation";
 
 type InputStep = "settings" | "scoring";
 
@@ -352,24 +353,34 @@ function DetailedInputContent() {
 
       if (roundError) throw roundError;
 
-      // 各ホールを集約して scores テーブルに一括 insert
-      const scoreRecords = roundData.holes.map((hole) => {
-        const agg = aggregateHoleData(hole);
-        return {
-          round_id: round.id,
-          hole_number: agg.hole_number,
-          par: agg.par,
-          distance: agg.distance,
-          score: agg.score,
-          putts: agg.putts,
-          fairway_result: agg.fairway_result,
-          ob: agg.ob,
-          bunker: agg.bunker,
-          penalty: agg.penalty,
-          pin_position: agg.pin_position,
-          shots_detail: agg.shots_detail,
-        };
-      });
+      // 各ホールを集約
+      const aggregated = roundData.holes.map((hole) => aggregateHoleData(hole));
+
+      // スコアバリデーション（DB挿入前に実行）
+      const validationErrors = validateScores(aggregated);
+      if (validationErrors.length > 0) {
+        // 作成済みのroundを削除してロールバック
+        await supabase.from("rounds").delete().eq("id", round.id);
+        setError(validationErrors.map((e) => e.message).join("\n"));
+        setIsSaving(false);
+        return;
+      }
+
+      // scores テーブルに一括 insert
+      const scoreRecords = aggregated.map((agg) => ({
+        round_id: round.id,
+        hole_number: agg.hole_number,
+        par: agg.par,
+        distance: agg.distance,
+        score: agg.score,
+        putts: agg.putts,
+        fairway_result: agg.fairway_result,
+        ob: agg.ob,
+        bunker: agg.bunker,
+        penalty: agg.penalty,
+        pin_position: agg.pin_position,
+        shots_detail: agg.shots_detail,
+      }));
 
       const { error: scoresError } = await supabase
         .from("scores")

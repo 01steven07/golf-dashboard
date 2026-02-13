@@ -10,48 +10,40 @@ export async function GET(request: NextRequest) {
     const detailed = searchParams.get("detailed") === "true";
 
     if (detailed) {
-      // 詳細込みで取得
+      // ネストselectで1クエリで全データ取得
       const { data: courses, error } = await supabase
         .from("courses")
-        .select("*")
+        .select(`
+          *,
+          course_tees(*),
+          course_sub_courses(*, course_holes(*))
+        `)
         .order("name");
 
       if (error) throw error;
 
-      const result: CourseWithDetails[] = [];
-      for (const course of courses || []) {
-        const { data: tees } = await supabase
-          .from("course_tees")
-          .select("*")
-          .eq("course_id", course.id)
-          .order("sort_order");
-
-        const { data: subCourses } = await supabase
-          .from("course_sub_courses")
-          .select("*")
-          .eq("course_id", course.id)
-          .order("sort_order");
-
-        const subCoursesWithHoles = [];
-        for (const sc of subCourses || []) {
-          const { data: holes } = await supabase
-            .from("course_holes")
-            .select("*")
-            .eq("sub_course_id", sc.id)
-            .order("hole_number");
-
-          subCoursesWithHoles.push({
-            ...sc,
-            holes: holes || [],
+      // レスポンスのキー名を変換 + ソート
+      const result: CourseWithDetails[] = (courses || []).map((course) => {
+        const tees = (course.course_tees ?? [])
+          .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
+        const sub_courses = (course.course_sub_courses ?? [])
+          .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)
+          .map((sc: { course_holes?: { hole_number: number }[] }) => {
+            const { course_holes, ...rest } = sc;
+            return {
+              ...rest,
+              holes: (course_holes ?? [])
+                .sort((a: { hole_number: number }, b: { hole_number: number }) => a.hole_number - b.hole_number),
+            };
           });
-        }
 
-        result.push({
-          ...course,
-          tees: tees || [],
-          sub_courses: subCoursesWithHoles,
-        });
-      }
+        const { course_tees: _tees, course_sub_courses: _sc, ...courseBase } = course;
+        return {
+          ...courseBase,
+          tees,
+          sub_courses,
+        } as CourseWithDetails;
+      });
 
       return NextResponse.json(result);
     }

@@ -12,7 +12,11 @@ export async function GET(
 
     const { data: course, error } = await supabase
       .from("courses")
-      .select("*")
+      .select(`
+        *,
+        course_tees(*),
+        course_sub_courses(*, course_holes(*))
+      `)
       .eq("id", id)
       .single();
 
@@ -23,36 +27,26 @@ export async function GET(
       );
     }
 
-    const { data: tees } = await supabase
-      .from("course_tees")
-      .select("*")
-      .eq("course_id", id)
-      .order("sort_order");
-
-    const { data: subCourses } = await supabase
-      .from("course_sub_courses")
-      .select("*")
-      .eq("course_id", id)
-      .order("sort_order");
-
-    const subCoursesWithHoles = [];
-    for (const sc of subCourses || []) {
-      const { data: holes } = await supabase
-        .from("course_holes")
-        .select("*")
-        .eq("sub_course_id", sc.id)
-        .order("hole_number");
-
-      subCoursesWithHoles.push({
-        ...sc,
-        holes: holes || [],
+    // レスポンスのキー名を変換 + ソート
+    const tees = (course.course_tees ?? [])
+      .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
+    const sub_courses = (course.course_sub_courses ?? [])
+      .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)
+      .map((sc: { course_holes?: { hole_number: number }[] }) => {
+        const { course_holes, ...rest } = sc;
+        return {
+          ...rest,
+          holes: (course_holes ?? [])
+            .sort((a: { hole_number: number }, b: { hole_number: number }) => a.hole_number - b.hole_number),
+        };
       });
-    }
+
+    const { course_tees: _tees, course_sub_courses: _sc, ...courseBase } = course;
 
     return NextResponse.json({
-      ...course,
-      tees: tees || [],
-      sub_courses: subCoursesWithHoles,
+      ...courseBase,
+      tees,
+      sub_courses,
     });
   } catch (error) {
     console.error("Course GET error:", error);
