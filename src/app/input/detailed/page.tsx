@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { DetailedRoundData, HoleData, createDefaultHole } from "@/types/shot";
 import { CourseWithDetails, SubCourseWithHoles } from "@/types/database";
@@ -106,6 +106,9 @@ function DetailedInputContent() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ courseName: string; date: string } | null>(null);
 
+  const isDirty = useRef(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   // 起動時にドラフトを確認
   useEffect(() => {
     const draft = loadDraft();
@@ -115,6 +118,35 @@ function DetailedInputContent() {
         date: draft.roundData.date,
       });
     }
+  }, []);
+
+  // 自動保存: step/currentHole/roundData 変更時に localStorage へ保存
+  useEffect(() => {
+    if (!isDirty.current) return;
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => {
+      saveDraft({ step, currentHole, roundData });
+    }, 500);
+  }, [step, currentHole, roundData]);
+
+  // ページ離脱時の警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      clearTimeout(saveTimeout.current);
+    };
+  }, []);
+
+  // setRoundData のラッパー（isDirty フラグを立てる）
+  const updateRoundData: typeof setRoundData = useCallback((action) => {
+    isDirty.current = true;
+    setRoundData(action);
   }, []);
 
   // コース選択時のコールバック
@@ -131,7 +163,7 @@ function DetailedInputContent() {
         teeName
       );
 
-      setRoundData((prev) => ({
+      updateRoundData((prev) => ({
         ...prev,
         courseId: course.id,
         courseName: course.name,
@@ -142,7 +174,7 @@ function DetailedInputContent() {
       }));
       setCurrentHole(1);
     } else {
-      setRoundData((prev) => ({
+      updateRoundData((prev) => ({
         ...prev,
         courseId: null,
         courseName: "",
@@ -152,20 +184,20 @@ function DetailedInputContent() {
       }));
       setCurrentHole(1);
     }
-  }, []);
+  }, [updateRoundData]);
 
   const handleManualInput = useCallback((name: string) => {
-    setRoundData((prev) => ({
+    updateRoundData((prev) => ({
       ...prev,
       courseId: null,
       courseName: name,
     }));
-  }, []);
+  }, [updateRoundData]);
 
   const handleSubCourseAdd = useCallback((subCourseId: string) => {
     if (!selectedCourse) return;
 
-    setRoundData((prev) => {
+    updateRoundData((prev) => {
       const newIds = [...prev.subCourseIds, subCourseId];
 
       const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
@@ -184,12 +216,12 @@ function DetailedInputContent() {
       };
     });
     setCurrentHole(1);
-  }, [selectedCourse]);
+  }, [selectedCourse, updateRoundData]);
 
   const handleSubCourseRemove = useCallback((index: number) => {
     if (!selectedCourse) return;
 
-    setRoundData((prev) => {
+    updateRoundData((prev) => {
       const newIds = prev.subCourseIds.filter((_, i) => i !== index);
 
       const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
@@ -208,12 +240,12 @@ function DetailedInputContent() {
       };
     });
     setCurrentHole(1);
-  }, [selectedCourse]);
+  }, [selectedCourse, updateRoundData]);
 
   const handleSubCourseReorder = useCallback((reorderedIds: string[]) => {
     if (!selectedCourse) return;
 
-    setRoundData((prev) => {
+    updateRoundData((prev) => {
       const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
       const teeName = selectedTee?.name ?? null;
 
@@ -230,7 +262,7 @@ function DetailedInputContent() {
       };
     });
     setCurrentHole(1);
-  }, [selectedCourse]);
+  }, [selectedCourse, updateRoundData]);
 
   const handleTeeSelect = useCallback((teeId: string) => {
     if (!selectedCourse) return;
@@ -238,7 +270,7 @@ function DetailedInputContent() {
     const tee = selectedCourse.tees.find((t) => t.id === teeId);
     if (!tee) return;
 
-    setRoundData((prev) => {
+    updateRoundData((prev) => {
       const newHoles = createHolesFromCourse(
         selectedCourse.sub_courses,
         prev.subCourseIds,
@@ -253,24 +285,24 @@ function DetailedInputContent() {
       };
     });
     setCurrentHole(1);
-  }, [selectedCourse]);
+  }, [selectedCourse, updateRoundData]);
 
   const handleDateChange = useCallback((date: string) => {
-    setRoundData((prev) => ({ ...prev, date }));
-  }, []);
+    updateRoundData((prev) => ({ ...prev, date }));
+  }, [updateRoundData]);
 
   const handleTeeColorChange = useCallback((teeColor: string) => {
-    setRoundData((prev) => ({ ...prev, teeColor }));
-  }, []);
+    updateRoundData((prev) => ({ ...prev, teeColor }));
+  }, [updateRoundData]);
 
   const handleUpdateHole = useCallback((updatedHole: HoleData) => {
-    setRoundData((prev) => ({
+    updateRoundData((prev) => ({
       ...prev,
       holes: prev.holes.map((h) =>
         h.holeNumber === updatedHole.holeNumber ? updatedHole : h
       ),
     }));
-  }, []);
+  }, [updateRoundData]);
 
   const handleSave = async () => {
     if (!member) return;
