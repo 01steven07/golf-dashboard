@@ -28,7 +28,7 @@ export function RoundSummaryStats({ summary }: RoundSummaryStatsProps) {
       value: `${summary.fairwayKeepRate.toFixed(0)}%`,
     },
     {
-      label: "GIR",
+      label: "パーオン",
       value: `${summary.girRate.toFixed(0)}%`,
     },
     {
