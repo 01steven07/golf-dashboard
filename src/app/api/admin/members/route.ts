@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireAdmin, isAuthError } from "@/lib/api-auth";
 
-// GET: 全部員一覧を返す
-export async function GET() {
+// GET: 全部員一覧を返す（管理者のみ）
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { data: members, error } = await supabase
       .from("members")
@@ -28,8 +32,11 @@ export async function GET() {
   }
 }
 
-// DELETE: 部員を削除
+// DELETE: 部員を削除（管理者のみ）
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { memberId } = await request.json();
 

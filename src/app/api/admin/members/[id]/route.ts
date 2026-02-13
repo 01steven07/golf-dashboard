@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireAdmin, isAuthError } from "@/lib/api-auth";
 
-// GET: 特定部員の詳細情報を返す
+// GET: 特定部員の詳細情報を返す（管理者のみ）
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
 
@@ -32,11 +36,14 @@ export async function GET(
   }
 }
 
-// PUT: 部員情報の更新
+// PUT: 部員情報の更新（管理者のみ）
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
     const body = await request.json();

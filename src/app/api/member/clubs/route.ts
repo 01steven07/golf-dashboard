@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireAuth, isAuthError } from "@/lib/api-auth";
 
 // GET: Fetch member's clubs
 export async function GET(request: NextRequest) {
@@ -43,6 +44,9 @@ export async function GET(request: NextRequest) {
 
 // PUT: Update member's profile (clubs, gender, preferred_tee)
 export async function PUT(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { memberId, clubs, gender, preferred_tee } = await request.json();
 
@@ -50,6 +54,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         { error: "memberId is required" },
         { status: 400 }
+      );
+    }
+
+    // 自分のプロフィールのみ更新可能
+    if (memberId !== auth.id) {
+      return NextResponse.json(
+        { error: "他のユーザーのプロフィールは更新できません" },
+        { status: 403 }
       );
     }
 
