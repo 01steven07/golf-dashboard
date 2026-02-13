@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,40 @@ import { cn } from "@/lib/utils";
 import { getScoreSymbol, getFairwaySymbol } from "@/utils/golf-symbols";
 
 type Step = "select" | "upload" | "processing" | "confirm";
+
+const OCR_DRAFT_KEY = "ocr-input-draft";
+
+interface OcrDraftData {
+  selectedCourseId: string;
+  newCourseName: string;
+  roundDate: string;
+  teeColor: string;
+  outCourseName: string;
+  inCourseName: string;
+  scores: OcrScoreData[];
+}
+
+function saveOcrDraft(data: OcrDraftData) {
+  try {
+    localStorage.setItem(OCR_DRAFT_KEY, JSON.stringify(data));
+  } catch {
+    // ignore
+  }
+}
+
+function loadOcrDraft(): OcrDraftData | null {
+  try {
+    const raw = localStorage.getItem(OCR_DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as OcrDraftData;
+  } catch {
+    return null;
+  }
+}
+
+function clearOcrDraft() {
+  localStorage.removeItem(OCR_DRAFT_KEY);
+}
 
 export default function InputPage() {
   return (
@@ -45,7 +79,76 @@ function InputContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [courseSearchQuery, setCourseSearchQuery] = useState<string>("");
   const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
   const courseDropdownRef = useRef<HTMLDivElement>(null);
+  const isDirty = useRef(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // 起動時にドラフトを確認・復元
+  useEffect(() => {
+    const draft = loadOcrDraft();
+    if (draft && draft.scores.length > 0) {
+      setSelectedCourseId(draft.selectedCourseId);
+      setNewCourseName(draft.newCourseName);
+      setRoundDate(draft.roundDate);
+      setTeeColor(draft.teeColor);
+      setOutCourseName(draft.outCourseName);
+      setInCourseName(draft.inCourseName);
+      setScores(draft.scores);
+      setStep("confirm");
+      setHasDraft(true);
+
+      // コース一覧も取得
+      supabase.from("courses").select("*").order("name").then(({ data }) => {
+        setCourses(data ?? []);
+      });
+    }
+  }, []);
+
+  // 自動保存: confirm ステップでデータ変更時
+  useEffect(() => {
+    if (step !== "confirm" || !isDirty.current) return;
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => {
+      saveOcrDraft({
+        selectedCourseId,
+        newCourseName,
+        roundDate,
+        teeColor,
+        outCourseName,
+        inCourseName,
+        scores,
+      });
+    }, 500);
+  }, [step, selectedCourseId, newCourseName, roundDate, teeColor, outCourseName, inCourseName, scores]);
+
+  // ページ離脱時の警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      clearTimeout(saveTimeout.current);
+    };
+  }, []);
+
+  const discardOcrDraft = () => {
+    clearOcrDraft();
+    setHasDraft(false);
+    setStep("select");
+    setScores([]);
+    setSelectedCourseId("");
+    setNewCourseName("");
+    setRoundDate("");
+    setTeeColor("White");
+    setOutCourseName("");
+    setInCourseName("");
+    isDirty.current = false;
+  };
 
   // 外側クリックでドロップダウンを閉じる
   useEffect(() => {
@@ -104,6 +207,7 @@ function InputContent() {
         setNewCourseName(result.course_name);
       }
 
+      isDirty.current = true;
       setStep("confirm");
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
@@ -132,7 +236,22 @@ function InputContent() {
     [handleFileSelect]
   );
 
+  // isDirty を立てつつ state を更新するヘルパー
+  function dirtySet<T>(setter: (value: SetStateAction<T>) => void) {
+    return (value: SetStateAction<T>) => {
+      isDirty.current = true;
+      setter(value);
+    };
+  }
+  const setRoundDateDirty = dirtySet(setRoundDate);
+  const setTeeColorDirty = dirtySet(setTeeColor);
+  const setOutCourseNameDirty = dirtySet(setOutCourseName);
+  const setInCourseNameDirty = dirtySet(setInCourseName);
+  const setNewCourseNameDirty = dirtySet(setNewCourseName);
+  const setSelectedCourseIdDirty = dirtySet(setSelectedCourseId);
+
   const updateScore = (index: number, field: keyof OcrScoreData, value: number | FairwayResult | null) => {
+    isDirty.current = true;
     setScores((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -217,6 +336,8 @@ function InputContent() {
 
       if (scoresError) throw scoresError;
 
+      clearOcrDraft();
+      isDirty.current = false;
       router.push("/my-stats");
     } catch (err) {
       console.error(err);
@@ -350,8 +471,21 @@ function InputContent() {
         </Card>
       )}
 
-      {step === "confirm" && ocrResult && (
+      {step === "confirm" && (scores.length > 0) && (
         <>
+          {hasDraft && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
+              <span>前回の入力内容を復元しました</span>
+              <button
+                type="button"
+                onClick={discardOcrDraft}
+                className="text-blue-600 underline text-xs ml-2 whitespace-nowrap"
+              >
+                破棄する
+              </button>
+            </div>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>ラウンド情報</CardTitle>
@@ -430,8 +564,8 @@ function InputContent() {
                                     key={course.id}
                                     type="button"
                                     onClick={() => {
-                                      setSelectedCourseId(course.id);
-                                      setNewCourseName("");
+                                      setSelectedCourseIdDirty(course.id);
+                                      setNewCourseNameDirty("");
                                       setCourseSearchQuery("");
                                       setIsCourseDropdownOpen(false);
                                     }}
@@ -457,7 +591,7 @@ function InputContent() {
                     <Input
                       placeholder="新規コース名を入力"
                       value={newCourseName}
-                      onChange={(e) => setNewCourseName(e.target.value)}
+                      onChange={(e) => setNewCourseNameDirty(e.target.value)}
                     />
                   )}
                 </div>
@@ -466,14 +600,14 @@ function InputContent() {
                   <Input
                     type="date"
                     value={roundDate}
-                    onChange={(e) => setRoundDate(e.target.value)}
+                    onChange={(e) => setRoundDateDirty(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>ティー</Label>
                   <select
                     value={teeColor}
-                    onChange={(e) => setTeeColor(e.target.value)}
+                    onChange={(e) => setTeeColorDirty(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     <option value="Black">Black</option>
@@ -490,14 +624,14 @@ function InputContent() {
                     <Input
                       placeholder="前半 (例: OUT, 東)"
                       value={outCourseName}
-                      onChange={(e) => setOutCourseName(e.target.value)}
+                      onChange={(e) => setOutCourseNameDirty(e.target.value)}
                       className="flex-1"
                     />
                     <span className="flex items-center text-muted-foreground">/</span>
                     <Input
                       placeholder="後半 (例: IN, 西)"
                       value={inCourseName}
-                      onChange={(e) => setInCourseName(e.target.value)}
+                      onChange={(e) => setInCourseNameDirty(e.target.value)}
                       className="flex-1"
                     />
                   </div>
@@ -683,6 +817,8 @@ function InputContent() {
               variant="outline"
               className="flex-1"
               onClick={() => {
+                clearOcrDraft();
+                isDirty.current = false;
                 setStep("select");
                 setImageFile(null);
                 setImagePreview(null);
