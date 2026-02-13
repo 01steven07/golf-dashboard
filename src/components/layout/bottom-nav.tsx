@@ -27,7 +27,7 @@ export function BottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50">
-      <div className="flex items-center justify-around h-16">
+      <div className="flex items-center h-16">
         {filteredNavItems.map((item) => {
           const isActive =
             item.href === "/" || item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -36,7 +36,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-1 text-xs font-medium transition-colors",
+                "flex-1 flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
