@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -11,6 +11,9 @@ import { MemberStats, DetailedMemberStats, ClubType, Gender, PreferredTee } from
 import { calculateMemberStats, calculateDetailedStats, DetailedRoundData } from "@/utils/ranking";
 import { calculateRadarData, calculateExtendedRadarData, calculateHoleAnalysis, calculateHoleScoreTrend, RadarChartData, HoleAnalysis, HoleScoreTrend } from "@/utils/stats";
 import { StatGroupSection } from "@/components/stat-group-section";
+import { StatCard } from "@/components/stat-card";
+import { getClubComparison, ClubComparison } from "@/utils/club-stats";
+import { RankingCategory } from "@/utils/ranking";
 import { DistanceRateChart } from "@/components/distance-rate-chart";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { CourseAnalysisTab } from "@/components/course-analysis-tab";
@@ -226,6 +229,28 @@ function MyStatsContent() {
     } finally {
       setIsLoadingAdvice(false);
     }
+  };
+
+  // 全スタッツの部内比較データを一括計算
+  const clubComparisons = useMemo(() => {
+    if (!member || allStats.length === 0) return {} as Record<RankingCategory, ClubComparison | null>;
+    const categories: RankingCategory[] = [
+      "gross", "putt", "gir", "keep", "birdie", "scramble",
+      "par3_avg", "par4_avg", "par5_avg", "bounce_back", "bogey_avoidance", "double_bogey_avoidance",
+      "putts_per_gir", "three_putt_avoidance", "one_putt_rate",
+      "gir_from_fairway", "gir_from_rough", "sand_save", "driving_distance",
+    ];
+    const result: Partial<Record<RankingCategory, ClubComparison | null>> = {};
+    for (const cat of categories) {
+      result[cat] = getClubComparison(allStats, member.id, cat);
+    }
+    return result as Record<RankingCategory, ClubComparison | null>;
+  }, [allStats, member]);
+
+  /** ClubComparison をスプレッド用のオブジェクトに変換 */
+  const comp = (cat: RankingCategory) => {
+    const c = clubComparisons[cat];
+    return c ? { clubAvg: c.clubAvg, rank: c.rank, totalMembers: c.totalMembers } : {};
   };
 
   const barColors = ["#22c55e", "#3b82f6", "#f59e0b"];
@@ -536,30 +561,12 @@ function MyStatsContent() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">平均スコア</p>
-                  <p className="text-2xl font-bold">{myStats.avg_score.toFixed(1)}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">平均パット</p>
-                  <p className="text-2xl font-bold">{myStats.avg_putts.toFixed(1)}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">パーオン率</p>
-                  <p className="text-2xl font-bold">{myStats.gir_rate.toFixed(1)}%</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">FWキープ率</p>
-                  <p className="text-2xl font-bold">{myStats.fairway_keep_rate.toFixed(1)}%</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">平均バーディー</p>
-                  <p className="text-2xl font-bold">{myStats.avg_birdies.toFixed(2)}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">リカバリー率</p>
-                  <p className="text-2xl font-bold">{myStats.scramble_rate.toFixed(1)}%</p>
-                </div>
+                <StatCard label="平均スコア" value={myStats.avg_score.toFixed(1)} description="平均スコア" {...comp("gross")} />
+                <StatCard label="平均パット" value={myStats.avg_putts.toFixed(1)} description="平均パット数" {...comp("putt")} />
+                <StatCard label="パーオン率" value={`${myStats.gir_rate.toFixed(1)}%`} description="パーオン率" {...comp("gir")} />
+                <StatCard label="FWキープ率" value={`${myStats.fairway_keep_rate.toFixed(1)}%`} description="フェアウェイキープ率" {...comp("keep")} />
+                <StatCard label="平均バーディー" value={myStats.avg_birdies.toFixed(2)} description="平均バーディー数" {...comp("birdie")} />
+                <StatCard label="リカバリー率" value={`${myStats.scramble_rate.toFixed(1)}%`} description="リカバリー率" {...comp("scramble")} />
               </div>
             </CardContent>
           </Card>
@@ -572,40 +579,42 @@ function MyStatsContent() {
               <StatGroupSection
                 title="スコアリング"
                 stats={[
-                  { label: "Par3平均", value: myStats.par3_avg.toFixed(1), description: "Par3ホールの平均スコア" },
-                  { label: "Par4平均", value: myStats.par4_avg.toFixed(1), description: "Par4ホールの平均スコア" },
-                  { label: "Par5平均", value: myStats.par5_avg.toFixed(1), description: "Par5ホールの平均スコア" },
-                  { label: "バウンスバック率", value: `${myStats.bounce_back_rate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率" },
-                  { label: "ボギー回避率", value: `${myStats.bogey_avoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合" },
-                  { label: "ダボ回避率", value: `${myStats.double_bogey_avoidance.toFixed(1)}%`, description: "ダブルボギー以下を叩かなかった割合" },
+                  { label: "Par3平均", value: myStats.par3_avg.toFixed(1), description: "Par3ホールの平均スコア", ...comp("par3_avg") },
+                  { label: "Par4平均", value: myStats.par4_avg.toFixed(1), description: "Par4ホールの平均スコア", ...comp("par4_avg") },
+                  { label: "Par5平均", value: myStats.par5_avg.toFixed(1), description: "Par5ホールの平均スコア", ...comp("par5_avg") },
+                  { label: "バウンスバック率", value: `${myStats.bounce_back_rate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率", ...comp("bounce_back") },
+                  { label: "ボギー回避率", value: `${myStats.bogey_avoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合", ...comp("bogey_avoidance") },
+                  { label: "ダボ回避率", value: `${myStats.double_bogey_avoidance.toFixed(1)}%`, description: "ダブルボギー以下を叩かなかった割合", ...comp("double_bogey_avoidance") },
                 ]}
               />
 
               <StatGroupSection
                 title="パッティング"
                 stats={[
-                  { label: "パーオン時パット", value: myStats.putts_per_gir.toFixed(1), description: "パーオンホールでの平均パット数" },
-                  { label: "3パット回避率", value: `${myStats.three_putt_avoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合" },
-                  { label: "1パット率", value: `${myStats.one_putt_rate.toFixed(1)}%`, description: "1パットで沈めた割合" },
+                  { label: "パーオン時パット", value: myStats.putts_per_gir.toFixed(1), description: "パーオンホールでの平均パット数", ...comp("putts_per_gir") },
+                  { label: "3パット回避率", value: `${myStats.three_putt_avoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合", ...comp("three_putt_avoidance") },
+                  { label: "1パット率", value: `${myStats.one_putt_rate.toFixed(1)}%`, description: "1パットで沈めた割合", ...comp("one_putt_rate") },
                 ]}
               />
 
               <StatGroupSection
                 title="ショット"
                 stats={[
-                  { label: "パーオン率(FW)", value: `${myStats.gir_from_fairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率" },
-                  { label: "パーオン率(ラフ)", value: `${myStats.gir_from_rough.toFixed(1)}%`, description: "ラフからのパーオン率" },
+                  { label: "パーオン率(FW)", value: `${myStats.gir_from_fairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率", ...comp("gir_from_fairway") },
+                  { label: "パーオン率(ラフ)", value: `${myStats.gir_from_rough.toFixed(1)}%`, description: "ラフからのパーオン率", ...comp("gir_from_rough") },
                   {
                     label: "サンドセーブ率",
                     value: detailedStats?.sand_save_rate != null ? `${detailedStats.sand_save_rate.toFixed(1)}%` : "-",
                     description: "グリーン周りバンカーからパー以上の率",
                     unavailable: detailedStats?.sand_save_rate == null,
+                    ...comp("sand_save"),
                   },
                   {
                     label: "平均飛距離",
                     value: detailedStats?.avg_driving_distance != null ? `${detailedStats.avg_driving_distance.toFixed(0)}yd` : "-",
                     description: "Par4でのティーショット推定飛距離",
                     unavailable: detailedStats?.avg_driving_distance == null,
+                    ...comp("driving_distance"),
                   },
                 ]}
               />

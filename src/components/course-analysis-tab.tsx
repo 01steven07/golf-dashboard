@@ -22,6 +22,9 @@ import {
   calculateCoursePuttingStats,
   calculateCourseShotStats,
   CourseBasicStats,
+  CourseScoringStats,
+  CoursePuttingStats,
+  CourseShotStats,
 } from "@/utils/course-stats";
 import { StatGroupSection } from "@/components/stat-group-section";
 import {
@@ -61,6 +64,11 @@ interface RoundWithScores {
   scores: ScoreRow[];
 }
 
+interface TeamRound {
+  member_id: string;
+  scores: ScoreRow[];
+}
+
 interface CourseAnalysisTabProps {
   memberId: string;
 }
@@ -96,7 +104,7 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [myRounds, setMyRounds] = useState<RoundWithScores[]>([]);
-  const [teamRounds, setTeamRounds] = useState<{ scores: ScoreRow[] }[]>([]);
+  const [teamRounds, setTeamRounds] = useState<TeamRound[]>([]);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -170,6 +178,7 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
       } else {
         setTeamRounds(
           (teamResult.data ?? []).map((r) => ({
+            member_id: r.member_id,
             scores: (r.scores as unknown as ScoreRow[]) ?? [],
           }))
         );
@@ -215,6 +224,45 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
     () => calculateCourseShotStats(myRounds),
     [myRounds]
   );
+
+  // Per-member course stats for club comparison
+  const memberCourseStats = useMemo(() => {
+    if (teamRounds.length === 0) return [];
+    const grouped = new Map<string, TeamRound[]>();
+    for (const r of teamRounds) {
+      const existing = grouped.get(r.member_id);
+      if (existing) existing.push(r);
+      else grouped.set(r.member_id, [r]);
+    }
+    return Array.from(grouped.entries()).map(([mid, rounds]) => ({
+      member_id: mid,
+      scoring: calculateCourseScoringStats(rounds),
+      putting: calculateCoursePuttingStats(rounds),
+      shot: calculateCourseShotStats(rounds),
+    }));
+  }, [teamRounds]);
+
+  /** コーススタッツの部内比較を計算するヘルパー */
+  const courseComp = (
+    accessor: (m: { scoring: CourseScoringStats; putting: CoursePuttingStats; shot: CourseShotStats }) => number,
+    lowerIsBetter: boolean,
+    format: "score" | "percent",
+  ) => {
+    if (memberCourseStats.length === 0) return {};
+    const values = memberCourseStats.map((m) => accessor(m));
+    const avg = values.reduce((s, v) => s + v, 0) / values.length;
+    const clubAvg = format === "percent" ? `${avg.toFixed(1)}%` : avg.toFixed(1);
+
+    const sorted = [...memberCourseStats].sort((a, b) => {
+      const aVal = accessor(a);
+      const bVal = accessor(b);
+      return lowerIsBetter ? aVal - bVal : bVal - aVal;
+    });
+    const rank = sorted.findIndex((m) => m.member_id === memberId) + 1;
+    if (rank === 0) return {};
+
+    return { clubAvg, rank, totalMembers: sorted.length };
+  };
 
   // Hole-specific calculations
   const holeTendency = useMemo(
@@ -456,28 +504,28 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
               <StatGroupSection
                 title="スコアリング"
                 stats={[
-                  { label: "Par3平均", value: courseScoringStats.par3Avg.toFixed(1), description: "Par3ホールの平均スコア" },
-                  { label: "Par4平均", value: courseScoringStats.par4Avg.toFixed(1), description: "Par4ホールの平均スコア" },
-                  { label: "Par5平均", value: courseScoringStats.par5Avg.toFixed(1), description: "Par5ホールの平均スコア" },
-                  { label: "バウンスバック率", value: `${courseScoringStats.bounceBackRate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率" },
-                  { label: "ボギー回避率", value: `${courseScoringStats.bogeyAvoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合" },
+                  { label: "Par3平均", value: courseScoringStats.par3Avg.toFixed(1), description: "Par3ホールの平均スコア", ...courseComp((m) => m.scoring.par3Avg, true, "score") },
+                  { label: "Par4平均", value: courseScoringStats.par4Avg.toFixed(1), description: "Par4ホールの平均スコア", ...courseComp((m) => m.scoring.par4Avg, true, "score") },
+                  { label: "Par5平均", value: courseScoringStats.par5Avg.toFixed(1), description: "Par5ホールの平均スコア", ...courseComp((m) => m.scoring.par5Avg, true, "score") },
+                  { label: "バウンスバック率", value: `${courseScoringStats.bounceBackRate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率", ...courseComp((m) => m.scoring.bounceBackRate, false, "percent") },
+                  { label: "ボギー回避率", value: `${courseScoringStats.bogeyAvoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合", ...courseComp((m) => m.scoring.bogeyAvoidance, false, "percent") },
                 ]}
               />
 
               <StatGroupSection
                 title="パッティング"
                 stats={[
-                  { label: "パーオン時パット", value: coursePuttingStats.puttsPerGir.toFixed(1), description: "パーオンホールでの平均パット数" },
-                  { label: "3パット回避率", value: `${coursePuttingStats.threePuttAvoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合" },
-                  { label: "1パット率", value: `${coursePuttingStats.onePuttRate.toFixed(1)}%`, description: "1パットで沈めた割合" },
+                  { label: "パーオン時パット", value: coursePuttingStats.puttsPerGir.toFixed(1), description: "パーオンホールでの平均パット数", ...courseComp((m) => m.putting.puttsPerGir, true, "score") },
+                  { label: "3パット回避率", value: `${coursePuttingStats.threePuttAvoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合", ...courseComp((m) => m.putting.threePuttAvoidance, false, "percent") },
+                  { label: "1パット率", value: `${coursePuttingStats.onePuttRate.toFixed(1)}%`, description: "1パットで沈めた割合", ...courseComp((m) => m.putting.onePuttRate, false, "percent") },
                 ]}
               />
 
               <StatGroupSection
                 title="ショット"
                 stats={[
-                  { label: "パーオン率(FW)", value: `${courseShotStats.girFromFairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率" },
-                  { label: "パーオン率(ラフ)", value: `${courseShotStats.girFromRough.toFixed(1)}%`, description: "ラフからのパーオン率" },
+                  { label: "パーオン率(FW)", value: `${courseShotStats.girFromFairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率", ...courseComp((m) => m.shot.girFromFairway, false, "percent") },
+                  { label: "パーオン率(ラフ)", value: `${courseShotStats.girFromRough.toFixed(1)}%`, description: "ラフからのパーオン率", ...courseComp((m) => m.shot.girFromRough, false, "percent") },
                 ]}
               />
             </CardContent>
