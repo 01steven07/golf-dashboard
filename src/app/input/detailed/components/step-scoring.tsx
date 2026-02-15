@@ -13,6 +13,7 @@ import {
   createDefaultPutt,
 } from "@/types/shot";
 import { CourseWithDetails } from "@/types/database";
+import { getHoleScore } from "@/utils/shot-aggregation";
 import { TeeShotInput } from "@/components/shot-input/tee-shot-input";
 import { ApproachShotInput } from "@/components/shot-input/approach-shot-input";
 import { PuttInput } from "@/components/shot-input/putt-input";
@@ -21,9 +22,7 @@ import { PinPositionSelector } from "@/components/pin-position/pin-position-sele
 import { ScoreSummaryBar } from "./score-summary-bar";
 import { HoleNavigation } from "./hole-navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,6 +36,8 @@ import {
   Settings,
   Pause,
   X,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 function getScoreDiffText(score: number, par: number): string {
@@ -49,6 +50,26 @@ function getScoreDiffText(score: number, par: number): string {
   if (diff === 1) return "△";
   if (diff === 2) return "□";
   return `+${diff}`;
+}
+
+/** ショットの表示打数を計算（OB/ペナルティの罰打を加算） */
+function getDisplayShotNumber(shots: Shot[], index: number): number {
+  let cumulativePenalties = 0;
+  for (let i = 0; i < index; i++) {
+    const s = shots[i];
+    if (s.type === "tee" && (s.result === "ob" || s.result === "penalty")) {
+      cumulativePenalties++;
+    } else if (s.type === "approach") {
+      const result = s.result;
+      if (
+        result === "ob-left" || result === "ob-right" ||
+        result === "penalty-left" || result === "penalty-right"
+      ) {
+        cumulativePenalties++;
+      }
+    }
+  }
+  return index + 1 + cumulativePenalties;
 }
 
 interface StepScoringProps {
@@ -112,11 +133,11 @@ export function StepScoring({
   const stats = useMemo(() => {
     const sectionScores = subCourseInfo.map((s) => ({
       name: s.name,
-      score: s.holes.reduce((sum, h) => sum + h.shots.length, 0),
+      score: s.holes.reduce((sum, h) => sum + getHoleScore(h), 0),
     }));
 
     const totalScore = roundData.holes.reduce(
-      (sum, h) => sum + h.shots.length,
+      (sum, h) => sum + getHoleScore(h),
       0
     );
     const totalPar = roundData.holes.reduce((sum, h) => sum + h.par, 0);
@@ -128,7 +149,7 @@ export function StepScoring({
     return { sectionScores, totalScore, totalPar, totalPutts };
   }, [roundData.holes, subCourseInfo]);
 
-  const currentHoleScore = hole.shots.length;
+  const currentHoleScore = getHoleScore(hole);
   const currentHolePutts = hole.shots.filter(
     (s) => s.type === "putt"
   ).length;
@@ -164,6 +185,14 @@ export function StepScoring({
     updateHole({ ...hole, shots: newShots });
   };
 
+  const moveShot = (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= hole.shots.length) return;
+    const newShots = [...hole.shots];
+    [newShots[index], newShots[newIndex]] = [newShots[newIndex], newShots[index]];
+    updateHole({ ...hole, shots: newShots });
+  };
+
   // ショット番号を計算
   let approachNumber = 0;
   let puttNumber = 0;
@@ -189,59 +218,21 @@ export function StepScoring({
       <div className="px-4 py-4">
         {/* ホールヘッダー */}
         <Card className="mb-4 border-2 border-green-300">
-          <CardContent className="p-4">
+          <CardContent className="px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-green-600 text-white flex flex-col items-center justify-center">
-                  <span className="text-xs">HOLE</span>
-                  <span className="text-xl font-bold">{currentHole}</span>
+                <div className="w-12 h-12 rounded-full bg-green-600 text-white flex flex-col items-center justify-center">
+                  <span className="text-[10px]">HOLE</span>
+                  <span className="text-lg font-bold leading-none">{currentHole}</span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">Par</span>
-                    <div className="flex gap-1">
-                      {[3, 4, 5, 6].map((par) => (
-                        <button
-                          key={par}
-                          type="button"
-                          onClick={() =>
-                            updateHole({
-                              ...hole,
-                              par: par as 3 | 4 | 5 | 6,
-                            })
-                          }
-                          className={cn(
-                            "w-8 h-8 rounded-lg text-sm font-bold transition-all",
-                            hole.par === par
-                              ? "bg-green-600 text-white"
-                              : "bg-gray-100 text-gray-600"
-                          )}
-                        >
-                          {par}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-500">距離</span>
-                    <Input
-                      type="number"
-                      value={hole.distance ?? ""}
-                      onChange={(e) =>
-                        updateHole({
-                          ...hole,
-                          distance: e.target.value
-                            ? Number(e.target.value)
-                            : null,
-                        })
-                      }
-                      placeholder="yd"
-                      className="w-20 h-8 text-sm"
-                    />
-                  </div>
+                  <span className="text-sm font-bold text-green-700">Par {hole.par}</span>
+                  {hole.distance && (
+                    <span className="text-sm text-gray-500 ml-2">{hole.distance}yd</span>
+                  )}
                 </div>
               </div>
-              <div className="text-right flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <ScoreDisplay
                   score={currentHoleScore}
                   par={hole.par}
@@ -261,8 +252,8 @@ export function StepScoring({
             </div>
 
             {/* ピン位置セレクター */}
-            <div className="mt-4 pt-3 border-t border-green-200">
-              <div className="text-xs text-gray-500 mb-2">ピン位置</div>
+            <div className="mt-3 pt-2 border-t border-green-200">
+              <div className="text-xs text-gray-500 mb-1">ピン位置</div>
               <PinPositionSelector
                 value={hole.pinPosition}
                 onChange={(pos) => updateHole({ ...hole, pinPosition: pos })}
@@ -315,25 +306,24 @@ export function StepScoring({
                   key={index}
                   className="border-2 border-green-200 overflow-hidden"
                 >
-                  <div className="bg-green-100 px-4 py-2 flex items-center justify-between">
+                  <div className="bg-green-100 px-3 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Flag className="w-4 h-4 text-green-600" />
                       <span className="font-medium text-green-800">
-                        {index + 1}打目 - ティーショット
+                        {getDisplayShotNumber(hole.shots, index)}打目 - ティーショット
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeShot(index)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </div>
                   <CardContent className="p-4">
                     <TeeShotInput
                       shot={shot as TeeShot}
                       onChange={(s) => updateShot(index, s)}
+                      par={hole.par}
                     />
                   </CardContent>
                 </Card>
@@ -345,20 +335,18 @@ export function StepScoring({
                   key={index}
                   className="border-2 border-blue-200 overflow-hidden"
                 >
-                  <div className="bg-blue-100 px-4 py-2 flex items-center justify-between">
+                  <div className="bg-blue-100 px-3 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-blue-600" />
                       <span className="font-medium text-blue-800">
-                        {index + 1}打目 - ショット/アプローチ
+                        {getDisplayShotNumber(hole.shots, index)}打目 - ショット/アプローチ
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeShot(index)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </div>
                   <CardContent className="p-4">
                     <ApproachShotInput
@@ -371,29 +359,29 @@ export function StepScoring({
               );
             } else {
               puttNumber++;
+              const puttShot = shot as PuttShot;
+              const isOkPutt = puttShot.note === "OK";
               return (
                 <Card
                   key={index}
                   className="border-2 border-purple-200 overflow-hidden"
                 >
-                  <div className="bg-purple-100 px-4 py-2 flex items-center justify-between">
+                  <div className="bg-purple-100 px-3 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Circle className="w-4 h-4 text-purple-600" />
                       <span className="font-medium text-purple-800">
-                        {puttNumber}パット目
+                        {getDisplayShotNumber(hole.shots, index)}打目 - {isOkPutt ? "OKパット" : "パット"}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeShot(index)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </div>
                   <CardContent className="p-4">
                     <PuttInput
-                      shot={shot as PuttShot}
+                      shot={puttShot}
                       onChange={(s) => updateShot(index, s)}
                       puttNumber={puttNumber}
                     />

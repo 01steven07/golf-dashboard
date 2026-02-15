@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Star, Ruler, TrendingUp, MoveRight } from "lucide-react";
+import { Star, Ruler, TrendingUp, Check } from "lucide-react";
 
 interface PuttInputProps {
   shot: PuttShot;
@@ -32,8 +32,18 @@ const RATINGS = [1, 2, 3, 4, 5] as const;
 const DISTANCE_PRESETS = [1, 2, 3, 5, 7, 10];
 
 export function PuttInput({ shot, onChange, puttNumber }: PuttInputProps) {
+  const isOk = shot.note === "OK";
+
   // 8方向の結果からセンター（IN）かどうか判定
   const isIn = shot.result === "in";
+
+  const handleOkToggle = () => {
+    if (isOk) {
+      onChange({ ...shot, note: "" });
+    } else {
+      onChange({ ...shot, result: "in", distance: 1, note: "OK" });
+    }
+  };
 
   const handleResultChange = (direction: string) => {
     // direction-selectorからの値をPuttResultに変換
@@ -46,6 +56,26 @@ export function PuttInput({ shot, onChange, puttNumber }: PuttInputProps) {
 
   return (
     <div className="space-y-5">
+      {/* OKパットトグル */}
+      <button
+        type="button"
+        onClick={handleOkToggle}
+        className={cn(
+          "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium transition-all",
+          isOk
+            ? "bg-purple-500 text-white shadow-md"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        )}
+      >
+        <Check className="w-4 h-4" />
+        OKパット
+      </button>
+
+      {isOk ? (
+        <div className="text-center text-sm text-purple-600">
+          1m カップイン
+        </div>
+      ) : (<>
       {/* 距離 */}
       <div>
         <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
@@ -205,6 +235,7 @@ export function PuttInput({ shot, onChange, puttNumber }: PuttInputProps) {
           className="h-16 resize-none"
         />
       </div>
+      </>)}
     </div>
   );
 }

@@ -4,18 +4,19 @@ import { useState, useEffect } from "react";
 import { ShotResult } from "@/types/shot";
 import { DirectionSelector } from "./direction-selector";
 import { cn } from "@/lib/utils";
-import { Circle, CircleX, AlertTriangle, Target } from "lucide-react";
+import { Circle, CircleX, AlertTriangle, Target, MapPin } from "lucide-react";
 
 interface ShotResultSelectorProps {
   value: ShotResult;
   onChange: (value: ShotResult) => void;
 }
 
-type ResultCategory = "on" | "miss" | "ob" | "penalty";
+type ResultCategory = "on" | "miss" | "layup" | "ob" | "penalty";
 
 const CATEGORIES: { id: ResultCategory; label: string; icon: React.ReactNode; color: string }[] = [
   { id: "on", label: "グリーンON", icon: <Target className="w-5 h-5" />, color: "green" },
   { id: "miss", label: "外し", icon: <Circle className="w-5 h-5" />, color: "orange" },
+  { id: "layup", label: "レイアップ", icon: <MapPin className="w-5 h-5" />, color: "sky" },
   { id: "ob", label: "OB", icon: <CircleX className="w-5 h-5" />, color: "red" },
   { id: "penalty", label: "ペナルティ", icon: <AlertTriangle className="w-5 h-5" />, color: "yellow" },
 ];
@@ -24,6 +25,7 @@ const CATEGORIES: { id: ResultCategory; label: string; icon: React.ReactNode; co
 function getCategoryFromResult(result: ShotResult): ResultCategory {
   if (result.startsWith("on-")) return "on";
   if (result.startsWith("miss-")) return "miss";
+  if (result.startsWith("layup-")) return "layup";
   if (result.startsWith("ob-")) return "ob";
   if (result.startsWith("penalty-")) return "penalty";
   return "on";
@@ -43,6 +45,8 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
       onChange("on-good" as ShotResult);
     } else if (newCategory === "miss") {
       onChange("miss-front" as ShotResult);
+    } else if (newCategory === "layup") {
+      onChange("layup-fairway");
     } else if (newCategory === "ob") {
       onChange("ob-left" as ShotResult);
     } else if (newCategory === "penalty") {
@@ -57,7 +61,7 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
   return (
     <div className="space-y-4">
       {/* カテゴリ選択 */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-1.5">
         {CATEGORIES.map((cat) => {
           const isSelected = category === cat.id;
           return (
@@ -66,12 +70,14 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
               type="button"
               onClick={() => handleCategoryChange(cat.id)}
               className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-xl transition-all",
+                "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all",
                 isSelected
                   ? cat.color === "green"
                     ? "bg-green-500 text-white shadow-lg ring-2 ring-green-300"
                     : cat.color === "orange"
                     ? "bg-orange-500 text-white shadow-lg ring-2 ring-orange-300"
+                    : cat.color === "sky"
+                    ? "bg-sky-500 text-white shadow-lg ring-2 ring-sky-300"
                     : cat.color === "red"
                     ? "bg-red-500 text-white shadow-lg ring-2 ring-red-300"
                     : "bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300"
@@ -79,7 +85,7 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
               )}
             >
               {cat.icon}
-              <span className="text-xs mt-1 font-medium">{cat.label}</span>
+              <span className="text-[10px] mt-1 font-medium leading-tight">{cat.label}</span>
             </button>
           );
         })}
@@ -98,6 +104,38 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
             centerLabel={category === "on" ? "⛳OK" : ""}
             prefix={category}
           />
+        </div>
+      )}
+
+      {/* レイアップ方向 */}
+      {category === "layup" && (
+        <div className="p-4 bg-gray-50 rounded-xl">
+          <div className="text-center text-sm text-gray-600 mb-3">
+            レイアップ先
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {([
+              { value: "layup-fairway", label: "FW" },
+              { value: "layup-rough-left", label: "ラフ左" },
+              { value: "layup-rough-right", label: "ラフ右" },
+              { value: "layup-bunker-left", label: "バンカー左" },
+              { value: "layup-bunker-right", label: "バンカー右" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onChange(opt.value)}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl font-medium transition-all",
+                  value === opt.value
+                    ? "bg-sky-500 text-white shadow-lg"
+                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-400"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

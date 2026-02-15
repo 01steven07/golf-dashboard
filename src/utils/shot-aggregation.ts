@@ -17,10 +17,17 @@ export interface AggregatedScore {
 }
 
 /**
+ * ホールのスコアを計算（ショット数 + OB罰打 + ペナルティ罰打）
+ */
+export function getHoleScore(hole: HoleData): number {
+  return hole.shots.length + countOB(hole) + countPenalty(hole);
+}
+
+/**
  * HoleData（ショット配列付き）を scores テーブルのフラットレコードに変換する
  */
 export function aggregateHoleData(hole: HoleData): AggregatedScore {
-  const score = hole.shots.length;
+  const score = getHoleScore(hole);
   const putts = hole.shots.filter((s) => s.type === "putt").length;
   const fairway_result = deriveFairwayResult(hole);
   const ob = countOB(hole);

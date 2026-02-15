@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { HoleData } from "@/types/shot";
+import { getHoleScore } from "@/utils/shot-aggregation";
 import { getScoreSymbol } from "@/utils/golf-symbols";
 
 interface HoleNavigationProps {
@@ -18,7 +19,7 @@ export function HoleNavigation({
   return (
     <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto">
       {holes.map((h) => {
-        const holeScore = h.shots.length;
+        const holeScore = getHoleScore(h);
         const scoreDiff = holeScore - h.par;
         const scoreSymbol = holeScore === 0 ? "" : getScoreSymbol(holeScore, h.par).symbol;
 

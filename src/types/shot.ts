@@ -77,6 +77,12 @@ export type ShotResult =
   | "miss-front-right"
   | "miss-back-left"
   | "miss-back-right"
+  // レイアップ
+  | "layup-fairway"
+  | "layup-rough-left"
+  | "layup-rough-right"
+  | "layup-bunker-left"
+  | "layup-bunker-right"
   // OB/ペナルティ
   | "ob-left"
   | "ob-right"
@@ -114,6 +120,7 @@ export interface TeeShot {
   result: TeeResult;
   resultDirection: LeftRight;
   wind: WindDirection;
+  distance?: number;  // Par3用: ティーショット距離 (yd)
   rating: Rating;
   note: string;
 }
