@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   DetailedRoundData,
   HoleData,
@@ -8,6 +8,7 @@ import {
   TeeShot,
   ApproachShot,
   PuttShot,
+  OptionalFieldSettings,
   createDefaultTeeShot,
   createDefaultApproachShot,
   createDefaultPutt,
@@ -26,6 +27,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Save,
   RotateCcw,
   Plus,
@@ -72,12 +75,70 @@ function getDisplayShotNumber(shots: Shot[], index: number): number {
   return index + 1 + cumulativePenalties;
 }
 
+/** 折りたたみ時のサマリーテキストを生成 */
+function getShotSummary(shot: Shot): string {
+  if (shot.type === "tee") {
+    const resultLabels: Record<string, string> = {
+      fairway: "FW",
+      rough: "ラフ",
+      bunker: "バンカー",
+      ob: "OB",
+      penalty: "ペナ",
+    };
+    const dirLabels: Record<string, string> = {
+      left: "左",
+      center: "中央",
+      right: "右",
+    };
+    const resultLabel = resultLabels[shot.result] ?? shot.result;
+    if (shot.result === "ob" || shot.result === "penalty") {
+      return `${shot.club} → ${resultLabel}`;
+    }
+    const dirLabel = dirLabels[shot.resultDirection] ?? "";
+    return `${shot.club} → ${resultLabel} ${dirLabel}`.trim();
+  }
+
+  if (shot.type === "approach") {
+    const categoryLabel = shot.result.startsWith("on-")
+      ? "グリーンON"
+      : shot.result.startsWith("miss-")
+        ? "外し"
+        : shot.result.startsWith("layup-")
+          ? "レイアップ"
+          : shot.result.startsWith("ob-")
+            ? "OB"
+            : shot.result.startsWith("penalty-")
+              ? "ペナ"
+              : shot.result;
+    return `${shot.club} ${shot.distance}yd → ${categoryLabel}`;
+  }
+
+  // putt
+  if (shot.note === "OK") {
+    return "OKパット";
+  }
+  const puttResultLabels: Record<string, string> = {
+    in: "IN",
+    front: "ショート",
+    back: "オーバー",
+    left: "左",
+    right: "右",
+    "front-left": "ショート左",
+    "front-right": "ショート右",
+    "back-left": "オーバー左",
+    "back-right": "オーバー右",
+  };
+  const resultLabel = puttResultLabels[shot.result] ?? shot.result;
+  return `${shot.distance}m → ${resultLabel}`;
+}
+
 interface StepScoringProps {
   roundData: DetailedRoundData;
   selectedCourse: CourseWithDetails | null;
   currentHole: number;
   isSaving: boolean;
   error: string;
+  optionalFields: OptionalFieldSettings;
   onCurrentHoleChange: (hole: number) => void;
   onUpdateHole: (hole: HoleData) => void;
   onSave: () => void;
@@ -93,6 +154,7 @@ export function StepScoring({
   currentHole,
   isSaving,
   error,
+  optionalFields,
   onCurrentHoleChange,
   onUpdateHole,
   onSave,
@@ -103,6 +165,16 @@ export function StepScoring({
 }: StepScoringProps) {
   const hole = roundData.holes[currentHole - 1];
   const totalHoles = roundData.holes.length;
+
+  // アコーディオン: 展開中のショットインデックス
+  const [expandedShotIndex, setExpandedShotIndex] = useState<number | null>(null);
+
+  // ホール切り替え時に最後のショットを展開
+  useEffect(() => {
+    setExpandedShotIndex(
+      hole.shots.length > 0 ? hole.shots.length - 1 : null
+    );
+  }, [currentHole]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // サブコース情報を計算
   const subCourseInfo = useMemo(() => {
@@ -172,6 +244,7 @@ export function StepScoring({
         break;
     }
     updateHole({ ...hole, shots: [...hole.shots, newShot] });
+    setExpandedShotIndex(hole.shots.length); // 新しいショット（末尾）を展開
   };
 
   const updateShot = (index: number, shot: Shot) => {
@@ -181,6 +254,7 @@ export function StepScoring({
   };
 
   const removeShot = (index: number) => {
+    if (!window.confirm("このショットを削除しますか？")) return;
     const newShots = hole.shots.filter((_, i) => i !== index);
     updateHole({ ...hole, shots: newShots });
   };
@@ -252,14 +326,16 @@ export function StepScoring({
             </div>
 
             {/* ピン位置セレクター */}
-            <div className="mt-3 pt-2 border-t border-green-200">
-              <div className="text-xs text-gray-500 mb-1">ピン位置</div>
-              <PinPositionSelector
-                value={hole.pinPosition}
-                onChange={(pos) => updateHole({ ...hole, pinPosition: pos })}
-                size="sm"
-              />
-            </div>
+            {optionalFields.pinPosition && (
+              <div className="mt-3 pt-2 border-t border-green-200">
+                <div className="text-xs text-gray-500 mb-1">ピン位置</div>
+                <PinPositionSelector
+                  value={hole.pinPosition}
+                  onChange={(pos) => updateHole({ ...hole, pinPosition: pos })}
+                  size="sm"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -301,91 +377,136 @@ export function StepScoring({
         <div className="space-y-4">
           {hole.shots.map((shot, index) => {
             if (shot.type === "tee") {
+              const isExpanded = expandedShotIndex === index;
               return (
                 <Card
                   key={index}
                   className="border-2 border-green-200 overflow-hidden"
                 >
-                  <div className="bg-green-100 px-3 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Flag className="w-4 h-4 text-green-600" />
-                      <span className="font-medium text-green-800">
+                  <div
+                    className="bg-green-100 px-3 py-2 flex items-center justify-between cursor-pointer"
+                    onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      <Flag className="w-4 h-4 text-green-600 shrink-0" />
+                      <span className="font-medium text-green-800 shrink-0">
                         {getDisplayShotNumber(hole.shots, index)}打目 - ティーショット
                       </span>
+                      {!isExpanded && (
+                        <span className="text-xs text-gray-500 truncate ml-1">
+                          {getShotSummary(shot)}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                    </div>
+                    {isExpanded && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    )}
                   </div>
-                  <CardContent className="p-4">
-                    <TeeShotInput
-                      shot={shot as TeeShot}
-                      onChange={(s) => updateShot(index, s)}
-                      par={hole.par}
-                    />
-                  </CardContent>
+                  {isExpanded && (
+                    <CardContent className="p-4">
+                      <TeeShotInput
+                        shot={shot as TeeShot}
+                        onChange={(s) => updateShot(index, s)}
+                        par={hole.par}
+                        optionalFields={optionalFields}
+                      />
+                    </CardContent>
+                  )}
                 </Card>
               );
             } else if (shot.type === "approach") {
               approachNumber++;
+              const isExpanded = expandedShotIndex === index;
               return (
                 <Card
                   key={index}
                   className="border-2 border-blue-200 overflow-hidden"
                 >
-                  <div className="bg-blue-100 px-3 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-blue-600" />
-                      <span className="font-medium text-blue-800">
+                  <div
+                    className="bg-blue-100 px-3 py-2 flex items-center justify-between cursor-pointer"
+                    onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      <Target className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span className="font-medium text-blue-800 shrink-0">
                         {getDisplayShotNumber(hole.shots, index)}打目 - ショット/アプローチ
                       </span>
+                      {!isExpanded && (
+                        <span className="text-xs text-gray-500 truncate ml-1">
+                          {getShotSummary(shot)}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                    </div>
+                    {isExpanded && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    )}
                   </div>
-                  <CardContent className="p-4">
-                    <ApproachShotInput
-                      shot={shot as ApproachShot}
-                      onChange={(s) => updateShot(index, s)}
-                      shotNumber={approachNumber}
-                    />
-                  </CardContent>
+                  {isExpanded && (
+                    <CardContent className="p-4">
+                      <ApproachShotInput
+                        shot={shot as ApproachShot}
+                        onChange={(s) => updateShot(index, s)}
+                        shotNumber={approachNumber}
+                        optionalFields={optionalFields}
+                      />
+                    </CardContent>
+                  )}
                 </Card>
               );
             } else {
               puttNumber++;
               const puttShot = shot as PuttShot;
               const isOkPutt = puttShot.note === "OK";
+              const isExpanded = expandedShotIndex === index;
               return (
                 <Card
                   key={index}
                   className="border-2 border-purple-200 overflow-hidden"
                 >
-                  <div className="bg-purple-100 px-3 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Circle className="w-4 h-4 text-purple-600" />
-                      <span className="font-medium text-purple-800">
+                  <div
+                    className="bg-purple-100 px-3 py-2 flex items-center justify-between cursor-pointer"
+                    onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      <Circle className="w-4 h-4 text-purple-600 shrink-0" />
+                      <span className="font-medium text-purple-800 shrink-0">
                         {getDisplayShotNumber(hole.shots, index)}打目 - {isOkPutt ? "OKパット" : "パット"}
                       </span>
+                      {!isExpanded && (
+                        <span className="text-xs text-gray-500 truncate ml-1">
+                          {getShotSummary(shot)}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => moveShot(index, "up")} disabled={index === 0} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => moveShot(index, "down")} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                      <button type="button" onClick={() => removeShot(index)} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
-                    </div>
+                    {isExpanded && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    )}
                   </div>
-                  <CardContent className="p-4">
-                    <PuttInput
-                      shot={puttShot}
-                      onChange={(s) => updateShot(index, s)}
-                      puttNumber={puttNumber}
-                    />
-                  </CardContent>
+                  {isExpanded && (
+                    <CardContent className="p-4">
+                      <PuttInput
+                        shot={puttShot}
+                        onChange={(s) => updateShot(index, s)}
+                        puttNumber={puttNumber}
+                        optionalFields={optionalFields}
+                      />
+                    </CardContent>
+                  )}
                 </Card>
               );
             }

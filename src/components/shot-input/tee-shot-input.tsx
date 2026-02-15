@@ -1,6 +1,6 @@
 "use client";
 
-import { TeeShot, TeeResult } from "@/types/shot";
+import { TeeShot, TeeResult, OptionalFieldSettings } from "@/types/shot";
 import { ClubSelector } from "./club-selector";
 import { WindSelector } from "./wind-selector";
 import { DirectionSelector } from "./direction-selector";
@@ -14,6 +14,7 @@ interface TeeShotInputProps {
   shot: TeeShot;
   onChange: (shot: TeeShot) => void;
   par?: number;
+  optionalFields?: OptionalFieldSettings;
 }
 
 const TEE_RESULTS_DEFAULT: { value: TeeResult; label: string; icon: React.ReactNode; color: string }[] = [
@@ -37,7 +38,7 @@ const TEE_DISTANCE_PRESETS = [80, 100, 120, 140, 160, 180];
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
 
-export function TeeShotInput({ shot, onChange, par }: TeeShotInputProps) {
+export function TeeShotInput({ shot, onChange, par, optionalFields }: TeeShotInputProps) {
   const isPar3 = par === 3;
   const teeResults = isPar3 ? TEE_RESULTS_PAR3 : TEE_RESULTS_DEFAULT;
 
@@ -138,15 +139,17 @@ export function TeeShotInput({ shot, onChange, par }: TeeShotInputProps) {
       </div>
 
       {/* 風 */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          💨 風
-        </Label>
-        <WindSelector
-          value={shot.wind}
-          onChange={(wind) => onChange({ ...shot, wind })}
-        />
-      </div>
+      {optionalFields?.wind !== false && (
+        <div>
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+            💨 風
+          </Label>
+          <WindSelector
+            value={shot.wind}
+            onChange={(wind) => onChange({ ...shot, wind })}
+          />
+        </div>
+      )}
 
       {/* 5点採点 */}
       <div>

@@ -184,6 +184,28 @@ export interface DetailedRoundData {
   holes: HoleData[];
 }
 
+/** 任意入力項目の表示/非表示設定 */
+export interface OptionalFieldSettings {
+  pinPosition: boolean;
+  wind: boolean;
+  shotDistance: boolean;
+  puttDistance: boolean;
+  shotLieSlope: boolean;
+  shotResultDirection: boolean;
+  puttLine: boolean;
+}
+
+/** デフォルト値（すべて表示） */
+export const DEFAULT_OPTIONAL_FIELDS: OptionalFieldSettings = {
+  pinPosition: true,
+  wind: true,
+  shotDistance: true,
+  puttDistance: true,
+  shotLieSlope: true,
+  shotResultDirection: true,
+  puttLine: true,
+};
+
 /** デフォルトのティーショット */
 export function createDefaultTeeShot(): TeeShot {
   return {

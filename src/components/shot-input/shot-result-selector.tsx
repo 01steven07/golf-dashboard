@@ -9,6 +9,7 @@ import { Circle, CircleX, AlertTriangle, Target, MapPin } from "lucide-react";
 interface ShotResultSelectorProps {
   value: ShotResult;
   onChange: (value: ShotResult) => void;
+  showDirection?: boolean;
 }
 
 type ResultCategory = "on" | "miss" | "layup" | "ob" | "penalty";
@@ -31,7 +32,7 @@ function getCategoryFromResult(result: ShotResult): ResultCategory {
   return "on";
 }
 
-export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps) {
+export function ShotResultSelector({ value, onChange, showDirection = true }: ShotResultSelectorProps) {
   const [category, setCategory] = useState<ResultCategory>(getCategoryFromResult(value));
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
       </div>
 
       {/* 方向選択（カテゴリに応じて表示） */}
-      {(category === "on" || category === "miss") && (
+      {showDirection && (category === "on" || category === "miss") && (
         <div className="p-4 bg-gray-50 rounded-xl">
           <div className="text-center text-sm text-gray-600 mb-3">
             {category === "on" ? "グリーン上の位置" : "外した方向"}
@@ -108,7 +109,7 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
       )}
 
       {/* レイアップ方向 */}
-      {category === "layup" && (
+      {showDirection && category === "layup" && (
         <div className="p-4 bg-gray-50 rounded-xl">
           <div className="text-center text-sm text-gray-600 mb-3">
             レイアップ先
@@ -140,7 +141,7 @@ export function ShotResultSelector({ value, onChange }: ShotResultSelectorProps)
       )}
 
       {/* OB/ペナルティは左右のみ */}
-      {(category === "ob" || category === "penalty") && (
+      {showDirection && (category === "ob" || category === "penalty") && (
         <div className="p-4 bg-gray-50 rounded-xl">
           <div className="text-center text-sm text-gray-600 mb-3">
             {category === "ob" ? "OBの方向" : "ペナルティの方向"}
