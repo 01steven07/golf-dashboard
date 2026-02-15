@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { DetailedRoundData, HoleData, createDefaultHole } from "@/types/shot";
+import { DetailedRoundData, HoleData, createDefaultHole, OptionalFieldSettings, DEFAULT_OPTIONAL_FIELDS } from "@/types/shot";
 import { CourseWithDetails, SubCourseWithHoles } from "@/types/database";
 import { StepSettings } from "./components/step-settings";
 import { StepScoring } from "./components/step-scoring";
@@ -15,6 +15,7 @@ import { validateScores } from "@/utils/score-validation";
 type InputStep = "settings" | "scoring";
 
 const STORAGE_KEY = "detailed-input-draft";
+const OPTIONAL_FIELDS_KEY = "detailed-input-optional-fields";
 
 // 初期状態：18ホール分
 function createInitialHoles(): HoleData[] {
@@ -106,11 +107,12 @@ function DetailedInputContent() {
   const [error, setError] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ courseName: string; date: string } | null>(null);
+  const [optionalFields, setOptionalFields] = useState<OptionalFieldSettings>(DEFAULT_OPTIONAL_FIELDS);
 
   const isDirty = useRef(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // 起動時にドラフトを確認
+  // 起動時にドラフトを確認 + optionalFields読み込み
   useEffect(() => {
     const draft = loadDraft();
     if (draft) {
@@ -118,6 +120,14 @@ function DetailedInputContent() {
         courseName: draft.roundData.courseName,
         date: draft.roundData.date,
       });
+    }
+    try {
+      const stored = localStorage.getItem(OPTIONAL_FIELDS_KEY);
+      if (stored) {
+        setOptionalFields({ ...DEFAULT_OPTIONAL_FIELDS, ...JSON.parse(stored) });
+      }
+    } catch {
+      // ignore
     }
   }, []);
 
@@ -441,12 +451,23 @@ function DetailedInputContent() {
     setDraftInfo(null);
   }, []);
 
+  const handleOptionalFieldsChange = useCallback((fields: OptionalFieldSettings) => {
+    setOptionalFields(fields);
+    try {
+      localStorage.setItem(OPTIONAL_FIELDS_KEY, JSON.stringify(fields));
+    } catch {
+      // ignore
+    }
+  }, []);
+
   if (step === "settings") {
     return (
       <StepSettings
         roundData={roundData}
         selectedCourse={selectedCourse}
         draftInfo={draftInfo}
+        optionalFields={optionalFields}
+        onOptionalFieldsChange={handleOptionalFieldsChange}
         onCourseSelect={handleCourseSelect}
         onManualInput={handleManualInput}
         onSubCourseAdd={handleSubCourseAdd}
@@ -469,6 +490,7 @@ function DetailedInputContent() {
       currentHole={currentHole}
       isSaving={isSaving}
       error={error}
+      optionalFields={optionalFields}
       onCurrentHoleChange={setCurrentHole}
       onUpdateHole={handleUpdateHole}
       onSave={handleSave}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { DetailedRoundData } from "@/types/shot";
+import { DetailedRoundData, OptionalFieldSettings } from "@/types/shot";
 import { CourseWithDetails } from "@/types/database";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CourseSelector } from "@/components/course/course-selector";
 import { SubCourseSelector } from "@/components/course/sub-course-selector";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ interface StepSettingsProps {
   roundData: DetailedRoundData;
   selectedCourse: CourseWithDetails | null;
   draftInfo: { courseName: string; date: string } | null;
+  optionalFields: OptionalFieldSettings;
+  onOptionalFieldsChange: (fields: OptionalFieldSettings) => void;
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
   onSubCourseAdd: (subCourseId: string) => void;
@@ -29,10 +32,22 @@ interface StepSettingsProps {
   onDiscardDraft: () => void;
 }
 
+const OPTIONAL_FIELD_OPTIONS: { key: keyof OptionalFieldSettings; label: string; description: string }[] = [
+  { key: "pinPosition", label: "ピン位置", description: "各ホールのピン位置（9分割）" },
+  { key: "wind", label: "風向き", description: "ティーショット・アプローチの風向き" },
+  { key: "shotDistance", label: "ショットの残り距離", description: "アプローチの残り距離（yd）" },
+  { key: "puttDistance", label: "パットの残り距離", description: "パットの距離（m）" },
+  { key: "shotLieSlope", label: "ライ・傾斜", description: "アプローチのライと傾斜" },
+  { key: "shotResultDirection", label: "ショットの結果方向", description: "グリーンON/外し等の細分方向" },
+  { key: "puttLine", label: "パットのライン", description: "傾斜と曲がりの組み合わせ" },
+];
+
 export function StepSettings({
   roundData,
   selectedCourse,
   draftInfo,
+  optionalFields,
+  onOptionalFieldsChange,
   onCourseSelect,
   onManualInput,
   onSubCourseAdd,
@@ -163,6 +178,37 @@ export function StepSettings({
               onChange={(e) => onDateChange(e.target.value)}
               className="h-10 text-sm"
             />
+          </CardContent>
+        </Card>
+
+        {/* 入力項目設定 */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">入力項目</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-gray-500">表示する任意項目を選択してください</p>
+            {OPTIONAL_FIELD_OPTIONS.map((opt) => (
+              <label
+                key={opt.key}
+                className="flex items-start gap-3 cursor-pointer"
+              >
+                <Checkbox
+                  checked={optionalFields[opt.key]}
+                  onCheckedChange={(checked) =>
+                    onOptionalFieldsChange({
+                      ...optionalFields,
+                      [opt.key]: !!checked,
+                    })
+                  }
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-sm font-medium">{opt.label}</div>
+                  <div className="text-xs text-gray-500">{opt.description}</div>
+                </div>
+              </label>
+            ))}
           </CardContent>
         </Card>
 

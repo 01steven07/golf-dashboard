@@ -1,6 +1,6 @@
 "use client";
 
-import { ApproachShot, Slope } from "@/types/shot";
+import { ApproachShot, Slope, OptionalFieldSettings } from "@/types/shot";
 import { ClubSelector } from "./club-selector";
 import { WindSelector } from "./wind-selector";
 import { ShotResultSelector } from "./shot-result-selector";
@@ -15,6 +15,7 @@ interface ApproachShotInputProps {
   shot: ApproachShot;
   onChange: (shot: ApproachShot) => void;
   shotNumber: number;
+  optionalFields?: OptionalFieldSettings;
 }
 
 const SLOPES: { value: Slope; label: string; icon: string }[] = [
@@ -30,43 +31,45 @@ const RATINGS = [1, 2, 3, 4, 5] as const;
 // よく使う距離のプリセット
 const DISTANCE_PRESETS = [50, 80, 100, 120, 150, 180];
 
-export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotInputProps) {
+export function ApproachShotInput({ shot, onChange, shotNumber, optionalFields }: ApproachShotInputProps) {
   return (
     <div className="space-y-5">
       {/* 残り距離 */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          <Ruler className="w-4 h-4" /> 残り距離 (yd)
-        </Label>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            value={shot.distance}
-            onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
-            className="w-24 text-center text-lg font-bold"
-            min={0}
-            max={600}
-          />
-          <span className="text-gray-500">yd</span>
+      {optionalFields?.shotDistance !== false && (
+        <div>
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+            <Ruler className="w-4 h-4" /> 残り距離 (yd)
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={shot.distance}
+              onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
+              className="w-24 text-center text-lg font-bold"
+              min={0}
+              max={600}
+            />
+            <span className="text-gray-500">yd</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {DISTANCE_PRESETS.map((dist) => (
+              <button
+                key={dist}
+                type="button"
+                onClick={() => onChange({ ...shot, distance: dist })}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+                  shot.distance === dist
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                {dist}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {DISTANCE_PRESETS.map((dist) => (
-            <button
-              key={dist}
-              type="button"
-              onClick={() => onChange({ ...shot, distance: dist })}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                shot.distance === dist
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              {dist}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* クラブ選択 */}
       <div>
@@ -81,40 +84,44 @@ export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotIn
       </div>
 
       {/* ライ */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          📍 ライ
-        </Label>
-        <LieSelector
-          value={shot.lie}
-          onChange={(lie) => onChange({ ...shot, lie })}
-        />
-      </div>
+      {optionalFields?.shotLieSlope !== false && (
+        <div>
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+            📍 ライ
+          </Label>
+          <LieSelector
+            value={shot.lie}
+            onChange={(lie) => onChange({ ...shot, lie })}
+          />
+        </div>
+      )}
 
       {/* 傾斜 */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          <Mountain className="w-4 h-4" /> 傾斜
-        </Label>
-        <div className="grid grid-cols-5 gap-1.5">
-          {SLOPES.map((slope) => (
-            <button
-              key={slope.value}
-              type="button"
-              onClick={() => onChange({ ...shot, slope: slope.value })}
-              className={cn(
-                "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all",
-                shot.slope === slope.value
-                  ? "bg-purple-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              <span className="text-base">{slope.icon}</span>
-              <span className="text-xs mt-0.5 font-medium">{slope.label}</span>
-            </button>
-          ))}
+      {optionalFields?.shotLieSlope !== false && (
+        <div>
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+            <Mountain className="w-4 h-4" /> 傾斜
+          </Label>
+          <div className="grid grid-cols-5 gap-1.5">
+            {SLOPES.map((slope) => (
+              <button
+                key={slope.value}
+                type="button"
+                onClick={() => onChange({ ...shot, slope: slope.value })}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2.5 rounded-xl transition-all",
+                  shot.slope === slope.value
+                    ? "bg-purple-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                <span className="text-base">{slope.icon}</span>
+                <span className="text-xs mt-0.5 font-medium">{slope.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 結果 */}
       <div>
@@ -124,19 +131,22 @@ export function ApproachShotInput({ shot, onChange, shotNumber }: ApproachShotIn
         <ShotResultSelector
           value={shot.result}
           onChange={(result) => onChange({ ...shot, result })}
+          showDirection={optionalFields?.shotResultDirection !== false}
         />
       </div>
 
       {/* 風 */}
-      <div>
-        <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
-          💨 風
-        </Label>
-        <WindSelector
-          value={shot.wind}
-          onChange={(wind) => onChange({ ...shot, wind })}
-        />
-      </div>
+      {optionalFields?.wind !== false && (
+        <div>
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+            💨 風
+          </Label>
+          <WindSelector
+            value={shot.wind}
+            onChange={(wind) => onChange({ ...shot, wind })}
+          />
+        </div>
+      )}
 
       {/* 5点採点 */}
       <div>
