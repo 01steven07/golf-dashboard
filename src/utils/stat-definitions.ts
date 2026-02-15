@@ -1,5 +1,5 @@
 /** スタッツのグループ定義 */
-export type StatGroup = "core" | "scoring" | "putting" | "shot";
+export type StatGroup = "core" | "scoring" | "putting" | "shot" | "putt_distance" | "gir_distance";
 
 export interface StatGroupDef {
   key: StatGroup;
@@ -12,6 +12,8 @@ export const STAT_GROUPS: StatGroupDef[] = [
   { key: "scoring", label: "スコアリング", description: "スコア関連の詳細分析" },
   { key: "putting", label: "パッティング", description: "パット関連の詳細分析" },
   { key: "shot", label: "ショット", description: "ショット関連の詳細分析" },
+  { key: "putt_distance", label: "パット距離別", description: "距離別カップイン率" },
+  { key: "gir_distance", label: "パーオン距離別", description: "距離別パーオン率" },
 ];
 
 /** フォーマット種別 */
@@ -226,6 +228,120 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
     description: "Par4でのティーショット推定飛距離",
     group: "shot",
     format: "score",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+
+  // Group E: パット距離別
+  {
+    key: "putt_make_1m",
+    label: "~1m",
+    description: "1m以内のカップイン率",
+    group: "putt_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "putt_make_1_2m",
+    label: "1-2m",
+    description: "1-2mのカップイン率",
+    group: "putt_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "putt_make_2_5m",
+    label: "2-5m",
+    description: "2-5mのカップイン率",
+    group: "putt_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "putt_make_5_10m",
+    label: "5-10m",
+    description: "5-10mのカップイン率",
+    group: "putt_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "putt_make_10m_plus",
+    label: "10m+",
+    description: "10m以上のカップイン率",
+    group: "putt_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+
+  // Group F: パーオン距離別
+  {
+    key: "gir_dist_100",
+    label: "~100yd",
+    description: "100yd以内からのパーオン率",
+    group: "gir_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "gir_dist_100_125",
+    label: "100-125yd",
+    description: "100-125ydからのパーオン率",
+    group: "gir_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "gir_dist_125_150",
+    label: "125-150yd",
+    description: "125-150ydからのパーオン率",
+    group: "gir_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "gir_dist_150_175",
+    label: "150-175yd",
+    description: "150-175ydからのパーオン率",
+    group: "gir_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "gir_dist_175_200",
+    label: "175-200yd",
+    description: "175-200ydからのパーオン率",
+    group: "gir_distance",
+    format: "percent",
+    lowerIsBetter: false,
+    requiresDetail: true,
+    rankable: true,
+  },
+  {
+    key: "gir_dist_200_plus",
+    label: "200yd+",
+    description: "200yd以上からのパーオン率",
+    group: "gir_distance",
+    format: "percent",
     lowerIsBetter: false,
     requiresDetail: true,
     rankable: true,

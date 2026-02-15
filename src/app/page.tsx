@@ -5,25 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
-import { MemberStats, DistanceBucket } from "@/types/database";
+import { MemberStats } from "@/types/database";
 import {
   calculateMemberStats,
-  calculateDetailedStats,
   getRankedStats,
   getStatValue,
   getCategoryDescription,
   RankingCategory,
-  DetailedRoundData,
 } from "@/utils/ranking";
 import { getRankableStatsByGroup } from "@/utils/stat-definitions";
-import { DistanceRateChart } from "@/components/distance-rate-chart";
 
 const rankableGroups = getRankableStatsByGroup();
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<MemberStats[]>([]);
-  const [makePctByDistance, setMakePctByDistance] = useState<DistanceBucket[]>([]);
-  const [girByDistance, setGirByDistance] = useState<DistanceBucket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState(rankableGroups[0]?.group.key ?? "core");
 
@@ -66,22 +61,6 @@ export default function DashboardPage() {
 
       const calculatedStats = calculateMemberStats(roundData);
       setStats(calculatedStats);
-
-      // Calculate aggregate distance-based stats from all rounds
-      const allDetailedRounds: DetailedRoundData[] = roundData.map((r) => ({
-        member_id: r.member_id,
-        scores: r.scores.map((s) => ({
-          hole_number: s.hole_number,
-          par: s.par,
-          score: s.score,
-          putts: s.putts,
-          distance: s.distance,
-          shots_detail: s.shots_detail,
-        })),
-      }));
-      const aggregateDetailed = calculateDetailedStats(allDetailedRounds);
-      setMakePctByDistance(aggregateDetailed.make_pct_by_distance);
-      setGirByDistance(aggregateDetailed.gir_by_distance);
 
       setIsLoading(false);
     }
@@ -189,33 +168,6 @@ export default function DashboardPage() {
         </Tabs>
       )}
 
-      {/* Distance-based charts for shot group */}
-      {selectedGroup === "shot" && !isLoading && (makePctByDistance.length > 0 || girByDistance.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>距離別スタッツ（全体集計）</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              詳細入力データがある全ラウンドの集計
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {makePctByDistance.length > 0 && (
-              <DistanceRateChart
-                data={makePctByDistance}
-                title="距離別カップイン率"
-                color="#3b82f6"
-              />
-            )}
-            {girByDistance.length > 0 && (
-              <DistanceRateChart
-                data={girByDistance}
-                title="距離別パーオン率"
-                color="#22c55e"
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

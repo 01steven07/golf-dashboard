@@ -85,6 +85,10 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
     let drivingDistanceTotal = 0;
     let drivingDistanceCount = 0;
 
+    // Distance-based stats (per-member)
+    const puttBuckets = PUTT_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, makes: 0 }));
+    const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, girs: 0 }));
+
     for (const round of latestRounds) {
       // Sort scores by hole_number for bounce back calculation
       const sortedScores = [...round.scores].sort(
@@ -201,6 +205,36 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
               }
             }
           }
+
+          // Putt make % by distance
+          const puttShots = shots.filter(
+            (s): s is ParsedPuttShot => s.type === "putt"
+          );
+          for (const putt of puttShots) {
+            if (putt.distance <= 0) continue;
+            for (const bucket of puttBuckets) {
+              if (putt.distance > bucket.min && putt.distance <= bucket.max) {
+                bucket.attempts++;
+                if (putt.result === "in") bucket.makes++;
+                break;
+              }
+            }
+          }
+
+          // GIR by approach distance (last approach)
+          if (approachShots.length > 0) {
+            const lastApproach = approachShots[approachShots.length - 1];
+            if (lastApproach.distance > 0) {
+              const isGirForDist = score.score - score.putts <= score.par - 2;
+              for (const bucket of girBuckets) {
+                if (lastApproach.distance > bucket.min && lastApproach.distance <= bucket.max) {
+                  bucket.attempts++;
+                  if (isGirForDist) bucket.girs++;
+                  break;
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -261,6 +295,19 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
         drivingDistanceCount > 0
           ? drivingDistanceTotal / drivingDistanceCount
           : null,
+      // Putt distance stats
+      putt_make_1m: puttBuckets[0].attempts > 0 ? (puttBuckets[0].makes / puttBuckets[0].attempts) * 100 : null,
+      putt_make_1_2m: puttBuckets[1].attempts > 0 ? (puttBuckets[1].makes / puttBuckets[1].attempts) * 100 : null,
+      putt_make_2_5m: puttBuckets[2].attempts > 0 ? (puttBuckets[2].makes / puttBuckets[2].attempts) * 100 : null,
+      putt_make_5_10m: puttBuckets[3].attempts > 0 ? (puttBuckets[3].makes / puttBuckets[3].attempts) * 100 : null,
+      putt_make_10m_plus: puttBuckets[4].attempts > 0 ? (puttBuckets[4].makes / puttBuckets[4].attempts) * 100 : null,
+      // GIR distance stats
+      gir_dist_100: girBuckets[0].attempts > 0 ? (girBuckets[0].girs / girBuckets[0].attempts) * 100 : null,
+      gir_dist_100_125: girBuckets[1].attempts > 0 ? (girBuckets[1].girs / girBuckets[1].attempts) * 100 : null,
+      gir_dist_125_150: girBuckets[2].attempts > 0 ? (girBuckets[2].girs / girBuckets[2].attempts) * 100 : null,
+      gir_dist_150_175: girBuckets[3].attempts > 0 ? (girBuckets[3].girs / girBuckets[3].attempts) * 100 : null,
+      gir_dist_175_200: girBuckets[4].attempts > 0 ? (girBuckets[4].girs / girBuckets[4].attempts) * 100 : null,
+      gir_dist_200_plus: girBuckets[5].attempts > 0 ? (girBuckets[5].girs / girBuckets[5].attempts) * 100 : null,
     });
   }
 
@@ -286,7 +333,18 @@ export type RankingCategory =
   | "gir_from_fairway"
   | "gir_from_rough"
   | "sand_save"
-  | "driving_distance";
+  | "driving_distance"
+  | "putt_make_1m"
+  | "putt_make_1_2m"
+  | "putt_make_2_5m"
+  | "putt_make_5_10m"
+  | "putt_make_10m_plus"
+  | "gir_dist_100"
+  | "gir_dist_100_125"
+  | "gir_dist_125_150"
+  | "gir_dist_150_175"
+  | "gir_dist_175_200"
+  | "gir_dist_200_plus";
 
 /** MemberStatsからカテゴリに対応する数値を取得 */
 export function getStatNumericValue(
@@ -332,6 +390,28 @@ export function getStatNumericValue(
       return stat.sand_save_rate ?? 0;
     case "driving_distance":
       return stat.avg_driving_distance ?? 0;
+    case "putt_make_1m":
+      return stat.putt_make_1m ?? 0;
+    case "putt_make_1_2m":
+      return stat.putt_make_1_2m ?? 0;
+    case "putt_make_2_5m":
+      return stat.putt_make_2_5m ?? 0;
+    case "putt_make_5_10m":
+      return stat.putt_make_5_10m ?? 0;
+    case "putt_make_10m_plus":
+      return stat.putt_make_10m_plus ?? 0;
+    case "gir_dist_100":
+      return stat.gir_dist_100 ?? 0;
+    case "gir_dist_100_125":
+      return stat.gir_dist_100_125 ?? 0;
+    case "gir_dist_125_150":
+      return stat.gir_dist_125_150 ?? 0;
+    case "gir_dist_150_175":
+      return stat.gir_dist_150_175 ?? 0;
+    case "gir_dist_175_200":
+      return stat.gir_dist_175_200 ?? 0;
+    case "gir_dist_200_plus":
+      return stat.gir_dist_200_plus ?? 0;
   }
 }
 
@@ -339,6 +419,17 @@ export function getStatNumericValue(
 function hasDetailData(stat: MemberStats, category: RankingCategory): boolean {
   if (category === "sand_save") return stat.sand_save_rate !== null;
   if (category === "driving_distance") return stat.avg_driving_distance !== null;
+  if (category === "putt_make_1m") return stat.putt_make_1m !== null;
+  if (category === "putt_make_1_2m") return stat.putt_make_1_2m !== null;
+  if (category === "putt_make_2_5m") return stat.putt_make_2_5m !== null;
+  if (category === "putt_make_5_10m") return stat.putt_make_5_10m !== null;
+  if (category === "putt_make_10m_plus") return stat.putt_make_10m_plus !== null;
+  if (category === "gir_dist_100") return stat.gir_dist_100 !== null;
+  if (category === "gir_dist_100_125") return stat.gir_dist_100_125 !== null;
+  if (category === "gir_dist_125_150") return stat.gir_dist_125_150 !== null;
+  if (category === "gir_dist_150_175") return stat.gir_dist_150_175 !== null;
+  if (category === "gir_dist_175_200") return stat.gir_dist_175_200 !== null;
+  if (category === "gir_dist_200_plus") return stat.gir_dist_200_plus !== null;
   return true;
 }
 
@@ -431,20 +522,20 @@ function parseShots(shotsDetail: unknown[] | null): ParsedShot[] {
 }
 
 const PUTT_DISTANCE_BUCKETS = [
-  { label: "~3ft", min: 0, max: 3 },
-  { label: "3-5ft", min: 3, max: 5 },
-  { label: "5-10ft", min: 5, max: 10 },
-  { label: "10-15ft", min: 10, max: 15 },
-  { label: "15ft+", min: 15, max: Infinity },
+  { key: "putt_make_1m" as const, label: "~1m", min: 0, max: 1 },
+  { key: "putt_make_1_2m" as const, label: "1-2m", min: 1, max: 2 },
+  { key: "putt_make_2_5m" as const, label: "2-5m", min: 2, max: 5 },
+  { key: "putt_make_5_10m" as const, label: "5-10m", min: 5, max: 10 },
+  { key: "putt_make_10m_plus" as const, label: "10m+", min: 10, max: Infinity },
 ];
 
 const GIR_DISTANCE_BUCKETS = [
-  { label: "~100yd", min: 0, max: 100 },
-  { label: "100-125", min: 100, max: 125 },
-  { label: "125-150", min: 125, max: 150 },
-  { label: "150-175", min: 150, max: 175 },
-  { label: "175-200", min: 175, max: 200 },
-  { label: "200yd+", min: 200, max: Infinity },
+  { key: "gir_dist_100" as const, label: "~100yd", min: 0, max: 100 },
+  { key: "gir_dist_100_125" as const, label: "100-125yd", min: 100, max: 125 },
+  { key: "gir_dist_125_150" as const, label: "125-150yd", min: 125, max: 150 },
+  { key: "gir_dist_150_175" as const, label: "150-175yd", min: 150, max: 175 },
+  { key: "gir_dist_175_200" as const, label: "175-200yd", min: 175, max: 200 },
+  { key: "gir_dist_200_plus" as const, label: "200yd+", min: 200, max: Infinity },
 ];
 
 /**

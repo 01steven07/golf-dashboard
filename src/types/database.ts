@@ -149,6 +149,19 @@ export interface MemberStats {
   gir_from_rough: number;
   sand_save_rate: number | null;
   avg_driving_distance: number | null;
+  // パット距離別カップイン率 (requires shots_detail)
+  putt_make_1m: number | null;
+  putt_make_1_2m: number | null;
+  putt_make_2_5m: number | null;
+  putt_make_5_10m: number | null;
+  putt_make_10m_plus: number | null;
+  // 距離別パーオン率 (requires shots_detail)
+  gir_dist_100: number | null;
+  gir_dist_100_125: number | null;
+  gir_dist_125_150: number | null;
+  gir_dist_150_175: number | null;
+  gir_dist_175_200: number | null;
+  gir_dist_200_plus: number | null;
 }
 
 /** 距離帯別の成功率データ */
