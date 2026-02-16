@@ -82,7 +82,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">総合ランキング</h2>
-      <p className="text-sm text-muted-foreground">直近5ラウンドの成績で集計</p>
+      <p className="text-sm text-muted-foreground">直近10ラウンドの成績で集計</p>
 
       {/* Group selector (upper row) */}
       <div className="flex gap-1 overflow-x-auto pb-1">

@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { authFetch } from "@/lib/api-client";
 import { MemberStats, DetailedMemberStats, ClubType, Gender, PreferredTee } from "@/types/database";
 import { calculateMemberStats, calculateDetailedStats, DetailedRoundData } from "@/utils/ranking";
-import { calculateRadarData, calculateExtendedRadarData, calculateHoleAnalysis, calculateHoleScoreTrend, RadarChartData, HoleAnalysis, HoleScoreTrend } from "@/utils/stats";
+import { calculateRadarData, calculateExtendedRadarData, calculateHoleAnalysis, RadarChartData, HoleAnalysis } from "@/utils/stats";
 import { StatGroupSection } from "@/components/stat-group-section";
 import { StatCard } from "@/components/stat-card";
 import { getClubComparison, ClubComparison } from "@/utils/club-stats";
@@ -27,15 +27,11 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
-  Cell,
   LineChart,
   Line,
-  ReferenceLine,
   CartesianGrid,
 } from "recharts";
 
@@ -56,7 +52,7 @@ function MyStatsContent() {
   const [detailedStats, setDetailedStats] = useState<DetailedMemberStats | null>(null);
   const [radarMode, setRadarMode] = useState<"basic" | "extended">("basic");
   const [holeAnalysis, setHoleAnalysis] = useState<HoleAnalysis[]>([]);
-  const [holeScoreTrend, setHoleScoreTrend] = useState<HoleScoreTrend[]>([]);
+  const [roundScoreTrend, setRoundScoreTrend] = useState<{ date: string; score: number; par: number }[]>([]);
   const [advice, setAdvice] = useState<string>("");
   const [isLoadingAdvice, setIsLoadingAdvice] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,11 +162,31 @@ function MyStatsContent() {
         setExtendedRadarData(calculateExtendedRadarData(myMemberStats, calculatedStats));
       }
 
-      // Calculate hole analysis and trend for my rounds
-      const myRounds = roundData.filter((r) => r.member_id === member?.id).slice(0, 5);
+      // Calculate hole analysis for my rounds (used by AI advisor)
+      const myRounds = roundData.filter((r) => r.member_id === member?.id).slice(0, 10);
       const allMyScores = myRounds.flatMap((r) => r.scores);
       setHoleAnalysis(calculateHoleAnalysis(allMyScores));
-      setHoleScoreTrend(calculateHoleScoreTrend(allMyScores));
+
+      // Calculate round score trend (last 10 rounds)
+      const myRawRounds = (rounds ?? [])
+        .filter((r) => r.member_id === member?.id)
+        .slice(0, 10);
+      const trend = myRawRounds
+        .map((r) => {
+          const scoreArr = r.scores as { score: number; par: number; hole_number: number }[];
+          const holeCount = scoreArr.length;
+          const factor = holeCount > 0 && holeCount < 18 ? 18 / holeCount : 1;
+          const rawScore = scoreArr.reduce((sum, s) => sum + s.score, 0);
+          const rawPar = scoreArr.reduce((sum, s) => sum + s.par, 0);
+          const d = new Date(r.date as string);
+          return {
+            date: `${d.getMonth() + 1}/${d.getDate()}`,
+            score: Math.round(rawScore * factor),
+            par: Math.round(rawPar * factor),
+          };
+        })
+        .reverse();
+      setRoundScoreTrend(trend);
 
       // Calculate detailed stats (shots_detail dependent)
       const myDetailedRounds: DetailedRoundData[] = myRounds.map((r) => ({
@@ -252,8 +268,6 @@ function MyStatsContent() {
     const c = clubComparisons[cat];
     return c ? { clubAvg: c.clubAvg, rank: c.rank, totalMembers: c.totalMembers } : {};
   };
-
-  const barColors = ["#22c55e", "#3b82f6", "#f59e0b"];
 
   if (isLoading) {
     return (
@@ -383,7 +397,7 @@ function MyStatsContent() {
         </TabsList>
 
         <TabsContent value="overall" className="space-y-6 mt-4">
-          <p className="text-xs text-muted-foreground">直近5ラウンド</p>
+          <p className="text-xs text-muted-foreground">直近10ラウンド</p>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
@@ -443,25 +457,40 @@ function MyStatsContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>ホール別分析</CardTitle>
-                <p className="text-xs text-muted-foreground">Par別の平均スコア</p>
+                <CardTitle>スコア推移</CardTitle>
+                <p className="text-xs text-muted-foreground">直近10ラウンドのスコア推移（18H換算）</p>
               </CardHeader>
               <CardContent className="h-72">
-                {holeAnalysis.some((h) => h.count > 0) ? (
+                {roundScoreTrend.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={holeAnalysis} layout="vertical">
-                      <XAxis type="number" domain={[0, "auto"]} />
-                      <YAxis type="category" dataKey="parType" width={50} />
+                    <LineChart data={roundScoreTrend}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={["auto", "auto"]} />
                       <Tooltip
-                        formatter={(value) => [Number(value).toFixed(2), "平均スコア"]}
-                        labelFormatter={(label) => label}
+                        formatter={(value, name) => [
+                          value,
+                          name === "score" ? "スコア" : "パー",
+                        ]}
                       />
-                      <Bar dataKey="avgScore" radius={[0, 4, 4, 0]}>
-                        {holeAnalysis.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={barColors[index]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
+                      <Line
+                        type="monotone"
+                        dataKey="par"
+                        stroke="#9ca3af"
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name="par"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: "#22c55e" }}
+                        activeDot={{ r: 6 }}
+                        name="score"
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -471,52 +500,6 @@ function MyStatsContent() {
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>ホール別スコア推移</CardTitle>
-              <p className="text-xs text-muted-foreground">各ホールの平均オーバーパー（直近5ラウンド）</p>
-            </CardHeader>
-            <CardContent className="h-72">
-              {holeScoreTrend.some((h) => h.count > 0) ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={holeScoreTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="hole"
-                      tick={{ fontSize: 12 }}
-                      label={{ value: "ホール", position: "insideBottomRight", offset: -5, fontSize: 11 }}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(v: number) => (v > 0 ? `+${v}` : `${v}`)}
-                      label={{ value: "±パー", angle: -90, position: "insideLeft", fontSize: 11 }}
-                    />
-                    <Tooltip
-                      formatter={(value) => {
-                        const v = Number(value);
-                        return [(v > 0 ? "+" : "") + v.toFixed(2), "平均オーバーパー"];
-                      }}
-                      labelFormatter={(label) => `Hole ${label}`}
-                    />
-                    <ReferenceLine y={0} stroke="#888" strokeDasharray="3 3" label={{ value: "Par", position: "right", fontSize: 11 }} />
-                    <Line
-                      type="monotone"
-                      dataKey="avgOverPar"
-                      stroke="#22c55e"
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: "#22c55e" }}
-                      activeDot={{ r: 5 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  データが不足しています
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
