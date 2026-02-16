@@ -349,6 +349,14 @@ function DetailedInputContent() {
         courseId = existingCourse?.id ?? null;
       }
 
+      // サブコース名を解決（out/in）
+      const subCourseNames = roundData.subCourseIds.map((scId) => {
+        const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+        return sc?.name ?? null;
+      });
+      const outCourseName = subCourseNames[0] ?? null;
+      const inCourseName = subCourseNames[1] ?? null;
+
       // rounds テーブルに insert
       const { data: round, error: roundError } = await supabase
         .from("rounds")
@@ -357,6 +365,8 @@ function DetailedInputContent() {
           course_id: courseId,
           date: roundData.date,
           tee_color: roundData.teeColor,
+          out_course_name: outCourseName,
+          in_course_name: inCourseName,
         })
         .select()
         .single();
