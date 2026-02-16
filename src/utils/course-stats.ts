@@ -82,17 +82,20 @@ export function calculateCourseBasicStats(rounds: RoundScores[]): CourseBasicSta
     return { avgScore: 0, avgPutts: 0, girRate: 0, fairwayKeepRate: 0, roundCount: 0 };
   }
 
-  let totalScore = 0;
-  let totalPutts = 0;
+  let normalizedScoreSum = 0;
+  let normalizedPuttsSum = 0;
   let totalHoles = 0;
   let girCount = 0;
   let fairwayKeepCount = 0;
   let fairwayHoles = 0;
 
   for (const round of rounds) {
+    let roundScore = 0;
+    let roundPutts = 0;
+
     for (const s of round.scores) {
-      totalScore += s.score;
-      totalPutts += s.putts;
+      roundScore += s.score;
+      roundPutts += s.putts;
       totalHoles++;
 
       const strokesBeforePutt = s.score - s.putts;
@@ -103,11 +106,19 @@ export function calculateCourseBasicStats(rounds: RoundScores[]): CourseBasicSta
         if (s.fairway_result === "keep") fairwayKeepCount++;
       }
     }
+
+    // 18H換算で正規化
+    const holeCount = round.scores.length;
+    if (holeCount > 0) {
+      const factor = 18 / holeCount;
+      normalizedScoreSum += roundScore * factor;
+      normalizedPuttsSum += roundPutts * factor;
+    }
   }
 
   return {
-    avgScore: totalScore / rounds.length,
-    avgPutts: totalPutts / rounds.length,
+    avgScore: normalizedScoreSum / rounds.length,
+    avgPutts: normalizedPuttsSum / rounds.length,
     girRate: totalHoles > 0 ? (girCount / totalHoles) * 100 : 0,
     fairwayKeepRate: fairwayHoles > 0 ? (fairwayKeepCount / fairwayHoles) * 100 : 0,
     roundCount: rounds.length,

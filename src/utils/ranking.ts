@@ -43,13 +43,13 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
 
     if (roundCount === 0) continue;
 
-    let totalScore = 0;
-    let totalPutts = 0;
+    let normalizedScoreSum = 0;
+    let normalizedPuttsSum = 0;
+    let normalizedBirdieSum = 0;
     let totalHoles = 0;
     let girCount = 0;
     let fairwayKeepCount = 0;
     let fairwayHoles = 0; // Par 4, 5 only
-    let birdieCount = 0;
     let scrambleOpportunities = 0;
     let scrambleSuccess = 0;
 
@@ -95,10 +95,15 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
         (a, b) => a.hole_number - b.hole_number
       );
 
+      // Per-round accumulators for 18H normalization
+      let roundScore = 0;
+      let roundPutts = 0;
+      let roundBirdies = 0;
+
       for (let i = 0; i < sortedScores.length; i++) {
         const score = sortedScores[i];
-        totalScore += score.score;
-        totalPutts += score.putts;
+        roundScore += score.score;
+        roundPutts += score.putts;
         totalHoles++;
 
         // GIR: パーオン = (par - 2) 打以内でグリーンに乗った
@@ -116,7 +121,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
 
         // Birdie
         if (score.score < score.par) {
-          birdieCount++;
+          roundBirdies++;
         }
 
         // Scramble: パーオンしなかったがパー以上で上がった
@@ -237,19 +242,28 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
           }
         }
       }
+
+      // 18H換算で正規化（9Hラウンドを18H相当に補正）
+      const holeCount = sortedScores.length;
+      if (holeCount > 0) {
+        const factor = 18 / holeCount;
+        normalizedScoreSum += roundScore * factor;
+        normalizedPuttsSum += roundPutts * factor;
+        normalizedBirdieSum += roundBirdies * factor;
+      }
     }
 
     stats.push({
       member_id: memberId,
       member_name: data.name,
       round_count: roundCount,
-      // Core
-      avg_score: totalScore / roundCount,
-      avg_putts: totalPutts / roundCount,
+      // Core (18H換算で正規化済み)
+      avg_score: normalizedScoreSum / roundCount,
+      avg_putts: normalizedPuttsSum / roundCount,
       gir_rate: totalHoles > 0 ? (girCount / totalHoles) * 100 : 0,
       fairway_keep_rate:
         fairwayHoles > 0 ? (fairwayKeepCount / fairwayHoles) * 100 : 0,
-      avg_birdies: birdieCount / roundCount,
+      avg_birdies: normalizedBirdieSum / roundCount,
       scramble_rate:
         scrambleOpportunities > 0
           ? (scrambleSuccess / scrambleOpportunities) * 100
