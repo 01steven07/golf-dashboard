@@ -200,13 +200,28 @@ function MyStatsContent() {
     setAdvice("");
 
     try {
+      const n = allStats.length;
+      const avgOf = (fn: (s: MemberStats) => number) =>
+        allStats.reduce((sum, s) => sum + fn(s), 0) / n;
+
       const allStatsAvg = {
-        avg_score: allStats.reduce((sum, s) => sum + s.avg_score, 0) / allStats.length,
-        avg_putts: allStats.reduce((sum, s) => sum + s.avg_putts, 0) / allStats.length,
-        gir_rate: allStats.reduce((sum, s) => sum + s.gir_rate, 0) / allStats.length,
-        fairway_keep_rate:
-          allStats.reduce((sum, s) => sum + s.fairway_keep_rate, 0) / allStats.length,
-        scramble_rate: allStats.reduce((sum, s) => sum + s.scramble_rate, 0) / allStats.length,
+        avg_score: avgOf((s) => s.avg_score),
+        avg_putts: avgOf((s) => s.avg_putts),
+        gir_rate: avgOf((s) => s.gir_rate),
+        fairway_keep_rate: avgOf((s) => s.fairway_keep_rate),
+        avg_birdies: avgOf((s) => s.avg_birdies),
+        scramble_rate: avgOf((s) => s.scramble_rate),
+        par3_avg: avgOf((s) => s.par3_avg),
+        par4_avg: avgOf((s) => s.par4_avg),
+        par5_avg: avgOf((s) => s.par5_avg),
+        bounce_back_rate: avgOf((s) => s.bounce_back_rate),
+        bogey_avoidance: avgOf((s) => s.bogey_avoidance),
+        double_bogey_avoidance: avgOf((s) => s.double_bogey_avoidance),
+        putts_per_gir: avgOf((s) => s.putts_per_gir),
+        three_putt_avoidance: avgOf((s) => s.three_putt_avoidance),
+        one_putt_rate: avgOf((s) => s.one_putt_rate),
+        gir_from_fairway: avgOf((s) => s.gir_from_fairway),
+        gir_from_rough: avgOf((s) => s.gir_from_rough),
       };
 
       const res = await fetch("/api/advice", {
@@ -216,6 +231,7 @@ function MyStatsContent() {
           stats: myStats,
           holeAnalysis,
           allStatsAvg,
+          detailedStats,
         }),
       });
 
