@@ -33,7 +33,7 @@ export function getScoreSymbol(score: number, par: number): ScoreSymbolInfo {
     return { label: "Birdie", symbol: "○", color: "text-blue-700", bgColor: "bg-blue-100" };
   }
   if (diff === 0) {
-    return { label: "Par", symbol: "-", color: "text-green-700", bgColor: "bg-green-100" };
+    return { label: "Par", symbol: "-", color: "text-green-700", bgColor: "" };
   }
   if (diff === 1) {
     return { label: "Bogey", symbol: "△", color: "text-orange-700", bgColor: "bg-orange-100" };

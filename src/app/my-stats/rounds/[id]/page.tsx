@@ -3,17 +3,23 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
-import { Score } from "@/types/database";
+import { authFetch } from "@/lib/api-client";
+import { Score, FairwayResult } from "@/types/database";
+import { Shot } from "@/types/shot";
 import { calculateRoundSummary, formatRoundDate } from "@/utils/round-stats";
 import { RoundSummaryStats } from "@/components/round-history/round-summary-stats";
 import { ScorecardTable } from "@/components/round-history/scorecard-table";
 import { ScoreDistributionChart } from "@/components/round-history/score-distribution-chart";
+import { HoleSelector } from "@/components/round-history/hole-selector";
+import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
+import { HoleEditForm } from "@/components/round-history/hole-edit-form";
 
 interface RoundDetail {
   id: string;
@@ -25,6 +31,42 @@ interface RoundDetail {
   in_course_name: string | null;
   courses: { id: string; name: string; pref: string | null } | null;
   scores: Score[];
+}
+
+async function fetchRoundData(roundId: string, memberId: string): Promise<RoundDetail> {
+  const { data, error: fetchError } = await supabase
+    .from("rounds")
+    .select(
+      `id, member_id, date, tee_color, weather, out_course_name, in_course_name,
+      courses(id, name, pref),
+      scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
+    )
+    .eq("id", roundId)
+    .single();
+
+  if (fetchError) {
+    throw new Error("ラウンドデータの取得に失敗しました。");
+  }
+
+  if (!data) {
+    throw new Error("ラウンドが見つかりません。");
+  }
+
+  if (data.member_id !== memberId) {
+    throw new Error("このラウンドを閲覧する権限がありません。");
+  }
+
+  return {
+    id: data.id,
+    member_id: data.member_id,
+    date: data.date,
+    tee_color: data.tee_color,
+    weather: data.weather,
+    out_course_name: data.out_course_name,
+    in_course_name: data.in_course_name,
+    courses: data.courses as unknown as { id: string; name: string; pref: string | null } | null,
+    scores: (data.scores as unknown as Score[]) ?? [],
+  };
 }
 
 export default function RoundDetailPage() {
@@ -43,57 +85,70 @@ function RoundDetailContent() {
   const [round, setRound] = useState<RoundDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedHole, setSelectedHole] = useState(1);
 
   useEffect(() => {
     if (!member || !roundId) return;
 
-    async function fetchRound() {
-      const { data, error: fetchError } = await supabase
-        .from("rounds")
-        .select(
-          `id, member_id, date, tee_color, weather, out_course_name, in_course_name,
-          courses(id, name, pref),
-          scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
-        )
-        .eq("id", roundId)
-        .single();
+    let cancelled = false;
 
-      if (fetchError) {
-        console.error("Failed to fetch round:", fetchError);
-        setError("ラウンドデータの取得に失敗しました。");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!data) {
-        setError("ラウンドが見つかりません。");
-        setIsLoading(false);
-        return;
-      }
-
-      // Auth check: only allow viewing own rounds
-      if (data.member_id !== member!.id) {
-        setError("このラウンドを閲覧する権限がありません。");
-        setIsLoading(false);
-        return;
-      }
-
-      setRound({
-        id: data.id,
-        member_id: data.member_id,
-        date: data.date,
-        tee_color: data.tee_color,
-        weather: data.weather,
-        out_course_name: data.out_course_name,
-        in_course_name: data.in_course_name,
-        courses: data.courses as unknown as { id: string; name: string; pref: string | null } | null,
-        scores: (data.scores as unknown as Score[]) ?? [],
+    fetchRoundData(roundId, member.id)
+      .then((data) => {
+        if (!cancelled) {
+          setRound(data);
+          setIsLoading(false);
+          if (data.scores.length > 0) {
+            const first = [...data.scores].sort((a, b) => a.hole_number - b.hole_number)[0];
+            setSelectedHole(first.hole_number);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error("Failed to fetch round:", err);
+          setError(err.message);
+          setIsLoading(false);
+        }
       });
-      setIsLoading(false);
+
+    return () => { cancelled = true; };
+  }, [member, roundId]);
+
+  const refreshRound = async () => {
+    if (!member || !roundId) return;
+    try {
+      const data = await fetchRoundData(roundId, member.id);
+      setRound(data);
+    } catch (err) {
+      console.error("Failed to refresh round:", err);
+    }
+  };
+
+  const handleSaveHole = async (data: {
+    score_id: string;
+    score: number;
+    putts: number;
+    fairway_result: FairwayResult;
+    ob: number;
+    bunker: number;
+    penalty: number;
+    pin_position: string | null;
+    shots_detail: Shot[] | null;
+  }) => {
+    const res = await authFetch(`/api/rounds/${roundId}/scores`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "保存に失敗しました");
     }
 
-    fetchRound();
-  }, [member, roundId]);
+    await refreshRound();
+  };
 
   if (isLoading) {
     return (
@@ -127,6 +182,7 @@ function RoundDetailContent() {
   const scores = round.scores;
   const summary = calculateRoundSummary(scores);
   const courseName = round.courses?.name ?? "不明なコース";
+  const selectedScore = scores.find((s) => s.hole_number === selectedHole);
 
   return (
     <div className="space-y-6">
@@ -140,28 +196,50 @@ function RoundDetailContent() {
       </Link>
 
       {/* Round meta info */}
-      <div>
-        <h2 className="text-xl font-bold">{courseName}</h2>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-sm text-muted-foreground">
-            {formatRoundDate(round.date)}
-          </span>
-          {round.tee_color && (
-            <Badge variant="outline" className="text-xs">
-              {round.tee_color}
-            </Badge>
-          )}
-          {round.weather && (
-            <Badge variant="outline" className="text-xs">
-              {round.weather}
-            </Badge>
-          )}
-          {round.out_course_name && round.in_course_name && (
-            <span className="text-xs text-muted-foreground">
-              {round.out_course_name} / {round.in_course_name}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-bold">{courseName}</h2>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span className="text-sm text-muted-foreground">
+              {formatRoundDate(round.date)}
             </span>
-          )}
+            {round.tee_color && (
+              <Badge variant="outline" className="text-xs">
+                {round.tee_color}
+              </Badge>
+            )}
+            {round.weather && (
+              <Badge variant="outline" className="text-xs">
+                {round.weather}
+              </Badge>
+            )}
+            {round.out_course_name && round.in_course_name && (
+              <span className="text-xs text-muted-foreground">
+                {round.out_course_name} / {round.in_course_name}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Edit toggle button */}
+        <Button
+          variant={isEditMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => setIsEditMode((prev) => !prev)}
+          className={isEditMode ? "bg-green-600 hover:bg-green-700" : ""}
+        >
+          {isEditMode ? (
+            <>
+              <Eye className="w-4 h-4 mr-1" />
+              閲覧モード
+            </>
+          ) : (
+            <>
+              <Pencil className="w-4 h-4 mr-1" />
+              編集
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Summary stats */}
@@ -174,6 +252,40 @@ function RoundDetailContent() {
         </CardHeader>
         <CardContent>
           <ScorecardTable scores={scores} />
+        </CardContent>
+      </Card>
+
+      {/* Hole selector + detail */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            ホール詳細
+            {isEditMode && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                編集モード
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <HoleSelector
+            scores={scores}
+            selectedHole={selectedHole}
+            onSelect={setSelectedHole}
+          />
+
+          {selectedScore && (
+            isEditMode ? (
+              <HoleEditForm
+                key={selectedScore.id}
+                score={selectedScore}
+                onSave={handleSaveHole}
+                onCancel={() => setIsEditMode(false)}
+              />
+            ) : (
+              <HoleDetailCard score={selectedScore} />
+            )
+          )}
         </CardContent>
       </Card>
 
