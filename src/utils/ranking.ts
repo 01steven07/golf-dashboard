@@ -16,7 +16,7 @@ export interface RoundData {
 }
 
 /**
- * 直近5ラウンドのデータから各部員のスタッツを計算する
+ * 直近10ラウンドのデータから各部員のスタッツを計算する
  */
 export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
   // Group rounds by member
@@ -37,8 +37,8 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
   const stats: MemberStats[] = [];
 
   for (const [memberId, data] of memberRounds) {
-    // Take only latest 5 rounds
-    const latestRounds = data.rounds.slice(0, 5);
+    // Take only latest 10 rounds
+    const latestRounds = data.rounds.slice(0, 10);
     const roundCount = latestRounds.length;
 
     if (roundCount === 0) continue;
