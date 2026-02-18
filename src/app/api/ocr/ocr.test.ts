@@ -42,8 +42,8 @@ describe("validateDistance", () => {
   it("should return null for invalid distances", () => {
     expect(validateDistance(0)).toBeNull();
     expect(validateDistance(-100)).toBeNull();
-    expect(validateDistance(701)).toBeNull();
     expect(validateDistance(1000)).toBeNull();
+    expect(validateDistance(1500)).toBeNull();
     expect(validateDistance("350")).toBeNull();
     expect(validateDistance(null)).toBeNull();
     expect(validateDistance(undefined)).toBeNull();
@@ -140,7 +140,7 @@ describe("normalizeOcrScores", () => {
 
   it("should validate and reject invalid distance", () => {
     const input = [
-      { hole_number: 1, distance: 800 }, // Too long
+      { hole_number: 1, distance: 1500 }, // Too long (>999)
       { hole_number: 2, distance: 0 }, // Zero
       { hole_number: 3, distance: -100 }, // Negative
     ];

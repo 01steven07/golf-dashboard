@@ -22,8 +22,8 @@ export interface ValidationError {
 export function validateScores(scores: ScoreInput[]): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // ホール数チェック
-  if (scores.length !== 9 && scores.length !== 18) {
+  // ホール数チェック（1〜36ホール）
+  if (scores.length < 1 || scores.length > 36) {
     errors.push({
       hole_number: 0,
       field: "holes",
@@ -107,11 +107,11 @@ export function validateScores(scores: ScoreInput[]): ValidationError[] {
     }
 
     // 距離の範囲チェック
-    if (s.distance != null && (s.distance < 1 || s.distance > 700)) {
+    if (s.distance != null && (s.distance < 1 || s.distance > 999)) {
       errors.push({
         hole_number: n,
         field: "distance",
-        message: `ホール${n}: 距離は1〜700ydの範囲で入力してください`,
+        message: `ホール${n}: 距離は1〜999ydの範囲で入力してください`,
       });
     }
   }
