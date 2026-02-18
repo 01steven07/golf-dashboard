@@ -25,6 +25,16 @@ import { HoleNavigation } from "./hole-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -139,9 +149,12 @@ interface StepScoringProps {
   isSaving: boolean;
   error: string;
   optionalFields: OptionalFieldSettings;
+  saveConfirm: { warnings: string[] } | null;
   onCurrentHoleChange: (hole: number) => void;
   onUpdateHole: (hole: HoleData) => void;
   onSave: () => void;
+  onSaveConfirm: () => void;
+  onSaveCancel: () => void;
   onReset: () => void;
   onBackToSettings: () => void;
   onSuspend: () => void;
@@ -155,9 +168,12 @@ export function StepScoring({
   isSaving,
   error,
   optionalFields,
+  saveConfirm,
   onCurrentHoleChange,
   onUpdateHole,
   onSave,
+  onSaveConfirm,
+  onSaveCancel,
   onReset,
   onBackToSettings,
   onSuspend,
@@ -656,6 +672,34 @@ export function StepScoring({
           </Button>
         </div>
       </div>
+
+      {/* 保存確認ダイアログ */}
+      <AlertDialog open={saveConfirm !== null} onOpenChange={(open) => { if (!open) onSaveCancel(); }}>
+        <AlertDialogContent className="mx-4 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>保存内容の確認</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                {saveConfirm?.warnings.map((w, i) => (
+                  <p key={i} className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
+                    {w}
+                  </p>
+                ))}
+                <p className="text-sm text-gray-600 pt-1">このまま保存しますか？</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>戻る</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onSaveConfirm}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              保存する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
