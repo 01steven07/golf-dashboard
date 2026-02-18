@@ -20,6 +20,7 @@ import { ScoreDistributionChart } from "@/components/round-history/score-distrib
 import { HoleSelector } from "@/components/round-history/hole-selector";
 import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
 import { HoleEditForm } from "@/components/round-history/hole-edit-form";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface RoundDetail {
   id: string;
@@ -87,6 +88,17 @@ function RoundDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedHole, setSelectedHole] = useState(1);
+  const [pendingSaveData, setPendingSaveData] = useState<{
+    score_id: string;
+    score: number;
+    putts: number;
+    fairway_result: FairwayResult;
+    ob: number;
+    bunker: number;
+    penalty: number;
+    pin_position: string | null;
+    shots_detail: Shot[] | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!member || !roundId) return;
@@ -136,6 +148,14 @@ function RoundDetailContent() {
     pin_position: string | null;
     shots_detail: Shot[] | null;
   }) => {
+    setPendingSaveData(data);
+  };
+
+  const executeSaveHole = async () => {
+    if (!pendingSaveData) return;
+    const data = pendingSaveData;
+    setPendingSaveData(null);
+
     const res = await authFetch(`/api/rounds/${roundId}/scores`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -298,6 +318,16 @@ function RoundDetailContent() {
           <ScoreDistributionChart scores={scores} />
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={pendingSaveData !== null}
+        onOpenChange={(open) => { if (!open) setPendingSaveData(null); }}
+        title="ホールデータを保存しますか？"
+        description="編集内容を保存します。"
+        confirmLabel="保存する"
+        variant="confirm"
+        onConfirm={executeSaveHole}
+      />
     </div>
   );
 }

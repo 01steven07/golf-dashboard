@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Course } from "@/types/database";
 import { Plus, Pencil, Trash2, Loader2, MapPin, Search } from "lucide-react";
 import { authFetch } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const fetchCourses = async () => {
     try {
@@ -54,8 +56,14 @@ export default function CoursesPage() {
     });
   }, [courses, searchQuery]);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`「${name}」を削除しますか？`)) return;
+  const handleDelete = (id: string, name: string) => {
+    setPendingDelete({ id, name });
+  };
+
+  const executeDelete = async () => {
+    if (!pendingDelete) return;
+    const { id } = pendingDelete;
+    setPendingDelete(null);
 
     setDeletingId(id);
     try {
@@ -167,6 +175,16 @@ export default function CoursesPage() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+        title="コースを削除しますか？"
+        description={pendingDelete ? `「${pendingDelete.name}」を削除します。この操作は取り消せません。` : ""}
+        confirmLabel="削除する"
+        variant="destructive"
+        onConfirm={executeDelete}
+      />
     </div>
   );
 }

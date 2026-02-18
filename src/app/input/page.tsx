@@ -16,6 +16,7 @@ import { Course, FairwayResult } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { getScoreSymbol, getFairwaySymbol } from "@/utils/golf-symbols";
 import { validateScores } from "@/utils/score-validation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Step = "select" | "upload" | "processing" | "confirm";
 
@@ -81,6 +82,8 @@ function InputContent() {
   const [courseSearchQuery, setCourseSearchQuery] = useState<string>("");
   const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const courseDropdownRef = useRef<HTMLDivElement>(null);
   const isDirty = useRef(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -487,7 +490,7 @@ function InputContent() {
               <span>前回の入力内容を復元しました</span>
               <button
                 type="button"
-                onClick={discardOcrDraft}
+                onClick={() => setShowDiscardDialog(true)}
                 className="text-blue-600 underline text-xs ml-2 whitespace-nowrap"
               >
                 破棄する
@@ -729,7 +732,7 @@ function InputContent() {
                             <Input
                               type="number"
                               min={1}
-                              max={700}
+                              max={999}
                               value={s.distance ?? ""}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -825,18 +828,11 @@ function InputContent() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => {
-                clearOcrDraft();
-                isDirty.current = false;
-                setStep("select");
-                setImageFile(null);
-                setImagePreview(null);
-                setOcrResult(null);
-              }}
+              onClick={() => setShowDiscardDialog(true)}
             >
               やり直す
             </Button>
-            <Button className="flex-1" onClick={handleSave} disabled={isSaving}>
+            <Button className="flex-1" onClick={() => setShowSaveDialog(true)} disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -847,6 +843,40 @@ function InputContent() {
               )}
             </Button>
           </div>
+
+          <ConfirmDialog
+            open={showDiscardDialog}
+            onOpenChange={setShowDiscardDialog}
+            title="入力内容を破棄しますか？"
+            description="現在の入力内容はすべて失われます。この操作は取り消せません。"
+            confirmLabel="破棄する"
+            variant="destructive"
+            onConfirm={() => {
+              setShowDiscardDialog(false);
+              discardOcrDraft();
+              setImageFile(null);
+              setImagePreview(null);
+              setOcrResult(null);
+            }}
+          />
+
+          <ConfirmDialog
+            open={showSaveDialog}
+            onOpenChange={setShowSaveDialog}
+            title="スコアを保存しますか？"
+            confirmLabel="保存する"
+            variant="confirm"
+            onConfirm={() => {
+              setShowSaveDialog(false);
+              handleSave();
+            }}
+          >
+            <div className="mt-2 space-y-1 text-sm">
+              <p>スコア: <span className="font-bold">{totalScore}</span> ({totalScore - totalPar >= 0 ? "+" : ""}{totalScore - totalPar})</p>
+              <p>パット: <span className="font-bold">{totalPutts}</span></p>
+              <p>FW Keep: <span className="font-bold">{par4or5Count > 0 ? `${Math.round((fwKeepCount / par4or5Count) * 100)}%` : "-"}</span></p>
+            </div>
+          </ConfirmDialog>
         </>
       )}
     </div>

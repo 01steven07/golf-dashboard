@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Shield, ShieldOff, Trash2 } from "lucide-react";
 import { Member } from "@/types/database";
 import { authFetch } from "@/lib/api-client";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type MemberWithCreatedAt = Member & { created_at: string };
 
@@ -24,6 +25,7 @@ export default function AdminMembersPage() {
   const [members, setMembers] = useState<MemberWithCreatedAt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<MemberWithCreatedAt | null>(null);
 
   const fetchMembers = useCallback(async () => {
     try {
@@ -75,15 +77,20 @@ export default function AdminMembersPage() {
     }
   };
 
-  const handleDelete = async (member: MemberWithCreatedAt) => {
-    if (!confirm(`${member.name} を削除しますか？この操作は取り消せません。`))
-      return;
+  const handleDelete = (member: MemberWithCreatedAt) => {
+    setPendingDelete(member);
+  };
+
+  const executeDelete = async () => {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    setPendingDelete(null);
 
     try {
       const res = await authFetch("/api/admin/members", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: member.id }),
+        body: JSON.stringify({ memberId: target.id }),
       });
 
       if (!res.ok) {
@@ -92,7 +99,7 @@ export default function AdminMembersPage() {
         return;
       }
 
-      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+      setMembers((prev) => prev.filter((m) => m.id !== target.id));
     } catch {
       alert("削除に失敗しました");
     }
@@ -216,6 +223,15 @@ export default function AdminMembersPage() {
             )}
           </CardContent>
         </Card>
+        <ConfirmDialog
+          open={pendingDelete !== null}
+          onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+          title="部員を削除しますか？"
+          description={pendingDelete ? `${pendingDelete.name} を削除します。この操作は取り消せません。` : ""}
+          confirmLabel="削除する"
+          variant="destructive"
+          onConfirm={executeDelete}
+        />
       </div>
     </RequireAdmin>
   );
