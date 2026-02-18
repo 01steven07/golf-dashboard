@@ -13,7 +13,7 @@ export const STAT_GROUPS: StatGroupDef[] = [
   { key: "putting", label: "パッティング", description: "パット関連の詳細分析" },
   { key: "shot", label: "ショット", description: "ショット関連の詳細分析" },
   { key: "putt_distance", label: "パット距離別", description: "距離別カップイン率" },
-  { key: "gir_distance", label: "パーオン距離別", description: "距離別パーオン率" },
+  { key: "gir_distance", label: "グリーンオン距離別", description: "距離別グリーンオン率" },
 ];
 
 /** フォーマット種別 */
@@ -285,11 +285,11 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
     rankable: true,
   },
 
-  // Group F: パーオン距離別
+  // Group F: グリーンオン距離別
   {
     key: "gir_dist_100",
     label: "~100yd",
-    description: "100yd以内からのパーオン率",
+    description: "100yd以内からのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
@@ -299,7 +299,7 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
   {
     key: "gir_dist_100_125",
     label: "100-125yd",
-    description: "100-125ydからのパーオン率",
+    description: "100-125ydからのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
@@ -309,7 +309,7 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
   {
     key: "gir_dist_125_150",
     label: "125-150yd",
-    description: "125-150ydからのパーオン率",
+    description: "125-150ydからのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
@@ -319,7 +319,7 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
   {
     key: "gir_dist_150_175",
     label: "150-175yd",
-    description: "150-175ydからのパーオン率",
+    description: "150-175ydからのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
@@ -329,7 +329,7 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
   {
     key: "gir_dist_175_200",
     label: "175-200yd",
-    description: "175-200ydからのパーオン率",
+    description: "175-200ydからのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
@@ -339,7 +339,7 @@ export const STAT_DEFINITIONS: StatDefinition[] = [
   {
     key: "gir_dist_200_plus",
     label: "200yd+",
-    description: "200yd以上からのパーオン率",
+    description: "200yd以上からのグリーンオン率",
     group: "gir_distance",
     format: "percent",
     lowerIsBetter: false,
