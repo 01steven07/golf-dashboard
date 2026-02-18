@@ -76,10 +76,10 @@ export function validatePar(par: unknown): 3 | 4 | 5 | null {
 }
 
 /**
- * 距離のバリデーション（1-700ヤード）
+ * 距離のバリデーション（1-999ヤード）
  */
 export function validateDistance(distance: unknown): number | null {
-  if (typeof distance === "number" && distance > 0 && distance <= 700) {
+  if (typeof distance === "number" && distance > 0 && distance <= 999) {
     return Math.round(distance);
   }
   return null;
