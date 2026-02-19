@@ -22,4 +22,12 @@ describe("getSectionLabels", () => {
   it("36H（追加IN, IN）: OUT, IN, IN, IN を返す", () => {
     expect(getSectionLabels(["IN", "IN"])).toEqual(["OUT", "IN", "IN", "IN"]);
   });
+
+  it("サブコース名（東・西）: OUT, IN, 西 を返す", () => {
+    expect(getSectionLabels(["西"])).toEqual(["OUT", "IN", "西"]);
+  });
+
+  it("36H サブコース名: OUT, IN, 東, 南 を返す", () => {
+    expect(getSectionLabels(["東", "南"])).toEqual(["OUT", "IN", "東", "南"]);
+  });
 });

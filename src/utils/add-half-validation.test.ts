@@ -42,14 +42,14 @@ describe("validateAddHalfInput: 基本", () => {
     expect(result.error).toContain("スコアデータは必須");
   });
 
-  it("無効なcourse_label → エラー", () => {
-    const result = validateAddHalfInput(makeValidScores(9), 18, "EXTRA");
+  it("空文字のcourse_label → エラー", () => {
+    const result = validateAddHalfInput(makeValidScores(9), 18, "");
     expect(result.valid).toBe(false);
     expect(result.error).toContain("コースラベル");
   });
 
-  it("空文字のcourse_label → エラー", () => {
-    const result = validateAddHalfInput(makeValidScores(9), 18, "");
+  it("スペースのみのcourse_label → エラー", () => {
+    const result = validateAddHalfInput(makeValidScores(9), 18, "  ");
     expect(result.valid).toBe(false);
   });
 
@@ -61,6 +61,12 @@ describe("validateAddHalfInput: 基本", () => {
   it("INラベル → valid", () => {
     const result = validateAddHalfInput(makeValidScores(9), 18, "IN");
     expect(result.valid).toBe(true);
+  });
+
+  it("任意のサブコース名（東・西等） → valid", () => {
+    expect(validateAddHalfInput(makeValidScores(9), 18, "東").valid).toBe(true);
+    expect(validateAddHalfInput(makeValidScores(9), 18, "西").valid).toBe(true);
+    expect(validateAddHalfInput(makeValidScores(9), 18, "南").valid).toBe(true);
   });
 });
 

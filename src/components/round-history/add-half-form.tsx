@@ -18,11 +18,10 @@ export interface HoleInput {
   distance: number | null;
 }
 
-export type CourseLabel = "OUT" | "IN";
-
 interface AddHalfFormProps {
   startHoleNumber: number;
-  onSubmit: (scores: HoleInput[], courseLabel: CourseLabel) => Promise<void>;
+  subCourseNames: string[];
+  onSubmit: (scores: HoleInput[], courseLabel: string) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -49,10 +48,13 @@ function createDefaultHole(): HoleInput {
 
 export function AddHalfForm({
   startHoleNumber,
+  subCourseNames,
   onSubmit,
   onCancel,
 }: AddHalfFormProps) {
-  const [courseLabel, setCourseLabel] = useState<CourseLabel>("OUT");
+  const [courseLabel, setCourseLabel] = useState<string>(
+    subCourseNames.length > 0 ? subCourseNames[0] : ""
+  );
   const [holes, setHoles] = useState<HoleInput[]>(() =>
     Array.from({ length: 9 }, () => createDefaultHole())
   );
@@ -102,25 +104,27 @@ export function AddHalfForm({
   return (
     <div className="space-y-4 p-4">
       {/* Course label selector */}
-      <div>
-        <Label className="text-xs mb-2 block">コース</Label>
-        <div className="flex gap-2">
-          {(["OUT", "IN"] as const).map((label) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => setCourseLabel(label)}
-              className={`flex-1 py-2 text-sm font-bold rounded border transition-colors ${
-                courseLabel === label
-                  ? "bg-green-600 text-white border-green-600"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      {subCourseNames.length > 0 && (
+        <div>
+          <Label className="text-xs mb-2 block">コース</Label>
+          <div className="flex gap-2 flex-wrap">
+            {subCourseNames.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setCourseLabel(name)}
+                className={`flex-1 min-w-[60px] py-2 text-sm font-bold rounded border transition-colors ${
+                  courseLabel === name
+                    ? "bg-green-600 text-white border-green-600"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Hole input rows */}
       <div className="space-y-3">

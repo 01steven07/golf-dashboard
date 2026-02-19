@@ -30,7 +30,6 @@ import {
 import {
   AddHalfForm,
   HoleInput,
-  CourseLabel,
 } from "@/components/round-history/add-half-form";
 
 interface RoundDetail {
@@ -102,6 +101,7 @@ function RoundDetailContent() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedHole, setSelectedHole] = useState(1);
   const [isAddHalfOpen, setIsAddHalfOpen] = useState(false);
+  const [subCourseNames, setSubCourseNames] = useState<string[]>([]);
   const [pendingSaveData, setPendingSaveData] = useState<{
     score_id: string;
     score: number;
@@ -120,13 +120,24 @@ function RoundDetailContent() {
     let cancelled = false;
 
     fetchRoundData(roundId, member.id)
-      .then((data) => {
+      .then(async (data) => {
         if (!cancelled) {
           setRound(data);
           setIsLoading(false);
           if (data.scores.length > 0) {
             const first = [...data.scores].sort((a, b) => a.hole_number - b.hole_number)[0];
             setSelectedHole(first.hole_number);
+          }
+          // サブコース名を取得
+          if (data.courses?.id) {
+            const { data: subCourses } = await supabase
+              .from("course_sub_courses")
+              .select("name, sort_order")
+              .eq("course_id", data.courses.id)
+              .order("sort_order");
+            if (!cancelled && subCourses) {
+              setSubCourseNames(subCourses.map((sc) => sc.name));
+            }
           }
         }
       })
@@ -184,7 +195,7 @@ function RoundDetailContent() {
     await refreshRound();
   };
 
-  const handleAddHalf = async (scores: HoleInput[], courseLabel: CourseLabel) => {
+  const handleAddHalf = async (scores: HoleInput[], courseLabel: string) => {
     const res = await authFetch(`/api/rounds/${roundId}/scores`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -383,6 +394,7 @@ function RoundDetailContent() {
           </SheetHeader>
           <AddHalfForm
             startHoleNumber={maxHoleNumber + 1}
+            subCourseNames={subCourseNames}
             onSubmit={handleAddHalf}
             onCancel={() => setIsAddHalfOpen(false)}
           />

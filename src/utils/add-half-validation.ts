@@ -33,8 +33,8 @@ export function validateAddHalfInput(
     return { valid: false, error: "スコアデータは必須です" };
   }
 
-  if (!courseLabel || !["OUT", "IN"].includes(courseLabel)) {
-    return { valid: false, error: "コースラベル（OUT/IN）は必須です" };
+  if (!courseLabel || typeof courseLabel !== "string" || courseLabel.trim() === "") {
+    return { valid: false, error: "コースラベルは必須です" };
   }
 
   if (currentMaxHole + scores.length > 36) {
