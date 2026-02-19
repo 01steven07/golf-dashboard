@@ -87,7 +87,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
 
     // Distance-based stats (per-member)
     const puttBuckets = PUTT_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, makes: 0 }));
-    const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, girs: 0 }));
+    const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, greenOns: 0 }));
 
     for (const round of latestRounds) {
       // Sort scores by hole_number for bounce back calculation
@@ -226,15 +226,14 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
             }
           }
 
-          // GIR by approach distance (last approach)
-          if (approachShots.length > 0) {
-            const lastApproach = approachShots[approachShots.length - 1];
-            if (lastApproach.distance > 0) {
-              const isGirForDist = score.score - score.putts <= score.par - 2;
+          // Green-on by approach distance (all approach shots)
+          for (const approach of approachShots) {
+            if (approach.distance > 0) {
+              const isGreenOn = approach.result?.startsWith("on") ?? false;
               for (const bucket of girBuckets) {
-                if (lastApproach.distance > bucket.min && lastApproach.distance <= bucket.max) {
+                if (approach.distance > bucket.min && approach.distance <= bucket.max) {
                   bucket.attempts++;
-                  if (isGirForDist) bucket.girs++;
+                  if (isGreenOn) bucket.greenOns++;
                   break;
                 }
               }
@@ -316,12 +315,12 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
       putt_make_5_10m: puttBuckets[3].attempts > 0 ? (puttBuckets[3].makes / puttBuckets[3].attempts) * 100 : null,
       putt_make_10m_plus: puttBuckets[4].attempts > 0 ? (puttBuckets[4].makes / puttBuckets[4].attempts) * 100 : null,
       // GIR distance stats
-      gir_dist_100: girBuckets[0].attempts > 0 ? (girBuckets[0].girs / girBuckets[0].attempts) * 100 : null,
-      gir_dist_100_125: girBuckets[1].attempts > 0 ? (girBuckets[1].girs / girBuckets[1].attempts) * 100 : null,
-      gir_dist_125_150: girBuckets[2].attempts > 0 ? (girBuckets[2].girs / girBuckets[2].attempts) * 100 : null,
-      gir_dist_150_175: girBuckets[3].attempts > 0 ? (girBuckets[3].girs / girBuckets[3].attempts) * 100 : null,
-      gir_dist_175_200: girBuckets[4].attempts > 0 ? (girBuckets[4].girs / girBuckets[4].attempts) * 100 : null,
-      gir_dist_200_plus: girBuckets[5].attempts > 0 ? (girBuckets[5].girs / girBuckets[5].attempts) * 100 : null,
+      gir_dist_100: girBuckets[0].attempts > 0 ? (girBuckets[0].greenOns / girBuckets[0].attempts) * 100 : null,
+      gir_dist_100_125: girBuckets[1].attempts > 0 ? (girBuckets[1].greenOns / girBuckets[1].attempts) * 100 : null,
+      gir_dist_125_150: girBuckets[2].attempts > 0 ? (girBuckets[2].greenOns / girBuckets[2].attempts) * 100 : null,
+      gir_dist_150_175: girBuckets[3].attempts > 0 ? (girBuckets[3].greenOns / girBuckets[3].attempts) * 100 : null,
+      gir_dist_175_200: girBuckets[4].attempts > 0 ? (girBuckets[4].greenOns / girBuckets[4].attempts) * 100 : null,
+      gir_dist_200_plus: girBuckets[5].attempts > 0 ? (girBuckets[5].greenOns / girBuckets[5].attempts) * 100 : null,
     });
   }
 
@@ -518,6 +517,7 @@ interface ParsedApproachShot {
   type: "approach";
   distance: number;
   lie: string;
+  result?: string;
 }
 
 interface ParsedTeeShot {
@@ -565,7 +565,7 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
   const puttBuckets = PUTT_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, makes: 0 }));
 
   // GIR by approach distance
-  const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, girs: 0 }));
+  const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, greenOns: 0 }));
 
   for (const round of rounds) {
     for (const score of round.scores) {
@@ -615,15 +615,14 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
         }
       }
 
-      // GIR by approach distance: last approach before green
-      if (approachShots.length > 0) {
-        const lastApproach = approachShots[approachShots.length - 1];
-        if (lastApproach.distance > 0) {
-          const isGir = score.score - score.putts <= score.par - 2;
+      // Green-on by approach distance (all approach shots)
+      for (const approach of approachShots) {
+        if (approach.distance > 0) {
+          const isGreenOn = approach.result?.startsWith("on") ?? false;
           for (const bucket of girBuckets) {
-            if (lastApproach.distance > bucket.min && lastApproach.distance <= bucket.max) {
+            if (approach.distance > bucket.min && approach.distance <= bucket.max) {
               bucket.attempts++;
-              if (isGir) bucket.girs++;
+              if (isGreenOn) bucket.greenOns++;
               break;
             }
           }
@@ -644,7 +643,7 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     .filter((b) => b.attempts > 0)
     .map((b) => ({
       label: b.label,
-      rate: (b.girs / b.attempts) * 100,
+      rate: (b.greenOns / b.attempts) * 100,
       count: b.attempts,
     }));
 

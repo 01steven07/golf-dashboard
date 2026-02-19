@@ -629,7 +629,7 @@ function MyStatsContent() {
               {detailedStats && detailedStats.gir_by_distance.length > 0 && (
                 <DistanceRateChart
                   data={detailedStats.gir_by_distance}
-                  title="距離別パーオン率"
+                  title="距離別グリーンオン率"
                   color="#22c55e"
                 />
               )}
