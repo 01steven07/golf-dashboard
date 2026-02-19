@@ -157,3 +157,111 @@ export async function PATCH(
     );
   }
 }
+
+// POST: 追加ハーフのスコアを一括挿入
+import {
+  validateAddHalfInput,
+  buildScoreRecords,
+  AddHalfScoreInput,
+} from "@/utils/add-half-validation";
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAuth(request);
+  if (isAuthError(auth)) return auth;
+
+  try {
+    const { id: roundId } = await params;
+    const body = await request.json();
+    const { scores, course_label } = body as {
+      scores: AddHalfScoreInput[];
+      course_label: string;
+    };
+
+    // ラウンドの所有者チェック
+    const { data: round, error: roundError } = await supabase
+      .from("rounds")
+      .select("id, member_id, ext_course_labels")
+      .eq("id", roundId)
+      .single();
+
+    if (roundError || !round) {
+      return NextResponse.json(
+        { error: "ラウンドが見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    if (round.member_id !== auth.id) {
+      return NextResponse.json(
+        { error: "このラウンドを編集する権限がありません" },
+        { status: 403 }
+      );
+    }
+
+    // 既存スコアの最大ホール番号を取得
+    const { data: existingScores, error: existingError } = await supabase
+      .from("scores")
+      .select("hole_number")
+      .eq("round_id", roundId)
+      .order("hole_number", { ascending: false })
+      .limit(1);
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: "既存スコアの取得に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    const maxHole =
+      existingScores && existingScores.length > 0
+        ? existingScores[0].hole_number
+        : 0;
+
+    // バリデーション
+    const validation = validateAddHalfInput(scores, maxHole, course_label);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    // レコード構築 & 挿入
+    const records = buildScoreRecords(scores, roundId, maxHole);
+
+    const { data: insertedScores, error: insertError } = await supabase
+      .from("scores")
+      .insert(records)
+      .select();
+
+    if (insertError) {
+      console.error("Insert scores error:", insertError);
+      return NextResponse.json(
+        { error: "スコアの追加に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    // ext_course_labels を更新
+    const currentLabels: string[] = (round.ext_course_labels as string[]) ?? [];
+    const updatedLabels = [...currentLabels, course_label];
+
+    const { error: updateError } = await supabase
+      .from("rounds")
+      .update({ ext_course_labels: updatedLabels })
+      .eq("id", roundId);
+
+    if (updateError) {
+      console.error("Update ext_course_labels error:", updateError);
+    }
+
+    return NextResponse.json({ scores: insertedScores }, { status: 201 });
+  } catch (error) {
+    console.error("Add scores error:", error);
+    return NextResponse.json(
+      { error: "スコアの追加に失敗しました" },
+      { status: 500 }
+    );
+  }
+}

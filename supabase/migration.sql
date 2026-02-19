@@ -100,8 +100,11 @@ CREATE TABLE rounds (
   image_url TEXT,
   out_course_name TEXT,
   in_course_name TEXT,
+  ext_course_labels JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+COMMENT ON COLUMN rounds.ext_course_labels IS 'Labels for additional half-rounds beyond 18H, e.g. ["OUT"] for 27H or ["OUT","IN"] for 36H';
 
 -- ==========================================
 -- Scores table (1 row per hole)

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Pencil, Eye } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Eye, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,17 @@ import { HoleSelector } from "@/components/round-history/hole-selector";
 import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
 import { HoleEditForm } from "@/components/round-history/hole-edit-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  AddHalfForm,
+  HoleInput,
+  CourseLabel,
+} from "@/components/round-history/add-half-form";
 
 interface RoundDetail {
   id: string;
@@ -30,6 +41,7 @@ interface RoundDetail {
   weather: string | null;
   out_course_name: string | null;
   in_course_name: string | null;
+  ext_course_labels: string[];
   courses: { id: string; name: string; pref: string | null } | null;
   scores: Score[];
 }
@@ -38,7 +50,7 @@ async function fetchRoundData(roundId: string, memberId: string): Promise<RoundD
   const { data, error: fetchError } = await supabase
     .from("rounds")
     .select(
-      `id, member_id, date, tee_color, weather, out_course_name, in_course_name,
+      `id, member_id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels,
       courses(id, name, pref),
       scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
     )
@@ -65,6 +77,7 @@ async function fetchRoundData(roundId: string, memberId: string): Promise<RoundD
     weather: data.weather,
     out_course_name: data.out_course_name,
     in_course_name: data.in_course_name,
+    ext_course_labels: (data.ext_course_labels as string[]) ?? [],
     courses: data.courses as unknown as { id: string; name: string; pref: string | null } | null,
     scores: (data.scores as unknown as Score[]) ?? [],
   };
@@ -88,6 +101,7 @@ function RoundDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedHole, setSelectedHole] = useState(1);
+  const [isAddHalfOpen, setIsAddHalfOpen] = useState(false);
   const [pendingSaveData, setPendingSaveData] = useState<{
     score_id: string;
     score: number;
@@ -170,6 +184,22 @@ function RoundDetailContent() {
     await refreshRound();
   };
 
+  const handleAddHalf = async (scores: HoleInput[], courseLabel: CourseLabel) => {
+    const res = await authFetch(`/api/rounds/${roundId}/scores`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scores, course_label: courseLabel }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "保存に失敗しました");
+    }
+
+    setIsAddHalfOpen(false);
+    await refreshRound();
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -203,6 +233,10 @@ function RoundDetailContent() {
   const summary = calculateRoundSummary(scores);
   const courseName = round.courses?.name ?? "不明なコース";
   const selectedScore = scores.find((s) => s.hole_number === selectedHole);
+  const maxHoleNumber = scores.length > 0
+    ? Math.max(...scores.map((s) => s.hole_number))
+    : 0;
+  const canAddHalf = maxHoleNumber > 0 && maxHoleNumber % 9 === 0 && maxHoleNumber + 9 <= 36;
 
   return (
     <div className="space-y-6">
@@ -241,25 +275,36 @@ function RoundDetailContent() {
           </div>
         </div>
 
-        {/* Edit toggle button */}
-        <Button
-          variant={isEditMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => setIsEditMode((prev) => !prev)}
-          className={isEditMode ? "bg-green-600 hover:bg-green-700" : ""}
-        >
-          {isEditMode ? (
-            <>
-              <Eye className="w-4 h-4 mr-1" />
-              閲覧モード
-            </>
-          ) : (
-            <>
-              <Pencil className="w-4 h-4 mr-1" />
-              編集
-            </>
+        <div className="flex gap-2">
+          {canAddHalf && !isEditMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddHalfOpen(true)}
+            >
+              <PlusCircle className="w-4 h-4 mr-1" />
+              ハーフ追加
+            </Button>
           )}
-        </Button>
+          <Button
+            variant={isEditMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsEditMode((prev) => !prev)}
+            className={isEditMode ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            {isEditMode ? (
+              <>
+                <Eye className="w-4 h-4 mr-1" />
+                閲覧モード
+              </>
+            ) : (
+              <>
+                <Pencil className="w-4 h-4 mr-1" />
+                編集
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Summary stats */}
@@ -271,7 +316,7 @@ function RoundDetailContent() {
           <CardTitle>スコアカード</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScorecardTable scores={scores} />
+          <ScorecardTable scores={scores} extCourseLabels={round.ext_course_labels} />
         </CardContent>
       </Card>
 
@@ -328,6 +373,21 @@ function RoundDetailContent() {
         variant="confirm"
         onConfirm={executeSaveHole}
       />
+
+      <Sheet open={isAddHalfOpen} onOpenChange={setIsAddHalfOpen}>
+        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
+              追加ハーフ入力（H{maxHoleNumber + 1}〜H{maxHoleNumber + 9}）
+            </SheetTitle>
+          </SheetHeader>
+          <AddHalfForm
+            startHoleNumber={maxHoleNumber + 1}
+            onSubmit={handleAddHalf}
+            onCancel={() => setIsAddHalfOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
