@@ -86,8 +86,8 @@ export function PuttInput({ shot, onChange, puttNumber, optionalFields }: PuttIn
           <div className="flex items-center gap-2">
             <Input
               type="number"
-              value={shot.distance}
-              onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
+              value={shot.distance || ""}
+              onChange={(e) => onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })}
               className="w-20 text-center text-lg font-bold"
               min={0}
               max={50}

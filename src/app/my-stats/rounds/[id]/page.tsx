@@ -158,18 +158,23 @@ function RoundDetailContent() {
     const data = pendingSaveData;
     setPendingSaveData(null);
 
-    const res = await authFetch(`/api/rounds/${roundId}/scores`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await authFetch(`/api/rounds/${roundId}/scores`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "保存に失敗しました");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "保存に失敗しました");
+      }
+
+      await refreshRound();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "保存に失敗しました";
+      alert(message);
     }
-
-    await refreshRound();
   };
 
   if (isLoading) {

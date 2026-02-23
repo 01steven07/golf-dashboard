@@ -748,8 +748,8 @@ function InputContent() {
                                 type="number"
                                 min={1}
                                 max={15}
-                                value={s.score}
-                                onChange={(e) => updateScore(i, "score", Number(e.target.value))}
+                                value={s.score || ""}
+                                onChange={(e) => updateScore(i, "score", e.target.value === "" ? 0 : Number(e.target.value))}
                                 className="w-14 h-8 text-center"
                               />
                               {s.score > 0 && (
@@ -764,8 +764,8 @@ function InputContent() {
                               type="number"
                               min={0}
                               max={10}
-                              value={s.putts}
-                              onChange={(e) => updateScore(i, "putts", Number(e.target.value))}
+                              value={s.putts || ""}
+                              onChange={(e) => updateScore(i, "putts", e.target.value === "" ? 0 : Number(e.target.value))}
                               className="w-14 h-8 text-center"
                             />
                           </td>
@@ -788,8 +788,8 @@ function InputContent() {
                               type="number"
                               min={0}
                               max={5}
-                              value={s.ob}
-                              onChange={(e) => updateScore(i, "ob", Number(e.target.value))}
+                              value={s.ob || ""}
+                              onChange={(e) => updateScore(i, "ob", e.target.value === "" ? 0 : Number(e.target.value))}
                               className="w-12 h-8 text-center"
                             />
                           </td>
@@ -798,8 +798,8 @@ function InputContent() {
                               type="number"
                               min={0}
                               max={5}
-                              value={s.bunker}
-                              onChange={(e) => updateScore(i, "bunker", Number(e.target.value))}
+                              value={s.bunker || ""}
+                              onChange={(e) => updateScore(i, "bunker", e.target.value === "" ? 0 : Number(e.target.value))}
                               className="w-12 h-8 text-center"
                             />
                           </td>
@@ -808,8 +808,8 @@ function InputContent() {
                               type="number"
                               min={0}
                               max={5}
-                              value={s.penalty}
-                              onChange={(e) => updateScore(i, "penalty", Number(e.target.value))}
+                              value={s.penalty || ""}
+                              onChange={(e) => updateScore(i, "penalty", e.target.value === "" ? 0 : Number(e.target.value))}
                               className="w-12 h-8 text-center"
                             />
                           </td>

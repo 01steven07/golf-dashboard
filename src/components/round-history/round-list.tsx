@@ -14,6 +14,7 @@ interface RoundData {
   weather: string | null;
   out_course_name: string | null;
   in_course_name: string | null;
+  ext_course_labels: string[];
   courses: { name: string; pref: string | null } | null;
   scores: Score[];
 }
@@ -31,7 +32,7 @@ export function RoundHistoryTab({ memberId }: RoundHistoryTabProps) {
       const { data, error } = await supabase
         .from("rounds")
         .select(
-          `id, date, tee_color, weather, out_course_name, in_course_name,
+          `id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels,
           courses(name, pref),
           scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
         )
@@ -51,6 +52,7 @@ export function RoundHistoryTab({ memberId }: RoundHistoryTabProps) {
         weather: r.weather,
         out_course_name: r.out_course_name,
         in_course_name: r.in_course_name,
+        ext_course_labels: (r.ext_course_labels as string[]) ?? [],
         courses: r.courses as unknown as { name: string; pref: string | null } | null,
         scores: (r.scores as unknown as Score[]) ?? [],
       }));

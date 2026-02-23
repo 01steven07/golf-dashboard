@@ -53,8 +53,8 @@ export function TeeShotInput({ shot, onChange, par, optionalFields }: TeeShotInp
           <div className="flex items-center gap-2">
             <Input
               type="number"
-              value={shot.distance ?? 0}
-              onChange={(e) => onChange({ ...shot, distance: Number(e.target.value) || 0 })}
+              value={shot.distance || ""}
+              onChange={(e) => onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })}
               className="w-24 text-center text-lg font-bold"
               min={0}
               max={300}

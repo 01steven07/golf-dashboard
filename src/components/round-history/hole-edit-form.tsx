@@ -12,6 +12,7 @@ import {
   DEFAULT_OPTIONAL_FIELDS,
 } from "@/types/shot";
 import { parseShots } from "@/utils/course-stats";
+import { computeScoreFromShots, detectShotScoreMismatch } from "@/utils/shot-score-validation";
 import { TeeShotInput } from "@/components/shot-input/tee-shot-input";
 import { ApproachShotInput } from "@/components/shot-input/approach-shot-input";
 import { PuttInput } from "@/components/shot-input/putt-input";
@@ -31,6 +32,7 @@ import {
   Save,
   X,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface HoleEditFormProps {
@@ -74,16 +76,38 @@ function getShotSummary(shot: Shot): string {
 }
 
 export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
-  const [editScore, setEditScore] = useState(score.score);
-  const [editPutts, setEditPutts] = useState(score.putts);
+  const [editScore, setEditScore] = useState(String(score.score));
+  const [editPutts, setEditPutts] = useState(String(score.putts));
   const [editFW, setEditFW] = useState<FairwayResult>(score.fairway_result);
-  const [editOB, setEditOB] = useState(score.ob);
-  const [editBunker, setEditBunker] = useState(score.bunker);
-  const [editPenalty, setEditPenalty] = useState(score.penalty);
+  const [editOB, setEditOB] = useState(String(score.ob));
+  const [editBunker, setEditBunker] = useState(String(score.bunker));
+  const [editPenalty, setEditPenalty] = useState(String(score.penalty));
   const [editPinPosition] = useState<string | null>(score.pin_position);
   const [shots, setShots] = useState<Shot[]>(() => parseShots(score.shots_detail));
   const [expandedShot, setExpandedShot] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const hasShots = shots.length > 0;
+
+  // Auto-calculate score and putts from shot details
+  const ob = Number(editOB) || 0;
+  const penalty = Number(editPenalty) || 0;
+  const { computedScore, computedPutts } = computeScoreFromShots(shots, ob, penalty);
+
+  // Mismatch warnings (when shots exist but saved values differ)
+  const scoreFromInput = hasShots ? computedScore : Number(editScore) || 0;
+  const puttsFromInput = hasShots ? computedPutts : Number(editPutts) || 0;
+  const mismatches = detectShotScoreMismatch(shots, score.score, score.putts, ob, penalty);
+
+  // Sync editScore/editPutts when shots change (so handleSave uses correct values)
+  const prevComputedScore = String(computedScore);
+  const prevComputedPutts = String(computedPutts);
+  if (hasShots && editScore !== prevComputedScore) {
+    setEditScore(prevComputedScore);
+  }
+  if (hasShots && editPutts !== prevComputedPutts) {
+    setEditPutts(prevComputedPutts);
+  }
 
   const addShot = (type: "tee" | "approach" | "putt") => {
     let newShot: Shot;
@@ -125,12 +149,12 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
     try {
       await onSave({
         score_id: score.id,
-        score: editScore,
-        putts: editPutts,
+        score: scoreFromInput,
+        putts: puttsFromInput,
         fairway_result: editFW,
-        ob: editOB,
-        bunker: editBunker,
-        penalty: editPenalty,
+        ob: Number(editOB) || 0,
+        bunker: Number(editBunker) || 0,
+        penalty: Number(editPenalty) || 0,
         pin_position: editPinPosition,
         shots_detail: shots.length > 0 ? shots : null,
       });
@@ -144,27 +168,51 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
 
   return (
     <div className="space-y-4">
+      {/* Mismatch warnings */}
+      {mismatches.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-700 space-y-0.5">
+            {mismatches.map((m) => (
+              <p key={m.field}>{m.message}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Basic info */}
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label className="text-xs">スコア</Label>
-          <Input
-            type="number"
-            min={1}
-            value={editScore}
-            onChange={(e) => setEditScore(Number(e.target.value))}
-            className="h-9"
-          />
+          {hasShots ? (
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm font-medium">
+              {computedScore}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min={1}
+              value={editScore}
+              onChange={(e) => setEditScore(e.target.value)}
+              className="h-9"
+            />
+          )}
         </div>
         <div>
           <Label className="text-xs">パット</Label>
-          <Input
-            type="number"
-            min={0}
-            value={editPutts}
-            onChange={(e) => setEditPutts(Number(e.target.value))}
-            className="h-9"
-          />
+          {hasShots ? (
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm font-medium">
+              {computedPutts}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min={0}
+              value={editPutts}
+              onChange={(e) => setEditPutts(e.target.value)}
+              className="h-9"
+            />
+          )}
         </div>
         <div>
           <Label className="text-xs">FW結果</Label>
@@ -198,7 +246,7 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
             type="number"
             min={0}
             value={editOB}
-            onChange={(e) => setEditOB(Number(e.target.value))}
+            onChange={(e) => setEditOB(e.target.value)}
             className="h-9"
           />
         </div>
@@ -208,7 +256,7 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
             type="number"
             min={0}
             value={editBunker}
-            onChange={(e) => setEditBunker(Number(e.target.value))}
+            onChange={(e) => setEditBunker(e.target.value)}
             className="h-9"
           />
         </div>
@@ -218,7 +266,7 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
             type="number"
             min={0}
             value={editPenalty}
-            onChange={(e) => setEditPenalty(Number(e.target.value))}
+            onChange={(e) => setEditPenalty(e.target.value)}
             className="h-9"
           />
         </div>
@@ -226,7 +274,14 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
 
       {/* Shot add buttons */}
       <div>
-        <Label className="text-xs mb-2 block">ショット詳細</Label>
+        <Label className="text-xs mb-2 block">
+          ショット詳細
+          {hasShots && (
+            <span className="ml-2 text-muted-foreground font-normal">
+              ({shots.length}打 = スコア{computedScore})
+            </span>
+          )}
+        </Label>
         <div className="flex gap-2">
           <Button
             type="button"
