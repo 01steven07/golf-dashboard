@@ -231,6 +231,14 @@ describe("buildScoreRecords", () => {
     expect(records[0].distance).toBe(150);
   });
 
+  it("pin_positionとshots_detailが正しく設定される", () => {
+    const shotsDetail = [{ type: "tee", result: "fairway" }];
+    const scores = [makeValidScore({ pin_position: "center", shots_detail: shotsDetail })];
+    const records = buildScoreRecords(scores, "round-123", 18);
+    expect(records[0].pin_position).toBe("center");
+    expect(records[0].shots_detail).toEqual(shotsDetail);
+  });
+
   it("各フィールドが正しくマッピングされる", () => {
     const scores = [
       makeValidScore({
@@ -257,6 +265,8 @@ describe("buildScoreRecords", () => {
       bunker: 2,
       penalty: 0,
       distance: 480,
+      pin_position: null,
+      shots_detail: null,
     });
   });
 });

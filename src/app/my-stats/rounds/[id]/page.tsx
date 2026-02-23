@@ -21,16 +21,6 @@ import { HoleSelector } from "@/components/round-history/hole-selector";
 import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
 import { HoleEditForm } from "@/components/round-history/hole-edit-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  AddHalfForm,
-  HoleInput,
-} from "@/components/round-history/add-half-form";
 
 interface RoundDetail {
   id: string;
@@ -100,8 +90,6 @@ function RoundDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedHole, setSelectedHole] = useState(1);
-  const [isAddHalfOpen, setIsAddHalfOpen] = useState(false);
-  const [subCourseNames, setSubCourseNames] = useState<string[]>([]);
   const [pendingSaveData, setPendingSaveData] = useState<{
     score_id: string;
     score: number;
@@ -120,24 +108,13 @@ function RoundDetailContent() {
     let cancelled = false;
 
     fetchRoundData(roundId, member.id)
-      .then(async (data) => {
+      .then((data) => {
         if (!cancelled) {
           setRound(data);
           setIsLoading(false);
           if (data.scores.length > 0) {
             const first = [...data.scores].sort((a, b) => a.hole_number - b.hole_number)[0];
             setSelectedHole(first.hole_number);
-          }
-          // サブコース名を取得
-          if (data.courses?.id) {
-            const { data: subCourses } = await supabase
-              .from("course_sub_courses")
-              .select("name, sort_order")
-              .eq("course_id", data.courses.id)
-              .order("sort_order");
-            if (!cancelled && subCourses) {
-              setSubCourseNames(subCourses.map((sc) => sc.name));
-            }
           }
         }
       })
@@ -192,22 +169,6 @@ function RoundDetailContent() {
       throw new Error(err.error || "保存に失敗しました");
     }
 
-    await refreshRound();
-  };
-
-  const handleAddHalf = async (scores: HoleInput[], courseLabel: string) => {
-    const res = await authFetch(`/api/rounds/${roundId}/scores`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scores, course_label: courseLabel }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "保存に失敗しました");
-    }
-
-    setIsAddHalfOpen(false);
     await refreshRound();
   };
 
@@ -291,10 +252,12 @@ function RoundDetailContent() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsAddHalfOpen(true)}
+              asChild
             >
-              <PlusCircle className="w-4 h-4 mr-1" />
-              ハーフ追加
+              <Link href={`/input/detailed?addToRound=${roundId}`}>
+                <PlusCircle className="w-4 h-4 mr-1" />
+                ハーフ追加
+              </Link>
             </Button>
           )}
           <Button
@@ -384,22 +347,6 @@ function RoundDetailContent() {
         variant="confirm"
         onConfirm={executeSaveHole}
       />
-
-      <Sheet open={isAddHalfOpen} onOpenChange={setIsAddHalfOpen}>
-        <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              追加ハーフ入力（H{maxHoleNumber + 1}〜H{maxHoleNumber + 9}）
-            </SheetTitle>
-          </SheetHeader>
-          <AddHalfForm
-            startHoleNumber={maxHoleNumber + 1}
-            subCourseNames={subCourseNames}
-            onSubmit={handleAddHalf}
-            onCancel={() => setIsAddHalfOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

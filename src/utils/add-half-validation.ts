@@ -11,6 +11,8 @@ export interface AddHalfScoreInput {
   bunker: number;
   penalty: number;
   distance?: number | null;
+  pin_position?: string | null;
+  shots_detail?: unknown[] | null;
 }
 
 export interface AddHalfValidationResult {
@@ -117,5 +119,7 @@ export function buildScoreRecords(
     bunker: s.bunker,
     penalty: s.penalty,
     distance: s.distance ?? null,
+    pin_position: s.pin_position ?? null,
+    shots_detail: s.shots_detail ?? null,
   }));
 }

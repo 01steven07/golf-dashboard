@@ -14,6 +14,7 @@ interface SubCourseSelectorProps {
   onSubCourseRemove: (index: number) => void;
   onSubCourseReorder: (reorderedIds: string[]) => void;
   onTeeSelect: (teeId: string) => void;
+  hideTeeSelector?: boolean;
 }
 
 export function SubCourseSelector({
@@ -25,6 +26,7 @@ export function SubCourseSelector({
   onSubCourseRemove,
   onSubCourseReorder,
   onTeeSelect,
+  hideTeeSelector = false,
 }: SubCourseSelectorProps) {
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -130,7 +132,7 @@ export function SubCourseSelector({
       )}
 
       {/* ティー選択 */}
-      {tees.length > 0 && (
+      {!hideTeeSelector && tees.length > 0 && (
         <div>
           <Label className="text-xs text-gray-500">ティー</Label>
           <div className="flex gap-1 mt-1 flex-wrap">
