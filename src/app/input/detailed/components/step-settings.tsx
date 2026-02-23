@@ -18,6 +18,8 @@ interface StepSettingsProps {
   selectedCourse: CourseWithDetails | null;
   draftInfo: { courseName: string; date: string } | null;
   optionalFields: OptionalFieldSettings;
+  isAddMode?: boolean;
+  addModeReady?: boolean;
   onOptionalFieldsChange: (fields: OptionalFieldSettings) => void;
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
@@ -47,6 +49,8 @@ export function StepSettings({
   selectedCourse,
   draftInfo,
   optionalFields,
+  isAddMode = false,
+  addModeReady = false,
   onOptionalFieldsChange,
   onCourseSelect,
   onManualInput,
@@ -62,7 +66,9 @@ export function StepSettings({
 }: StepSettingsProps) {
   const router = useRouter();
 
-  const canStart = roundData.courseName.length > 0;
+  const canStart = isAddMode
+    ? addModeReady && roundData.subCourseIds.length > 0
+    : roundData.courseName.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,14 +81,16 @@ export function StepSettings({
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-bold text-green-800">詳細入力</h1>
+          <h1 className="text-lg font-bold text-green-800">
+            {isAddMode ? "ハーフ追加" : "詳細入力"}
+          </h1>
           <div className="w-10" />
         </div>
       </div>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         {/* ドラフト復元バナー */}
-        {draftInfo && (
+        {!isAddMode && draftInfo && (
           <Card className="border-2 border-amber-300 bg-amber-50">
             <CardContent className="p-4">
               <p className="text-sm text-amber-800 font-medium mb-1">
@@ -114,72 +122,121 @@ export function StepSettings({
           </Card>
         )}
 
-        {/* コース選択 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">コース設定</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <CourseSelector
-              onCourseSelect={onCourseSelect}
-              onManualInput={onManualInput}
-              courseName={roundData.courseName}
-            />
-
-            {/* コース選択時: サブコース＋ティー選択 */}
-            {selectedCourse && selectedCourse.sub_courses.length > 0 && (
-              <SubCourseSelector
-                subCourses={selectedCourse.sub_courses}
-                tees={selectedCourse.tees}
-                selectedSubCourseIds={roundData.subCourseIds}
-                selectedTeeId={roundData.teeId}
-                onSubCourseAdd={onSubCourseAdd}
-                onSubCourseRemove={onSubCourseRemove}
-                onSubCourseReorder={onSubCourseReorder}
-                onTeeSelect={onTeeSelect}
-              />
-            )}
-
-            {/* 手動入力時: ティー色選択 */}
-            {!selectedCourse && (
-              <div>
-                <Label className="text-xs text-gray-500">ティー</Label>
-                <div className="flex gap-1 mt-1 overflow-x-auto pb-1">
-                  {["Back", "Regular", "White", "Gold", "Red"].map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => onTeeColorChange(color)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
-                        roundData.teeColor === color
-                          ? "bg-green-600 text-white"
-                          : "bg-white text-gray-600 border"
-                      )}
-                    >
-                      {color}
-                    </button>
-                  ))}
-                </div>
+        {/* 追加モード: コース情報を読み取り専用で表示 */}
+        {isAddMode ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">追加先ラウンド</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm">
+                <span className="text-gray-500">コース: </span>
+                <span className="font-medium">{roundData.courseName}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="text-sm">
+                <span className="text-gray-500">日付: </span>
+                <span className="font-medium">{roundData.date}</span>
+              </div>
+              {roundData.teeColor && (
+                <div className="text-sm">
+                  <span className="text-gray-500">ティー: </span>
+                  <span className="font-medium">{roundData.teeColor}</span>
+                </div>
+              )}
 
-        {/* 日付 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">ラウンド日</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              type="date"
-              value={roundData.date}
-              onChange={(e) => onDateChange(e.target.value)}
-              className="h-10 text-sm"
-            />
-          </CardContent>
-        </Card>
+              {/* サブコース選択のみ操作可能 */}
+              {selectedCourse && selectedCourse.sub_courses.length > 0 && (
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-gray-500 mb-2">追加するコースを選択してください</p>
+                  <SubCourseSelector
+                    subCourses={selectedCourse.sub_courses}
+                    tees={selectedCourse.tees}
+                    selectedSubCourseIds={roundData.subCourseIds}
+                    selectedTeeId={roundData.teeId}
+                    onSubCourseAdd={onSubCourseAdd}
+                    onSubCourseRemove={onSubCourseRemove}
+                    onSubCourseReorder={onSubCourseReorder}
+                    onTeeSelect={onTeeSelect}
+                    hideTeeSelector
+                  />
+                </div>
+              )}
+
+              {!addModeReady && (
+                <p className="text-xs text-amber-600">ラウンドデータを読み込み中...</p>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* コース選択 */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">コース設定</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <CourseSelector
+                  onCourseSelect={onCourseSelect}
+                  onManualInput={onManualInput}
+                  courseName={roundData.courseName}
+                />
+
+                {/* コース選択時: サブコース＋ティー選択 */}
+                {selectedCourse && selectedCourse.sub_courses.length > 0 && (
+                  <SubCourseSelector
+                    subCourses={selectedCourse.sub_courses}
+                    tees={selectedCourse.tees}
+                    selectedSubCourseIds={roundData.subCourseIds}
+                    selectedTeeId={roundData.teeId}
+                    onSubCourseAdd={onSubCourseAdd}
+                    onSubCourseRemove={onSubCourseRemove}
+                    onSubCourseReorder={onSubCourseReorder}
+                    onTeeSelect={onTeeSelect}
+                  />
+                )}
+
+                {/* 手動入力時: ティー色選択 */}
+                {!selectedCourse && (
+                  <div>
+                    <Label className="text-xs text-gray-500">ティー</Label>
+                    <div className="flex gap-1 mt-1 overflow-x-auto pb-1">
+                      {["Back", "Regular", "White", "Gold", "Red"].map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => onTeeColorChange(color)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                            roundData.teeColor === color
+                              ? "bg-green-600 text-white"
+                              : "bg-white text-gray-600 border"
+                          )}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 日付 */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">ラウンド日</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  type="date"
+                  value={roundData.date}
+                  onChange={(e) => onDateChange(e.target.value)}
+                  className="h-10 text-sm"
+                />
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         {/* 入力項目設定 */}
         <Card>

@@ -13,6 +13,7 @@ import {
 
 interface ScorecardTableProps {
   scores: Score[];
+  extCourseLabels?: string[];
 }
 
 function HalfTable({
@@ -113,9 +114,24 @@ function HalfTable({
   );
 }
 
-export function ScorecardTable({ scores }: ScorecardTableProps) {
-  const outScores = scores.filter((s) => s.hole_number >= 1 && s.hole_number <= 9);
-  const inScores = scores.filter((s) => s.hole_number >= 10 && s.hole_number <= 18);
+/** セクションラベルを生成: OUT, IN, ext_course_labels[0], ext_course_labels[1] */
+export function getSectionLabels(extCourseLabels: string[] = []): string[] {
+  return ["OUT", "IN", ...extCourseLabels];
+}
+
+export function ScorecardTable({ scores, extCourseLabels = [] }: ScorecardTableProps) {
+  const sorted = [...scores].sort((a, b) => a.hole_number - b.hole_number);
+  const labels = getSectionLabels(extCourseLabels);
+
+  // 9ホールごとにセクション分割（最大4セクション = 36H）
+  const sections: { label: string; holes: Score[]; startHole: number }[] = [];
+  for (let i = 0; i < 4; i++) {
+    const min = i * 9 + 1;
+    const max = i * 9 + 9;
+    const chunk = sorted.filter((s) => s.hole_number >= min && s.hole_number <= max);
+    if (chunk.length === 0) break;
+    sections.push({ label: labels[i] ?? `H${min}-${max}`, holes: chunk, startHole: min });
+  }
 
   const totalPar = scores.reduce((sum, s) => sum + s.par, 0);
   const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
@@ -123,10 +139,16 @@ export function ScorecardTable({ scores }: ScorecardTableProps) {
 
   return (
     <div className="space-y-4">
-      <HalfTable label="OUT" holeScores={outScores} startHole={1} />
-      <HalfTable label="IN" holeScores={inScores} startHole={10} />
+      {sections.map((sec) => (
+        <HalfTable
+          key={sec.startHole}
+          label={sec.label}
+          holeScores={sec.holes}
+          startHole={sec.startHole}
+        />
+      ))}
 
-      {outScores.length > 0 && inScores.length > 0 && (
+      {sections.length >= 2 && (
         <div className="grid grid-cols-3 gap-3 pt-2 border-t">
           <div className="text-center">
             <p className="text-[10px] text-muted-foreground uppercase">Total Par</p>

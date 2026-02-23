@@ -97,6 +97,7 @@ export interface Round {
   image_url: string | null;
   out_course_name: string | null;
   in_course_name: string | null;
+  ext_course_labels: string[];
 }
 
 export interface Score {
