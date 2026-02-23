@@ -29,7 +29,8 @@
       "Bash(gh pr edit:*)",
       "Bash(grep:*)",
       "Bash(xargs:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(npx vitest run:*)"
     ]
   }
 }
