@@ -1,47 +1,68 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useSyncExternalStore, useEffect } from "react";
 import { processQueue, getQueueLength } from "@/lib/offline-queue";
 
+// --- Online status (navigator.onLine) ---
+
+function subscribeOnline(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  return navigator.onLine;
+}
+
+function getServerOnlineSnapshot() {
+  return true;
+}
+
+// --- Queue length (localStorage polling) ---
+
+function subscribeQueue(callback: () => void) {
+  const interval = setInterval(callback, 3000);
+  // Also refresh on online event (after sync completes)
+  window.addEventListener("online", callback);
+  return () => {
+    clearInterval(interval);
+    window.removeEventListener("online", callback);
+  };
+}
+
+function getQueueSnapshot() {
+  return getQueueLength();
+}
+
+function getServerQueueSnapshot() {
+  return 0;
+}
+
+// --- Hook ---
+
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(
-    () => (typeof navigator !== "undefined" ? navigator.onLine : true),
-  );
-  const [queueLength, setQueueLength] = useState(
-    () => (typeof localStorage !== "undefined" ? getQueueLength() : 0),
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    getOnlineSnapshot,
+    getServerOnlineSnapshot,
   );
 
-  const refreshQueueLength = useCallback(() => {
-    setQueueLength(getQueueLength());
-  }, []);
+  const queueLength = useSyncExternalStore(
+    subscribeQueue,
+    getQueueSnapshot,
+    getServerQueueSnapshot,
+  );
 
+  // Auto-sync when back online
   useEffect(() => {
-    const handleOnline = async () => {
-      setIsOnline(true);
-      // Auto-sync when back online
-      const pending = getQueueLength();
-      if (pending > 0) {
-        await processQueue();
-        refreshQueueLength();
-      }
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // Poll queue length periodically (catches enqueue from other code)
-    const interval = setInterval(refreshQueueLength, 3000);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-      clearInterval(interval);
-    };
-  }, [refreshQueueLength]);
+    if (isOnline && getQueueLength() > 0) {
+      processQueue();
+    }
+  }, [isOnline]);
 
   return { isOnline, queueLength };
 }
