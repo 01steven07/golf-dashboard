@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/api-client";
 import { aggregateHoleData } from "@/utils/shot-aggregation";
 import { validateScores } from "@/utils/score-validation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { enqueue, isNetworkError, CreateRoundPayload, AddScoresPayload } from "@/lib/offline-queue";
 import { Suspense } from "react";
 
 type InputStep = "settings" | "scoring";
@@ -517,6 +518,69 @@ function DetailedInputContent() {
         router.push("/my-stats");
       }
     } catch (err) {
+      if (!navigator.onLine || isNetworkError(err)) {
+        // Offline: queue for later sync
+        const playedHoles2 = roundData.holes.filter((h) => h.shots.length > 0);
+        const agg = playedHoles2.map((hole) => aggregateHoleData(hole));
+
+        if (addToRoundId) {
+          const scNames = roundData.subCourseIds.map((scId) => {
+            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+            return sc?.name ?? null;
+          }).filter((n): n is string => n !== null);
+
+          enqueue("add-scores", {
+            roundId: addToRoundId,
+            scores: agg.map((a) => ({
+              par: a.par,
+              score: a.score,
+              putts: a.putts,
+              fairway_result: a.fairway_result,
+              ob: a.ob,
+              bunker: a.bunker,
+              penalty: a.penalty,
+              distance: a.distance,
+              pin_position: a.pin_position,
+              shots_detail: a.shots_detail,
+            })),
+            courseLabel: scNames[0] ?? "追加",
+          } satisfies AddScoresPayload);
+        } else {
+          const scNames = roundData.subCourseIds.map((scId) => {
+            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+            return sc?.name ?? null;
+          }).filter((n): n is string => n !== null);
+
+          enqueue("create-round", {
+            memberId: member.id,
+            courseName: roundData.courseName,
+            courseId: roundData.courseId,
+            date: roundData.date,
+            teeColor: roundData.teeColor,
+            outCourseName: scNames[0] ?? null,
+            inCourseName: scNames.length > 1 ? scNames.slice(1).join(" / ") : null,
+            imageUrl: null,
+            scores: agg.map((a) => ({
+              hole_number: a.hole_number,
+              par: a.par,
+              distance: a.distance,
+              score: a.score,
+              putts: a.putts,
+              fairway_result: a.fairway_result,
+              ob: a.ob,
+              bunker: a.bunker,
+              penalty: a.penalty,
+              pin_position: a.pin_position,
+              shots_detail: a.shots_detail,
+            })),
+          } satisfies CreateRoundPayload);
+        }
+
+        clearDraft();
+        router.push(addToRoundId ? `/my-stats/rounds/${addToRoundId}` : "/my-stats");
+        return;
+      }
+
       console.error(err);
       setError(err instanceof Error ? err.message : "保存に失敗しました");
     } finally {

@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { getScoreSymbol, getFairwaySymbol } from "@/utils/golf-symbols";
 import { validateScores } from "@/utils/score-validation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { enqueue, isNetworkError, CreateRoundPayload } from "@/lib/offline-queue";
+import { setCourseCache, getCourseCache } from "@/lib/course-cache";
 
 type Step = "select" | "upload" | "processing" | "confirm";
 
@@ -102,9 +104,15 @@ function InputContent() {
       setStep("confirm");
       setHasDraft(true);
 
-      // コース一覧も取得
+      // コース一覧も取得（オフライン時はキャッシュを利用）
       supabase.from("courses").select("*").order("name").then(({ data }) => {
-        setCourses(data ?? []);
+        if (data) {
+          setCourses(data);
+          setCourseCache(data);
+        } else {
+          const cached = getCourseCache();
+          if (cached) setCourses(cached);
+        }
       });
     }
   }, []);
@@ -171,12 +179,18 @@ function InputContent() {
     setStep("processing");
     setError("");
 
-    // Fetch courses
+    // Fetch courses (with cache fallback)
     const { data: coursesData } = await supabase
       .from("courses")
       .select("*")
       .order("name");
-    setCourses(coursesData ?? []);
+    if (coursesData) {
+      setCourses(coursesData);
+      setCourseCache(coursesData);
+    } else {
+      const cached = getCourseCache();
+      if (cached) setCourses(cached);
+    }
 
     // Call OCR API
     const formData = new FormData();
@@ -352,6 +366,35 @@ function InputContent() {
       isDirty.current = false;
       router.push("/my-stats");
     } catch (err) {
+      if (!navigator.onLine || isNetworkError(err)) {
+        enqueue("create-round", {
+          memberId: member.id,
+          courseName: newCourseName || courses.find((c) => c.id === selectedCourseId)?.name || "",
+          courseId: selectedCourseId || null,
+          date: roundDate,
+          teeColor,
+          outCourseName: outCourseName || null,
+          inCourseName: inCourseName || null,
+          imageUrl: null,
+          scores: scores.map((s) => ({
+            hole_number: s.hole_number,
+            par: s.par,
+            distance: s.distance,
+            score: s.score,
+            putts: s.putts,
+            fairway_result: s.fairway_result,
+            ob: s.ob,
+            bunker: s.bunker,
+            penalty: s.penalty,
+          })),
+        } satisfies CreateRoundPayload);
+
+        clearOcrDraft();
+        isDirty.current = false;
+        router.push("/my-stats");
+        return;
+      }
+
       console.error(err);
       setError("保存に失敗しました");
     } finally {
