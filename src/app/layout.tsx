@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { OfflineBanner } from "@/components/layout/offline-banner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
         <AuthProvider>
           <Sidebar />
           <MobileHeader />
+          <OfflineBanner />
           <main className="md:ml-60 min-h-screen pb-20 md:pb-0">
             <div className="container mx-auto px-4 py-6 max-w-5xl">{children}</div>
           </main>
