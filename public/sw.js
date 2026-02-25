@@ -3,9 +3,7 @@ const CACHE_NAME = "golf-dashboard-v2";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll([
-        "/offline",
-      ])
+      cache.addAll(["/offline"])
     )
   );
   self.skipWaiting();
@@ -13,15 +11,32 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    Promise.all([
+      // Clean old caches
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      ),
+      // Cache pages of existing clients (handles first-visit race condition)
+      self.clients.matchAll({ type: "window" }).then((windowClients) =>
+        caches.open(CACHE_NAME).then((cache) =>
+          Promise.all(
+            windowClients.map((client) => {
+              const url = new URL(client.url);
+              return fetch(url.pathname)
+                .then((res) => {
+                  if (res.ok) return cache.put(url.pathname, res);
+                })
+                .catch(() => {});
+            })
+          )
+        )
+      ),
+    ]).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -36,7 +51,6 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return;
 
   // Static assets (JS/CSS bundles, icons, fonts): cache-first
-  // These have content-hashed filenames so cached versions are always valid.
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
@@ -57,27 +71,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigation requests & Next.js data requests: network-first, cache fallback
+  // Navigation requests & Next.js data: network-first, cache fallback
   if (event.request.mode === "navigate" || url.pathname.startsWith("/_next/data/")) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Cache successful navigation responses for offline use
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           return response;
         })
         .catch(() =>
-          caches.match(event.request).then((cached) => {
-            // Return cached page if available, otherwise offline fallback
-            return cached || caches.match("/offline");
-          })
+          caches.match(event.request).then((cached) =>
+            cached || caches.match("/offline")
+          )
         )
     );
     return;
   }
 
-  // Other same-origin GET requests: network-first with cache
+  // Other same-origin GET: network-first with cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
