@@ -3,19 +3,31 @@
 import { useSyncExternalStore, useEffect } from "react";
 import { processQueue, getQueueLength } from "@/lib/offline-queue";
 
-// --- Online status (navigator.onLine) ---
+// --- Online status ---
+// navigator.onLine is unreliable (returns false in some environments even when online).
+// Start optimistically as "online" and only react to browser offline/online events.
+
+let onlineState = true;
 
 function subscribeOnline(callback: () => void) {
-  window.addEventListener("online", callback);
-  window.addEventListener("offline", callback);
+  const handleOnline = () => {
+    onlineState = true;
+    callback();
+  };
+  const handleOffline = () => {
+    onlineState = false;
+    callback();
+  };
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
   return () => {
-    window.removeEventListener("online", callback);
-    window.removeEventListener("offline", callback);
+    window.removeEventListener("online", handleOnline);
+    window.removeEventListener("offline", handleOffline);
   };
 }
 
 function getOnlineSnapshot() {
-  return navigator.onLine;
+  return onlineState;
 }
 
 function getServerOnlineSnapshot() {
@@ -26,7 +38,6 @@ function getServerOnlineSnapshot() {
 
 function subscribeQueue(callback: () => void) {
   const interval = setInterval(callback, 3000);
-  // Also refresh on online event (after sync completes)
   window.addEventListener("online", callback);
   return () => {
     clearInterval(interval);

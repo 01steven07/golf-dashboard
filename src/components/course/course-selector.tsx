@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Search, X, Loader2 } from "lucide-react";
+import { setCourseCache, getCourseCache, setCourseDetailCache, getCourseDetailCache } from "@/lib/course-cache";
 
 interface CourseSelectorProps {
   onCourseSelect: (course: CourseWithDetails | null) => void;
@@ -27,7 +28,7 @@ export function CourseSelector({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 軽量な一覧取得（名前・都道府県のみ）
+  // 軽量な一覧取得（名前・都道府県のみ）- オフライン時はキャッシュにフォールバック
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -35,12 +36,19 @@ export function CourseSelector({
         if (res.ok) {
           const data = await res.json();
           setCourses(data);
+          setCourseCache(data);
+          setIsLoading(false);
+          return;
         }
       } catch {
-        console.error("コース一覧の取得に失敗しました");
-      } finally {
-        setIsLoading(false);
+        // network error - fall through to cache
       }
+      // Fallback to cache
+      const cached = getCourseCache();
+      if (cached) {
+        setCourses(cached);
+      }
+      setIsLoading(false);
     };
     fetchCourses();
   }, []);
@@ -80,7 +88,7 @@ export function CourseSelector({
 
   const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
-  // 選択時に詳細をフェッチ
+  // 選択時に詳細をフェッチ - オフライン時はキャッシュにフォールバック
   const handleCourseChange = async (courseId: string) => {
     setSelectedCourseId(courseId);
     setIsDropdownOpen(false);
@@ -95,13 +103,27 @@ export function CourseSelector({
       const res = await fetch(`/api/courses/${courseId}`);
       if (res.ok) {
         const detail: CourseWithDetails = await res.json();
+        setCourseDetailCache(detail);
         onCourseSelect(detail);
+        setIsFetchingDetail(false);
+        return;
       }
     } catch {
-      console.error("コース詳細の取得に失敗しました");
-    } finally {
-      setIsFetchingDetail(false);
+      // network error - fall through to cache
     }
+    // Fallback to cache
+    const cached = getCourseDetailCache(courseId);
+    if (cached) {
+      onCourseSelect(cached);
+    } else {
+      // No cache: switch to manual mode with course name preserved
+      const course = courses.find((c) => c.id === courseId);
+      if (course) {
+        onManualInput(course.name);
+        setMode("manual");
+      }
+    }
+    setIsFetchingDetail(false);
   };
 
   const handleClear = () => {
