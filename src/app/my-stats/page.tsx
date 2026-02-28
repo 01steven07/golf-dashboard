@@ -15,6 +15,7 @@ import { StatCard } from "@/components/stat-card";
 import { getClubComparison, ClubComparison } from "@/utils/club-stats";
 import { RankingCategory } from "@/utils/ranking";
 import { DistanceRateChart } from "@/components/distance-rate-chart";
+import { CompactBarList } from "@/components/compact-bar-list";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { CourseAnalysisTab } from "@/components/course-analysis-tab";
 import { RoundHistoryTab } from "@/components/round-history/round-list";
@@ -632,6 +633,75 @@ function MyStatsContent() {
                   title="距離別グリーンオン率"
                   color="#22c55e"
                 />
+              )}
+
+              {/* ライ別パーオン率 */}
+              {detailedStats && detailedStats.gir_by_lie.length > 0 && (
+                <CompactBarList
+                  items={detailedStats.gir_by_lie.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
+                  title="ライ別パーオン率"
+                  mode="rate"
+                  color="#f59e0b"
+                />
+              )}
+
+              {/* 風向き別スコア影響 */}
+              {detailedStats && detailedStats.score_by_wind.length > 0 && (
+                <CompactBarList
+                  items={detailedStats.score_by_wind}
+                  title="風向き別スコア影響（対パー）"
+                  mode="value"
+                  color="#ef4444"
+                />
+              )}
+
+              {/* パットライン分析 */}
+              {detailedStats && (detailedStats.putt_make_by_slope.length > 0 || detailedStats.putt_make_by_break.length > 0) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {detailedStats.putt_make_by_slope.length > 0 && (
+                    <CompactBarList
+                      items={detailedStats.putt_make_by_slope.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
+                      title="傾斜別カップイン率"
+                      mode="rate"
+                      color="#8b5cf6"
+                    />
+                  )}
+                  {detailedStats.putt_make_by_break.length > 0 && (
+                    <CompactBarList
+                      items={detailedStats.putt_make_by_break.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
+                      title="曲がり別カップイン率"
+                      mode="rate"
+                      color="#8b5cf6"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* ショットレーティング */}
+              {detailedStats && (detailedStats.avg_rating_tee != null || detailedStats.avg_rating_approach != null || detailedStats.avg_rating_putt != null) && (
+                <>
+                  <h4 className="text-sm font-semibold text-muted-foreground">ショットレーティング平均</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <StatCard
+                      label="ティーショット"
+                      value={detailedStats.avg_rating_tee != null ? detailedStats.avg_rating_tee.toFixed(1) : "-"}
+                      description="ティーショットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_tee == null}
+                    />
+                    <StatCard
+                      label="アプローチ"
+                      value={detailedStats.avg_rating_approach != null ? detailedStats.avg_rating_approach.toFixed(1) : "-"}
+                      description="アプローチショットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_approach == null}
+                    />
+                    <StatCard
+                      label="パット"
+                      value={detailedStats.avg_rating_putt != null ? detailedStats.avg_rating_putt.toFixed(1) : "-"}
+                      description="パットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_putt == null}
+                    />
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
