@@ -36,51 +36,77 @@ export function CompactBarList({
       : 100;
 
   return (
-    <div>
-      <h4 className="text-sm font-semibold text-muted-foreground mb-1">
-        {title}
-      </h4>
-      <div className="space-y-0.5">
+    <div className="rounded-lg border bg-card p-4">
+      <h4 className="text-sm font-semibold mb-3">{title}</h4>
+      <div className="space-y-2.5">
         {items.map((item) => (
-          <div key={item.label} className="flex items-center h-7 text-xs">
-            <span className="w-16 shrink-0 truncate text-muted-foreground">
-              {item.label}
-            </span>
-            <div className="flex-1 mx-2 h-4 relative">
+          <div key={item.label} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{item.label}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground/60 text-[10px]">
+                  n={item.count}
+                </span>
+                <span
+                  className="font-semibold tabular-nums"
+                  style={{
+                    color:
+                      mode === "value"
+                        ? item.value > 0
+                          ? "#ef4444"
+                          : item.value < 0
+                            ? "#22c55e"
+                            : undefined
+                        : undefined,
+                  }}
+                >
+                  {format(mode === "rate" ? item.value ?? item.count : item.value)}
+                </span>
+              </div>
+            </div>
+            <div className="h-4 relative">
               {mode === "rate" ? (
-                <div className="absolute inset-0 rounded bg-muted">
+                <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded"
+                    className="h-full rounded-full"
                     style={{
-                      width: `${Math.min(item.value, 100)}%`,
+                      width: `${Math.max(Math.min(item.value, 100), 1.5)}%`,
                       backgroundColor: color,
                       opacity: 0.8,
                     }}
                   />
                 </div>
               ) : (
-                <div className="absolute inset-0 flex">
+                <div className="absolute inset-0 flex rounded-full bg-muted overflow-hidden">
                   <div className="w-1/2 relative">
-                    {item.value < 0 && (
+                    {item.value <= 0 && (
                       <div
-                        className="absolute right-0 top-0 h-full rounded-l"
+                        className="absolute right-0 top-0 h-full rounded-l-full"
                         style={{
-                          width: `${(Math.abs(item.value) / maxAbs) * 100}%`,
-                          backgroundColor: color,
-                          opacity: 0.8,
+                          width:
+                            item.value === 0
+                              ? "2px"
+                              : `${(Math.abs(item.value) / maxAbs) * 100}%`,
+                          backgroundColor:
+                            item.value === 0 ? "var(--muted-foreground)" : "#22c55e",
+                          opacity: item.value === 0 ? 0.3 : 0.8,
                         }}
                       />
                     )}
                   </div>
-                  <div className="w-px bg-muted-foreground/30" />
+                  <div className="w-px bg-muted-foreground/40 z-10" />
                   <div className="w-1/2 relative">
-                    {item.value > 0 && (
+                    {item.value >= 0 && (
                       <div
-                        className="absolute left-0 top-0 h-full rounded-r"
+                        className="absolute left-0 top-0 h-full rounded-r-full"
                         style={{
-                          width: `${(Math.abs(item.value) / maxAbs) * 100}%`,
-                          backgroundColor: color,
-                          opacity: 0.8,
+                          width:
+                            item.value === 0
+                              ? "2px"
+                              : `${(Math.abs(item.value) / maxAbs) * 100}%`,
+                          backgroundColor:
+                            item.value === 0 ? "var(--muted-foreground)" : "#ef4444",
+                          opacity: item.value === 0 ? 0.3 : 0.8,
                         }}
                       />
                     )}
@@ -88,9 +114,6 @@ export function CompactBarList({
                 </div>
               )}
             </div>
-            <span className="w-14 shrink-0 text-right font-medium tabular-nums">
-              {format(mode === "rate" ? item.value ?? item.count : item.value)}
-            </span>
           </div>
         ))}
       </div>

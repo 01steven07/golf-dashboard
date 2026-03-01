@@ -621,43 +621,48 @@ function MyStatsContent() {
 
               {/* Distance-based charts */}
               {detailedStats && detailedStats.make_pct_by_distance.length > 0 && (
-                <DistanceRateChart
-                  data={detailedStats.make_pct_by_distance}
-                  title="距離別カップイン率"
-                  color="#3b82f6"
-                />
+                <div className="rounded-lg border bg-card p-4">
+                  <DistanceRateChart
+                    data={detailedStats.make_pct_by_distance}
+                    title="距離別カップイン率"
+                    color="#3b82f6"
+                  />
+                </div>
               )}
               {detailedStats && detailedStats.gir_by_distance.length > 0 && (
-                <DistanceRateChart
-                  data={detailedStats.gir_by_distance}
-                  title="距離別グリーンオン率"
-                  color="#22c55e"
-                />
+                <div className="rounded-lg border bg-card p-4">
+                  <DistanceRateChart
+                    data={detailedStats.gir_by_distance}
+                    title="距離別グリーンオン率"
+                    color="#22c55e"
+                  />
+                </div>
               )}
 
-              {/* ライ別パーオン率 */}
-              {detailedStats && detailedStats.gir_by_lie.length > 0 && (
-                <CompactBarList
-                  items={detailedStats.gir_by_lie.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
-                  title="ライ別パーオン率"
-                  mode="rate"
-                  color="#f59e0b"
-                />
-              )}
-
-              {/* 風向き別スコア影響 */}
-              {detailedStats && detailedStats.score_by_wind.length > 0 && (
-                <CompactBarList
-                  items={detailedStats.score_by_wind}
-                  title="風向き別スコア影響（対パー）"
-                  mode="value"
-                  color="#ef4444"
-                />
+              {/* ライ別パーオン率 & 風向き別スコア影響 */}
+              {detailedStats && (detailedStats.gir_by_lie.length > 0 || detailedStats.score_by_wind.length > 0) && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {detailedStats.gir_by_lie.length > 0 && (
+                    <CompactBarList
+                      items={detailedStats.gir_by_lie.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
+                      title="ライ別パーオン率"
+                      mode="rate"
+                      color="#f59e0b"
+                    />
+                  )}
+                  {detailedStats.score_by_wind.length > 0 && (
+                    <CompactBarList
+                      items={detailedStats.score_by_wind}
+                      title="風向き別スコア影響（対パー）"
+                      mode="value"
+                    />
+                  )}
+                </div>
               )}
 
               {/* パットライン分析 */}
               {detailedStats && (detailedStats.putt_make_by_slope.length > 0 || detailedStats.putt_make_by_break.length > 0) && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   {detailedStats.putt_make_by_slope.length > 0 && (
                     <CompactBarList
                       items={detailedStats.putt_make_by_slope.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
@@ -679,8 +684,8 @@ function MyStatsContent() {
 
               {/* ショットレーティング */}
               {detailedStats && (detailedStats.avg_rating_tee != null || detailedStats.avg_rating_approach != null || detailedStats.avg_rating_putt != null) && (
-                <>
-                  <h4 className="text-sm font-semibold text-muted-foreground">ショットレーティング平均</h4>
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-semibold mb-3">ショットレーティング平均</h4>
                   <div className="grid grid-cols-3 gap-4">
                     <StatCard
                       label="ティーショット"
@@ -701,7 +706,7 @@ function MyStatsContent() {
                       unavailable={detailedStats.avg_rating_putt == null}
                     />
                   </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
