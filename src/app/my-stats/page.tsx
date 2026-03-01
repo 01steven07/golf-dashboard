@@ -639,8 +639,8 @@ function MyStatsContent() {
                 </div>
               )}
 
-              {/* ライ別パーオン率 & 風向き別スコア影響 */}
-              {detailedStats && (detailedStats.gir_by_lie.length > 0 || detailedStats.score_by_wind.length > 0) && (
+              {/* ライ別パーオン率 & 風向き別グリーンオン率 */}
+              {detailedStats && (detailedStats.gir_by_lie.length > 0 || detailedStats.gir_by_wind.length > 0) && (
                 <div className="grid md:grid-cols-2 gap-4">
                   {detailedStats.gir_by_lie.length > 0 && (
                     <CompactBarList
@@ -650,11 +650,12 @@ function MyStatsContent() {
                       color="#f59e0b"
                     />
                   )}
-                  {detailedStats.score_by_wind.length > 0 && (
+                  {detailedStats.gir_by_wind.length > 0 && (
                     <CompactBarList
-                      items={detailedStats.score_by_wind}
-                      title="風向き別スコア影響（対パー）"
-                      mode="value"
+                      items={detailedStats.gir_by_wind.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
+                      title="風向き別グリーンオン率（50yd+）"
+                      mode="rate"
+                      color="#06b6d4"
                     />
                   )}
                 </div>

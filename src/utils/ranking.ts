@@ -1,4 +1,4 @@
-import { MemberStats, DetailedMemberStats, DistanceBucket, CategoryValue } from "@/types/database";
+import { MemberStats, DetailedMemberStats, DistanceBucket } from "@/types/database";
 import { STAT_DEFINITIONS, formatStatValue, getStatDefinition } from "@/utils/stat-definitions";
 
 export interface RoundData {
@@ -583,12 +583,12 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     "right-bunker": { attempts: 0, greenOns: 0 },
   };
 
-  // Wind-based score impact
-  const windGroups: Record<string, { totalOverPar: number; count: number }> = {
-    none: { totalOverPar: 0, count: 0 },
-    follow: { totalOverPar: 0, count: 0 },
-    against: { totalOverPar: 0, count: 0 },
-    cross: { totalOverPar: 0, count: 0 },
+  // Wind-based GIR rate (50yd+ shots only)
+  const windGirGroups: Record<string, { attempts: number; greenOns: number }> = {
+    none: { attempts: 0, greenOns: 0 },
+    follow: { attempts: 0, greenOns: 0 },
+    against: { attempts: 0, greenOns: 0 },
+    cross: { attempts: 0, greenOns: 0 },
   };
 
   // Putt slope/break make rates
@@ -682,13 +682,18 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
         }
       }
 
-      // Wind-based score (use tee shot wind as hole's wind condition)
+      // Wind-based GIR (50yd+ approach/tee shots)
       const teeShot = shots.find((s): s is ParsedTeeShot => s.type === "tee");
-      const holeWind = teeShot?.wind ?? approachShots[0]?.wind;
-      if (holeWind) {
-        const group = classifyWind(holeWind);
-        windGroups[group].totalOverPar += score.score - score.par;
-        windGroups[group].count++;
+      for (const approach of approachShots) {
+        if (approach.distance >= 50) {
+          const wind = approach.wind ?? teeShot?.wind;
+          if (wind) {
+            const group = classifyWind(wind);
+            windGirGroups[group].attempts++;
+            const isGreenOn = approach.result?.startsWith("on") ?? false;
+            if (isGreenOn) windGirGroups[group].greenOns++;
+          }
+        }
       }
 
       // Putt slope/break
@@ -762,12 +767,12 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     cross: "横風",
   };
 
-  const scoreByWind: CategoryValue[] = Object.entries(windGroups)
-    .filter(([, v]) => v.count > 0)
+  const girByWind: DistanceBucket[] = Object.entries(windGirGroups)
+    .filter(([, v]) => v.attempts > 0)
     .map(([key, v]) => ({
       label: windLabels[key] ?? key,
-      value: v.totalOverPar / v.count,
-      count: v.count,
+      rate: (v.greenOns / v.attempts) * 100,
+      count: v.attempts,
     }));
 
   const slopeLabels: Record<string, string> = {
@@ -807,7 +812,7 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     make_pct_by_distance: makePctByDistance,
     gir_by_distance: girByDistance,
     gir_by_lie: girByLie,
-    score_by_wind: scoreByWind,
+    gir_by_wind: girByWind,
     putt_make_by_slope: puttMakeBySlope,
     putt_make_by_break: puttMakeByBreak,
     avg_rating_tee: teeRatingCount > 0 ? teeRatingTotal / teeRatingCount : null,

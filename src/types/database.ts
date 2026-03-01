@@ -187,8 +187,8 @@ export interface DetailedMemberStats {
   gir_by_distance: DistanceBucket[];
   // ライ別パーオン率
   gir_by_lie: DistanceBucket[];
-  // 風向き別平均スコア（対パー）
-  score_by_wind: CategoryValue[];
+  // 風向き別グリーンオン率（50yd+ショット対象）
+  gir_by_wind: DistanceBucket[];
   // パット傾斜別カップイン率
   putt_make_by_slope: DistanceBucket[];
   // パット曲がり別カップイン率
