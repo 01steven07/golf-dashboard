@@ -620,14 +620,14 @@ function MyStatsContent() {
               />
 
               {/* Distance-based charts */}
-              {detailedStats && detailedStats.make_pct_by_distance.length > 0 && (
+              {detailedStats && (detailedStats.make_pct_by_distance?.length ?? 0) > 0 && (
                 <DistanceRateChart
                   data={detailedStats.make_pct_by_distance}
                   title="距離別カップイン率"
                   color="#3b82f6"
                 />
               )}
-              {detailedStats && detailedStats.gir_by_distance.length > 0 && (
+              {detailedStats && (detailedStats.gir_by_distance?.length ?? 0) > 0 && (
                 <DistanceRateChart
                   data={detailedStats.gir_by_distance}
                   title="距離別グリーンオン率"
