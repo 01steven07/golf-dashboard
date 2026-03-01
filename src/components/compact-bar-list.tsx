@@ -36,11 +36,13 @@ export function CompactBarList({
       : 100;
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <h4 className="text-sm font-semibold mb-3">{title}</h4>
-      <div className="space-y-2.5">
+    <div>
+      <h4 className="text-sm font-semibold text-muted-foreground mb-2">
+        {title}
+      </h4>
+      <div className="space-y-2">
         {items.map((item) => (
-          <div key={item.label} className="space-y-1">
+          <div key={item.label} className="space-y-0.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{item.label}</span>
               <div className="flex items-center gap-2">

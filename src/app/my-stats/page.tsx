@@ -621,22 +621,18 @@ function MyStatsContent() {
 
               {/* Distance-based charts */}
               {detailedStats && detailedStats.make_pct_by_distance.length > 0 && (
-                <div className="rounded-lg border bg-card p-4">
-                  <DistanceRateChart
-                    data={detailedStats.make_pct_by_distance}
-                    title="距離別カップイン率"
-                    color="#3b82f6"
-                  />
-                </div>
+                <DistanceRateChart
+                  data={detailedStats.make_pct_by_distance}
+                  title="距離別カップイン率"
+                  color="#3b82f6"
+                />
               )}
               {detailedStats && detailedStats.gir_by_distance.length > 0 && (
-                <div className="rounded-lg border bg-card p-4">
-                  <DistanceRateChart
-                    data={detailedStats.gir_by_distance}
-                    title="距離別グリーンオン率"
-                    color="#22c55e"
-                  />
-                </div>
+                <DistanceRateChart
+                  data={detailedStats.gir_by_distance}
+                  title="距離別グリーンオン率"
+                  color="#22c55e"
+                />
               )}
 
               {/* ライ別パーオン率 & 風向き別グリーンオン率 */}
@@ -685,8 +681,8 @@ function MyStatsContent() {
 
               {/* ショットレーティング */}
               {detailedStats && (detailedStats.avg_rating_tee != null || detailedStats.avg_rating_approach != null || detailedStats.avg_rating_putt != null) && (
-                <div className="rounded-lg border bg-card p-4">
-                  <h4 className="text-sm font-semibold mb-3">ショットレーティング平均</h4>
+                <>
+                  <h4 className="text-sm font-semibold text-muted-foreground">ショットレーティング平均</h4>
                   <div className="grid grid-cols-3 gap-4">
                     <StatCard
                       label="ティーショット"
@@ -707,7 +703,7 @@ function MyStatsContent() {
                       unavailable={detailedStats.avg_rating_putt == null}
                     />
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
