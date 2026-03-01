@@ -636,9 +636,9 @@ function MyStatsContent() {
               )}
 
               {/* ライ別パーオン率 & 風向き別グリーンオン率 */}
-              {detailedStats && (detailedStats.gir_by_lie.length > 0 || detailedStats.gir_by_wind.length > 0) && (
+              {detailedStats && ((detailedStats.gir_by_lie?.length ?? 0) > 0 || (detailedStats.gir_by_wind?.length ?? 0) > 0) && (
                 <div className="grid md:grid-cols-2 gap-4">
-                  {detailedStats.gir_by_lie.length > 0 && (
+                  {(detailedStats.gir_by_lie?.length ?? 0) > 0 && (
                     <CompactBarList
                       items={detailedStats.gir_by_lie.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
                       title="ライ別パーオン率"
@@ -646,7 +646,7 @@ function MyStatsContent() {
                       color="#f59e0b"
                     />
                   )}
-                  {detailedStats.gir_by_wind.length > 0 && (
+                  {(detailedStats.gir_by_wind?.length ?? 0) > 0 && (
                     <CompactBarList
                       items={detailedStats.gir_by_wind.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
                       title="風向き別グリーンオン率（50yd+）"
@@ -658,9 +658,9 @@ function MyStatsContent() {
               )}
 
               {/* パットライン分析 */}
-              {detailedStats && (detailedStats.putt_make_by_slope.length > 0 || detailedStats.putt_make_by_break.length > 0) && (
+              {detailedStats && ((detailedStats.putt_make_by_slope?.length ?? 0) > 0 || (detailedStats.putt_make_by_break?.length ?? 0) > 0) && (
                 <div className="grid md:grid-cols-2 gap-4">
-                  {detailedStats.putt_make_by_slope.length > 0 && (
+                  {(detailedStats.putt_make_by_slope?.length ?? 0) > 0 && (
                     <CompactBarList
                       items={detailedStats.putt_make_by_slope.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
                       title="傾斜別カップイン率"
@@ -668,7 +668,7 @@ function MyStatsContent() {
                       color="#8b5cf6"
                     />
                   )}
-                  {detailedStats.putt_make_by_break.length > 0 && (
+                  {(detailedStats.putt_make_by_break?.length ?? 0) > 0 && (
                     <CompactBarList
                       items={detailedStats.putt_make_by_break.map((d) => ({ label: d.label, value: d.rate, count: d.count }))}
                       title="曲がり別カップイン率"
