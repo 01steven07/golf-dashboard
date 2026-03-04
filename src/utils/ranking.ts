@@ -1,4 +1,4 @@
-import { MemberStats, DetailedMemberStats, DistanceBucket } from "@/types/database";
+import { MemberStats, DetailedMemberStats, DistanceBucket, PuttCrossCell } from "@/types/database";
 import { STAT_DEFINITIONS, formatStatValue, getStatDefinition } from "@/utils/stat-definitions";
 
 export interface RoundData {
@@ -511,6 +511,9 @@ interface ParsedPuttShot {
   type: "putt";
   distance: number;
   result: string;
+  slope?: string;
+  break?: string;
+  rating?: number;
 }
 
 interface ParsedApproachShot {
@@ -518,10 +521,15 @@ interface ParsedApproachShot {
   distance: number;
   lie: string;
   result?: string;
+  wind?: string;
+  slope?: string;
+  rating?: number;
 }
 
 interface ParsedTeeShot {
   type: "tee";
+  wind?: string;
+  rating?: number;
 }
 
 type ParsedShot = ParsedPuttShot | ParsedApproachShot | ParsedTeeShot;
@@ -566,6 +574,67 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
 
   // GIR by approach distance
   const girBuckets = GIR_DISTANCE_BUCKETS.map((b) => ({ ...b, attempts: 0, greenOns: 0 }));
+
+  // Lie-based GIR
+  const lieBuckets: Record<string, { attempts: number; greenOns: number }> = {
+    fairway: { attempts: 0, greenOns: 0 },
+    "left-rough": { attempts: 0, greenOns: 0 },
+    "right-rough": { attempts: 0, greenOns: 0 },
+    "left-bunker": { attempts: 0, greenOns: 0 },
+    "right-bunker": { attempts: 0, greenOns: 0 },
+  };
+
+  // Wind-based GIR rate (50yd+ shots only) - 8 directions + none
+  const windGirGroups: Record<string, { attempts: number; greenOns: number }> = {
+    none: { attempts: 0, greenOns: 0 },
+    follow: { attempts: 0, greenOns: 0 },
+    "follow-right": { attempts: 0, greenOns: 0 },
+    right: { attempts: 0, greenOns: 0 },
+    "against-right": { attempts: 0, greenOns: 0 },
+    against: { attempts: 0, greenOns: 0 },
+    "against-left": { attempts: 0, greenOns: 0 },
+    left: { attempts: 0, greenOns: 0 },
+    "follow-left": { attempts: 0, greenOns: 0 },
+  };
+
+  // Putt slope/break make rates
+  const slopeBuckets: Record<string, { attempts: number; makes: number }> = {
+    flat: { attempts: 0, makes: 0 },
+    uphill: { attempts: 0, makes: 0 },
+    downhill: { attempts: 0, makes: 0 },
+  };
+  const breakBuckets: Record<string, { attempts: number; makes: number }> = {
+    straight: { attempts: 0, makes: 0 },
+    slice: { attempts: 0, makes: 0 },
+    hook: { attempts: 0, makes: 0 },
+  };
+
+  // Putt slope × break cross-tabulation (3×3)
+  const SLOPES = ["uphill", "flat", "downhill"] as const;
+  const BREAKS = ["hook", "straight", "slice"] as const;
+  const puttCrossBuckets: Record<string, { attempts: number; makes: number }> = {};
+  for (const s of SLOPES) {
+    for (const b of BREAKS) {
+      puttCrossBuckets[`${s}:${b}`] = { attempts: 0, makes: 0 };
+    }
+  }
+
+  // Approach slope-based GIR (ゴルフのライ傾斜: つま先上がり/下がり, 左足上がり/下がり)
+  const approachSlopeBuckets: Record<string, { attempts: number; greenOns: number }> = {
+    flat: { attempts: 0, greenOns: 0 },
+    "toe-up": { attempts: 0, greenOns: 0 },
+    "toe-down": { attempts: 0, greenOns: 0 },
+    "left-up": { attempts: 0, greenOns: 0 },
+    "left-down": { attempts: 0, greenOns: 0 },
+  };
+
+  // Rating accumulators
+  let teeRatingTotal = 0;
+  let teeRatingCount = 0;
+  let approachRatingTotal = 0;
+  let approachRatingCount = 0;
+  let puttRatingTotal = 0;
+  let puttRatingCount = 0;
 
   for (const round of rounds) {
     for (const score of round.scores) {
@@ -628,6 +697,75 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
           }
         }
       }
+
+      // GIR by lie (approach shots)
+      for (const approach of approachShots) {
+        if (approach.lie && approach.lie in lieBuckets) {
+          lieBuckets[approach.lie].attempts++;
+          const isGreenOn = approach.result?.startsWith("on") ?? false;
+          if (isGreenOn) lieBuckets[approach.lie].greenOns++;
+        }
+      }
+
+      // GIR by approach slope
+      for (const approach of approachShots) {
+        if (approach.slope && approach.slope in approachSlopeBuckets) {
+          approachSlopeBuckets[approach.slope].attempts++;
+          const isGreenOn = approach.result?.startsWith("on") ?? false;
+          if (isGreenOn) approachSlopeBuckets[approach.slope].greenOns++;
+        }
+      }
+
+      // Wind-based GIR (50yd+ approach/tee shots) - use 8 directions directly
+      const teeShot = shots.find((s): s is ParsedTeeShot => s.type === "tee");
+      for (const approach of approachShots) {
+        if (approach.distance >= 50) {
+          const wind = approach.wind ?? teeShot?.wind;
+          if (wind && wind in windGirGroups) {
+            windGirGroups[wind].attempts++;
+            const isGreenOn = approach.result?.startsWith("on") ?? false;
+            if (isGreenOn) windGirGroups[wind].greenOns++;
+          }
+        }
+      }
+
+      // Putt slope/break (individual + cross-tabulation)
+      for (const putt of puttShots) {
+        if (putt.slope && putt.slope in slopeBuckets) {
+          slopeBuckets[putt.slope].attempts++;
+          if (putt.result === "in") slopeBuckets[putt.slope].makes++;
+        }
+        if (putt.break && putt.break in breakBuckets) {
+          breakBuckets[putt.break].attempts++;
+          if (putt.result === "in") breakBuckets[putt.break].makes++;
+        }
+        // Cross-tabulation
+        if (putt.slope && putt.break) {
+          const crossKey = `${putt.slope}:${putt.break}`;
+          if (crossKey in puttCrossBuckets) {
+            puttCrossBuckets[crossKey].attempts++;
+            if (putt.result === "in") puttCrossBuckets[crossKey].makes++;
+          }
+        }
+      }
+
+      // Ratings
+      if (teeShot?.rating && teeShot.rating >= 1 && teeShot.rating <= 5) {
+        teeRatingTotal += teeShot.rating;
+        teeRatingCount++;
+      }
+      for (const approach of approachShots) {
+        if (approach.rating && approach.rating >= 1 && approach.rating <= 5) {
+          approachRatingTotal += approach.rating;
+          approachRatingCount++;
+        }
+      }
+      for (const putt of puttShots) {
+        if (putt.rating && putt.rating >= 1 && putt.rating <= 5) {
+          puttRatingTotal += putt.rating;
+          puttRatingCount++;
+        }
+      }
     }
   }
 
@@ -647,6 +785,97 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
       count: b.attempts,
     }));
 
+  const lieLabels: Record<string, string> = {
+    fairway: "フェアウェイ",
+    "left-rough": "左ラフ",
+    "right-rough": "右ラフ",
+    "left-bunker": "左バンカー",
+    "right-bunker": "右バンカー",
+  };
+
+  const girByLie: DistanceBucket[] = Object.entries(lieBuckets)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => ({
+      label: lieLabels[key] ?? key,
+      rate: (v.greenOns / v.attempts) * 100,
+      count: v.attempts,
+    }));
+
+  const windLabels: Record<string, string> = {
+    none: "無風",
+    follow: "追い風",
+    "follow-right": "右追い風",
+    right: "右風",
+    "against-right": "右向かい風",
+    against: "向かい風",
+    "against-left": "左向かい風",
+    left: "左風",
+    "follow-left": "左追い風",
+  };
+
+  const girByWind: DistanceBucket[] = Object.entries(windGirGroups)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => ({
+      label: windLabels[key] ?? key,
+      rate: (v.greenOns / v.attempts) * 100,
+      count: v.attempts,
+    }));
+
+  const slopeLabels: Record<string, string> = {
+    flat: "フラット",
+    uphill: "上り",
+    downhill: "下り",
+  };
+  const breakLabels: Record<string, string> = {
+    straight: "ストレート",
+    slice: "スライス",
+    hook: "フック",
+  };
+
+  const approachSlopeLabels: Record<string, string> = {
+    flat: "フラット",
+    "toe-up": "つま先上がり",
+    "toe-down": "つま先下がり",
+    "left-up": "左足上がり",
+    "left-down": "左足下がり",
+  };
+
+  const girBySlope: DistanceBucket[] = Object.entries(approachSlopeBuckets)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => ({
+      label: approachSlopeLabels[key] ?? key,
+      rate: (v.greenOns / v.attempts) * 100,
+      count: v.attempts,
+    }));
+
+  const puttMakeBySlope: DistanceBucket[] = Object.entries(slopeBuckets)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => ({
+      label: slopeLabels[key] ?? key,
+      rate: (v.makes / v.attempts) * 100,
+      count: v.attempts,
+    }));
+
+  const puttMakeByBreak: DistanceBucket[] = Object.entries(breakBuckets)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => ({
+      label: breakLabels[key] ?? key,
+      rate: (v.makes / v.attempts) * 100,
+      count: v.attempts,
+    }));
+
+  const puttCrossRates: PuttCrossCell[] = Object.entries(puttCrossBuckets)
+    .filter(([, v]) => v.attempts > 0)
+    .map(([key, v]) => {
+      const [slope, breakDir] = key.split(":");
+      return {
+        slope: slopeLabels[slope] ?? slope,
+        break_dir: breakLabels[breakDir] ?? breakDir,
+        rate: (v.makes / v.attempts) * 100,
+        count: v.attempts,
+      };
+    });
+
   return {
     sand_save_rate: sandSaveOpportunities > 0
       ? (sandSaveSuccess / sandSaveOpportunities) * 100
@@ -656,5 +885,15 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
       : null,
     make_pct_by_distance: makePctByDistance,
     gir_by_distance: girByDistance,
+    gir_by_lie: girByLie,
+    gir_by_wind: girByWind,
+    gir_by_slope: girBySlope,
+    putt_make_by_slope: puttMakeBySlope,
+    putt_make_by_break: puttMakeByBreak,
+    putt_cross_rates: puttCrossRates,
+    avg_rating_tee: teeRatingCount > 0 ? teeRatingTotal / teeRatingCount : null,
+    avg_rating_approach: approachRatingCount > 0 ? approachRatingTotal / approachRatingCount : null,
+    avg_rating_putt: puttRatingCount > 0 ? puttRatingTotal / puttRatingCount : null,
   };
 }
+

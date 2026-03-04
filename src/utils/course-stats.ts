@@ -381,6 +381,64 @@ export function calculateCourseShotStats(rounds: RoundScores[]): CourseShotStats
 /**
  * ティーショットのクラブ集計（shots_detailから）
  */
+/**
+ * ホール別のパーオン率
+ */
+export function calculateHoleGirRate(scores: ScoreRow[], holeNumber: number): { girRate: number; count: number } {
+  const holeScores = scores.filter((s) => s.hole_number === holeNumber);
+  if (holeScores.length === 0) return { girRate: 0, count: 0 };
+
+  let girCount = 0;
+  for (const s of holeScores) {
+    const strokesBeforePutt = s.score - s.putts;
+    if (strokesBeforePutt <= s.par - 2) girCount++;
+  }
+
+  return { girRate: (girCount / holeScores.length) * 100, count: holeScores.length };
+}
+
+/**
+ * ホール別の平均パット数
+ */
+export function calculateHoleAvgPutts(scores: ScoreRow[], holeNumber: number): { avgPutts: number; count: number } {
+  const holeScores = scores.filter((s) => s.hole_number === holeNumber);
+  if (holeScores.length === 0) return { avgPutts: 0, count: 0 };
+
+  const totalPutts = holeScores.reduce((sum, s) => sum + s.putts, 0);
+  return { avgPutts: totalPutts / holeScores.length, count: holeScores.length };
+}
+
+/**
+ * ホール別のスクランブル率（パーオンしなかったがパー以上で上がった率）
+ */
+export function calculateHoleScrambleRate(scores: ScoreRow[], holeNumber: number): { scrambleRate: number; opportunities: number } {
+  const holeScores = scores.filter((s) => s.hole_number === holeNumber);
+  let opportunities = 0;
+  let successes = 0;
+
+  for (const s of holeScores) {
+    const strokesBeforePutt = s.score - s.putts;
+    const isGir = strokesBeforePutt <= s.par - 2;
+    if (!isGir) {
+      opportunities++;
+      if (s.score <= s.par) successes++;
+    }
+  }
+
+  return {
+    scrambleRate: opportunities > 0 ? (successes / opportunities) * 100 : 0,
+    opportunities,
+  };
+}
+
+/**
+ * ホール別のスコア分布
+ */
+export function calculateHoleScoreDistribution(scores: ScoreRow[], holeNumber: number): ScoreDistribution {
+  const holeScores = scores.filter((s) => s.hole_number === holeNumber);
+  return calculateScoreDistribution(holeScores);
+}
+
 export function calculateTeeShotClubs(scores: ScoreRow[], holeNumber: number): ClubUsage[] {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber);
   const clubMap = new Map<string, number>();

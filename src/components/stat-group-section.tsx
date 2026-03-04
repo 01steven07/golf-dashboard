@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { StatCard } from "@/components/stat-card";
 
 interface StatItem {
@@ -10,6 +11,7 @@ interface StatItem {
   clubAvg?: string;
   rank?: number;
   totalMembers?: number;
+  icon?: ReactNode;
 }
 
 interface StatGroupSectionProps {
@@ -32,6 +34,7 @@ export function StatGroupSection({ title, stats }: StatGroupSectionProps) {
             clubAvg={stat.clubAvg}
             rank={stat.rank}
             totalMembers={stat.totalMembers}
+            icon={stat.icon}
           />
         ))}
       </div>

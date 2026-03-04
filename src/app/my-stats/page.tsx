@@ -15,11 +15,22 @@ import { StatCard } from "@/components/stat-card";
 import { getClubComparison, ClubComparison } from "@/utils/club-stats";
 import { RankingCategory } from "@/utils/ranking";
 import { DistanceRateChart } from "@/components/distance-rate-chart";
+import { CompactBarList } from "@/components/compact-bar-list";
+import { WindRoseChart } from "@/components/wind-rose-chart";
+import { FairwayLieChart } from "@/components/fairway-lie-chart";
+import { SlopeRateChart } from "@/components/slope-rate-chart";
+import { PuttHeatmap } from "@/components/putt-heatmap";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { CourseAnalysisTab } from "@/components/course-analysis-tab";
 import { RoundHistoryTab } from "@/components/round-history/round-list";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, Sparkles, Settings, Check, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Loader2, Sparkles, Settings, Check, ChevronDown, ChevronUp,
+  Trophy, Crosshair, TreePine, RotateCcw,
+  Flag, TrendingUp, Triangle, Square,
+  Target,
+  Locate, Trees, Waves, Ruler, Star,
+} from "lucide-react";
 import {
   Radar,
   RadarChart,
@@ -34,6 +45,25 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
+
+/** パターアイコン（LucideにないのでカスタムSVG） */
+function PutterIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className={className}>
+      <line x1="7" y1="1" x2="7" y2="10" />
+      <line x1="4" y1="10.5" x2="10" y2="10.5" strokeWidth="2" />
+    </svg>
+  );
+}
+
+/** バーディー ⚪ */
+function BirdieIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
+      <circle cx="7" cy="7" r="5.5" />
+    </svg>
+  );
+}
 
 export default function MyStatsPage() {
   return (
@@ -560,12 +590,12 @@ function MyStatsContent() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <StatCard label="平均スコア" value={myStats.avg_score.toFixed(1)} description="平均スコア" {...comp("gross")} />
-                <StatCard label="平均パット" value={myStats.avg_putts.toFixed(1)} description="平均パット数" {...comp("putt")} />
-                <StatCard label="パーオン率" value={`${myStats.gir_rate.toFixed(1)}%`} description="パーオン率" {...comp("gir")} />
-                <StatCard label="FWキープ率" value={`${myStats.fairway_keep_rate.toFixed(1)}%`} description="フェアウェイキープ率" {...comp("keep")} />
-                <StatCard label="平均バーディー" value={myStats.avg_birdies.toFixed(2)} description="平均バーディー数" {...comp("birdie")} />
-                <StatCard label="リカバリー率" value={`${myStats.scramble_rate.toFixed(1)}%`} description="リカバリー率" {...comp("scramble")} />
+                <StatCard label="平均スコア" value={myStats.avg_score.toFixed(1)} description="平均スコア" icon={<Trophy className="h-3.5 w-3.5" />} {...comp("gross")} />
+                <StatCard label="平均パット" value={myStats.avg_putts.toFixed(1)} description="平均パット数" icon={<PutterIcon className="h-3.5 w-3.5" />} {...comp("putt")} />
+                <StatCard label="パーオン率" value={`${myStats.gir_rate.toFixed(1)}%`} description="パーオン率" icon={<Crosshair className="h-3.5 w-3.5" />} {...comp("gir")} />
+                <StatCard label="FWキープ率" value={`${myStats.fairway_keep_rate.toFixed(1)}%`} description="フェアウェイキープ率" icon={<TreePine className="h-3.5 w-3.5" />} {...comp("keep")} />
+                <StatCard label="平均バーディー" value={myStats.avg_birdies.toFixed(2)} description="平均バーディー数" icon={<BirdieIcon className="h-3.5 w-3.5" />} {...comp("birdie")} />
+                <StatCard label="リカバリー率" value={`${myStats.scramble_rate.toFixed(1)}%`} description="リカバリー率" icon={<RotateCcw className="h-3.5 w-3.5" />} {...comp("scramble")} />
               </div>
             </CardContent>
           </Card>
@@ -578,34 +608,35 @@ function MyStatsContent() {
               <StatGroupSection
                 title="スコアリング"
                 stats={[
-                  { label: "Par3平均", value: myStats.par3_avg.toFixed(1), description: "Par3ホールの平均スコア", ...comp("par3_avg") },
-                  { label: "Par4平均", value: myStats.par4_avg.toFixed(1), description: "Par4ホールの平均スコア", ...comp("par4_avg") },
-                  { label: "Par5平均", value: myStats.par5_avg.toFixed(1), description: "Par5ホールの平均スコア", ...comp("par5_avg") },
-                  { label: "バウンスバック率", value: `${myStats.bounce_back_rate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率", ...comp("bounce_back") },
-                  { label: "ボギー回避率", value: `${myStats.bogey_avoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合", ...comp("bogey_avoidance") },
-                  { label: "ダボ回避率", value: `${myStats.double_bogey_avoidance.toFixed(1)}%`, description: "ダブルボギー以下を叩かなかった割合", ...comp("double_bogey_avoidance") },
+                  { label: "Par3平均", value: myStats.par3_avg.toFixed(1), description: "Par3ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...comp("par3_avg") },
+                  { label: "Par4平均", value: myStats.par4_avg.toFixed(1), description: "Par4ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...comp("par4_avg") },
+                  { label: "Par5平均", value: myStats.par5_avg.toFixed(1), description: "Par5ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...comp("par5_avg") },
+                  { label: "バウンスバック率", value: `${myStats.bounce_back_rate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率", icon: <TrendingUp className="h-3.5 w-3.5" />, ...comp("bounce_back") },
+                  { label: "ボギー回避率", value: `${myStats.bogey_avoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合", icon: <Triangle className="h-3.5 w-3.5" />, ...comp("bogey_avoidance") },
+                  { label: "ダボ回避率", value: `${myStats.double_bogey_avoidance.toFixed(1)}%`, description: "ダブルボギー以下を叩かなかった割合", icon: <Square className="h-3.5 w-3.5" />, ...comp("double_bogey_avoidance") },
                 ]}
               />
 
               <StatGroupSection
                 title="パッティング"
                 stats={[
-                  { label: "パーオン時パット", value: myStats.putts_per_gir.toFixed(1), description: "パーオンホールでの平均パット数", ...comp("putts_per_gir") },
-                  { label: "3パット回避率", value: `${myStats.three_putt_avoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合", ...comp("three_putt_avoidance") },
-                  { label: "1パット率", value: `${myStats.one_putt_rate.toFixed(1)}%`, description: "1パットで沈めた割合", ...comp("one_putt_rate") },
+                  { label: "パーオン時パット", value: myStats.putts_per_gir.toFixed(1), description: "パーオンホールでの平均パット数", icon: <PutterIcon className="h-3.5 w-3.5" />, ...comp("putts_per_gir") },
+                  { label: "3パット回避率", value: `${myStats.three_putt_avoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合", icon: <PutterIcon className="h-3.5 w-3.5" />, ...comp("three_putt_avoidance") },
+                  { label: "1パット率", value: `${myStats.one_putt_rate.toFixed(1)}%`, description: "1パットで沈めた割合", icon: <Star className="h-3.5 w-3.5" />, ...comp("one_putt_rate") },
                 ]}
               />
 
               <StatGroupSection
                 title="ショット"
                 stats={[
-                  { label: "パーオン率(FW)", value: `${myStats.gir_from_fairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率", ...comp("gir_from_fairway") },
-                  { label: "パーオン率(ラフ)", value: `${myStats.gir_from_rough.toFixed(1)}%`, description: "ラフからのパーオン率", ...comp("gir_from_rough") },
+                  { label: "パーオン率(FW)", value: `${myStats.gir_from_fairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率", icon: <Locate className="h-3.5 w-3.5" />, ...comp("gir_from_fairway") },
+                  { label: "パーオン率(ラフ)", value: `${myStats.gir_from_rough.toFixed(1)}%`, description: "ラフからのパーオン率", icon: <Trees className="h-3.5 w-3.5" />, ...comp("gir_from_rough") },
                   {
                     label: "サンドセーブ率",
                     value: detailedStats?.sand_save_rate != null ? `${detailedStats.sand_save_rate.toFixed(1)}%` : "-",
                     description: "グリーン周りバンカーからパー以上の率",
                     unavailable: detailedStats?.sand_save_rate == null,
+                    icon: <Waves className="h-3.5 w-3.5" />,
                     ...comp("sand_save"),
                   },
                   {
@@ -613,25 +644,93 @@ function MyStatsContent() {
                     value: detailedStats?.avg_driving_distance != null ? `${detailedStats.avg_driving_distance.toFixed(0)}yd` : "-",
                     description: "Par4でのティーショット推定飛距離",
                     unavailable: detailedStats?.avg_driving_distance == null,
+                    icon: <Ruler className="h-3.5 w-3.5" />,
                     ...comp("driving_distance"),
                   },
                 ]}
               />
 
               {/* Distance-based charts */}
-              {detailedStats && detailedStats.make_pct_by_distance.length > 0 && (
+              {detailedStats && (detailedStats.make_pct_by_distance?.length ?? 0) > 0 && (
                 <DistanceRateChart
                   data={detailedStats.make_pct_by_distance}
                   title="距離別カップイン率"
                   color="#3b82f6"
                 />
               )}
-              {detailedStats && detailedStats.gir_by_distance.length > 0 && (
+              {detailedStats && (detailedStats.gir_by_distance?.length ?? 0) > 0 && (
                 <DistanceRateChart
                   data={detailedStats.gir_by_distance}
                   title="距離別グリーンオン率"
                   color="#22c55e"
                 />
+              )}
+
+              {/* ライ別パーオン率 & 風向き別グリーンオン率 */}
+              {detailedStats && ((detailedStats.gir_by_lie?.length ?? 0) > 0 || (detailedStats.gir_by_wind?.length ?? 0) > 0) && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {(detailedStats.gir_by_lie?.length ?? 0) > 0 && (
+                    <FairwayLieChart
+                      data={detailedStats.gir_by_lie}
+                      title="ライ別パーオン率"
+                    />
+                  )}
+                  {(detailedStats.gir_by_wind?.length ?? 0) > 0 && (
+                    <WindRoseChart
+                      data={detailedStats.gir_by_wind}
+                      title="風向き別グリーンオン率（50yd+）"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* 傾斜別グリーンオン率 */}
+              {detailedStats && (detailedStats.gir_by_slope?.length ?? 0) > 0 && (
+                <SlopeRateChart
+                  data={detailedStats.gir_by_slope}
+                  title="傾斜別グリーンオン率"
+                  color="#22c55e"
+                />
+              )}
+
+              {/* パットライン分析（傾斜 × 曲がり 3×3ヒートマップ） */}
+              {detailedStats && ((detailedStats.putt_make_by_slope?.length ?? 0) > 0 || (detailedStats.putt_make_by_break?.length ?? 0) > 0) && (
+                <PuttHeatmap
+                  crossData={detailedStats.putt_cross_rates ?? []}
+                  slopeData={detailedStats.putt_make_by_slope ?? []}
+                  breakData={detailedStats.putt_make_by_break ?? []}
+                  title="パットライン分析（傾斜 × 曲がり）"
+                />
+              )}
+
+              {/* ショットレーティング */}
+              {detailedStats && (detailedStats.avg_rating_tee != null || detailedStats.avg_rating_approach != null || detailedStats.avg_rating_putt != null) && (
+                <>
+                  <h4 className="text-sm font-semibold text-muted-foreground">ショットレーティング平均</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <StatCard
+                      label="ティーショット"
+                      value={detailedStats.avg_rating_tee != null ? detailedStats.avg_rating_tee.toFixed(1) : "-"}
+                      description="ティーショットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_tee == null}
+                      icon={<Target className="h-3.5 w-3.5" />}
+                    />
+                    <StatCard
+                      label="アプローチ"
+                      value={detailedStats.avg_rating_approach != null ? detailedStats.avg_rating_approach.toFixed(1) : "-"}
+                      description="アプローチショットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_approach == null}
+                      icon={<Crosshair className="h-3.5 w-3.5" />}
+                    />
+                    <StatCard
+                      label="パット"
+                      value={detailedStats.avg_rating_putt != null ? detailedStats.avg_rating_putt.toFixed(1) : "-"}
+                      description="パットの平均自己評価（5点満点）"
+                      unavailable={detailedStats.avg_rating_putt == null}
+                      icon={<PutterIcon className="h-3.5 w-3.5" />}
+                    />
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

@@ -172,10 +172,41 @@ export interface DistanceBucket {
   count: number;
 }
 
+/** カテゴリ別の数値データ（±スコアなど任意数値用） */
+export interface CategoryValue {
+  label: string;
+  value: number;
+  count: number;
+}
+
+/** パット傾斜×曲がりクロス集計セル */
+export interface PuttCrossCell {
+  slope: string;
+  break_dir: string;
+  rate: number;
+  count: number;
+}
+
 /** Detailed stats requiring shots_detail data */
 export interface DetailedMemberStats {
   sand_save_rate: number | null;
   avg_driving_distance: number | null;
   make_pct_by_distance: DistanceBucket[];
   gir_by_distance: DistanceBucket[];
+  // ライ別パーオン率
+  gir_by_lie: DistanceBucket[];
+  // 風向き別グリーンオン率（50yd+ショット対象）
+  gir_by_wind: DistanceBucket[];
+  // 傾斜別グリーンオン率（アプローチショット）
+  gir_by_slope: DistanceBucket[];
+  // パット傾斜別カップイン率
+  putt_make_by_slope: DistanceBucket[];
+  // パット曲がり別カップイン率
+  putt_make_by_break: DistanceBucket[];
+  // パット傾斜×曲がりクロス集計（3×3ヒートマップ用）
+  putt_cross_rates: PuttCrossCell[];
+  // ショットレーティング平均
+  avg_rating_tee: number | null;
+  avg_rating_approach: number | null;
+  avg_rating_putt: number | null;
 }
