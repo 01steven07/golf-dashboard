@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import {
   DetailedRoundData,
   HoleData,
@@ -185,12 +185,38 @@ export function StepScoring({
   // アコーディオン: 展開中のショットインデックス
   const [expandedShotIndex, setExpandedShotIndex] = useState<number | null>(null);
 
-  // ホール切り替え時に最後のショットを展開
+  // ショットカードへのref（スクロール用）
+  const shotRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const setShotRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    if (el) shotRefs.current.set(index, el);
+    else shotRefs.current.delete(index);
+  }, []);
+
+  // 追加直後にスクロールするためのフラグ
+  const pendingScrollIndex = useRef<number | null>(null);
+
+  // 初期表示時・ホール切り替え時にページ最上部にスクロール
   useEffect(() => {
+    window.scrollTo(0, 0);
     setExpandedShotIndex(
       hole.shots.length > 0 ? hole.shots.length - 1 : null
     );
   }, [currentHole]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ショット追加後のスクロール
+  useEffect(() => {
+    if (pendingScrollIndex.current !== null) {
+      const idx = pendingScrollIndex.current;
+      pendingScrollIndex.current = null;
+      // DOMが更新された後にスクロール
+      requestAnimationFrame(() => {
+        const el = shotRefs.current.get(idx);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    }
+  }, [hole.shots.length]);
 
   // サブコース情報を計算
   const subCourseInfo = useMemo(() => {
@@ -259,8 +285,10 @@ export function StepScoring({
         newShot = createDefaultPutt();
         break;
     }
+    const newIndex = hole.shots.length;
     updateHole({ ...hole, shots: [...hole.shots, newShot] });
-    setExpandedShotIndex(hole.shots.length); // 新しいショット（末尾）を展開
+    setExpandedShotIndex(newIndex); // 新しいショット（末尾）を展開
+    pendingScrollIndex.current = newIndex; // スクロール予約
   };
 
   const updateShot = (index: number, shot: Shot) => {
@@ -397,6 +425,7 @@ export function StepScoring({
               return (
                 <Card
                   key={index}
+                  ref={(el: HTMLDivElement | null) => setShotRef(index, el)}
                   className="border-2 border-green-200 overflow-hidden"
                 >
                   <div
@@ -441,6 +470,7 @@ export function StepScoring({
               return (
                 <Card
                   key={index}
+                  ref={(el: HTMLDivElement | null) => setShotRef(index, el)}
                   className="border-2 border-blue-200 overflow-hidden"
                 >
                   <div
@@ -487,6 +517,7 @@ export function StepScoring({
               return (
                 <Card
                   key={index}
+                  ref={(el: HTMLDivElement | null) => setShotRef(index, el)}
                   className="border-2 border-purple-200 overflow-hidden"
                 >
                   <div
