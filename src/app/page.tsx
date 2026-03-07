@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -14,59 +14,65 @@ import {
   RankingCategory,
 } from "@/utils/ranking";
 import { getRankableStatsByGroup } from "@/utils/stat-definitions";
+import { FetchError } from "@/components/fetch-error";
 
 const rankableGroups = getRankableStatsByGroup();
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<MemberStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState(rankableGroups[0]?.group.key ?? "core");
 
-  useEffect(() => {
-    async function fetchData() {
-      // Fetch all rounds with scores and member info, ordered by date desc
-      const { data: rounds, error } = await supabase
-        .from("rounds")
-        .select(
-          `
-          id,
-          member_id,
-          date,
-          members!inner(name),
-          scores(hole_number, par, score, putts, fairway_result, distance, shots_detail)
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setFetchError(null);
+
+    // Fetch all rounds with scores and member info, ordered by date desc
+    const { data: rounds, error } = await supabase
+      .from("rounds")
+      .select(
         `
-        )
-        .order("date", { ascending: false });
+        id,
+        member_id,
+        date,
+        members!inner(name),
+        scores(hole_number, par, score, putts, fairway_result, distance, shots_detail)
+      `
+      )
+      .order("date", { ascending: false });
 
-      if (error) {
-        console.error("Failed to fetch rounds:", error);
-        setIsLoading(false);
-        return;
-      }
-
-      // Transform data for calculation
-      const roundData = (rounds ?? []).map((r) => ({
-        member_id: r.member_id,
-        member_name: (r.members as unknown as { name: string }).name,
-        scores: r.scores as {
-          hole_number: number;
-          par: number;
-          score: number;
-          putts: number;
-          fairway_result: string;
-          distance: number | null;
-          shots_detail: unknown[] | null;
-        }[],
-      }));
-
-      const calculatedStats = calculateMemberStats(roundData);
-      setStats(calculatedStats);
-
+    if (error) {
+      console.error("Failed to fetch rounds:", error);
+      setFetchError("ランキングデータの取得に失敗しました。通信状況を確認してください。");
       setIsLoading(false);
+      return;
     }
 
-    fetchData();
+    // Transform data for calculation
+    const roundData = (rounds ?? []).map((r) => ({
+      member_id: r.member_id,
+      member_name: (r.members as unknown as { name: string }).name,
+      scores: r.scores as {
+        hole_number: number;
+        par: number;
+        score: number;
+        putts: number;
+        fairway_result: string;
+        distance: number | null;
+        shots_detail: unknown[] | null;
+      }[],
+    }));
+
+    const calculatedStats = calculateMemberStats(roundData);
+    setStats(calculatedStats);
+
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const getRankBadgeColor = (rank: number) => {
     if (rank === 1) return "bg-yellow-500 text-white";
@@ -78,6 +84,15 @@ export default function DashboardPage() {
   // Get stats for currently selected group
   const currentGroupData = rankableGroups.find((g) => g.group.key === selectedGroup);
   const currentStats = currentGroupData?.stats ?? [];
+
+  if (fetchError) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">総合ランキング</h2>
+        <FetchError message={fetchError} onRetry={fetchData} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
