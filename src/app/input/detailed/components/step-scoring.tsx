@@ -187,6 +187,7 @@ export function StepScoring({
 
   // ショットカードへのref（スクロール用）
   const shotRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
   const setShotRef = useCallback((index: number, el: HTMLDivElement | null) => {
     if (el) shotRefs.current.set(index, el);
     else shotRefs.current.delete(index);
@@ -194,6 +195,15 @@ export function StepScoring({
 
   // 追加直後にスクロールするためのフラグ
   const pendingScrollIndex = useRef<number | null>(null);
+
+  /** stickyヘッダーの高さを考慮してカード上端にスクロール */
+  const scrollToShot = useCallback((idx: number) => {
+    const el = shotRefs.current.get(idx);
+    if (!el) return;
+    const headerHeight = stickyHeaderRef.current?.offsetHeight ?? 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+    window.scrollTo({ top, behavior: "smooth" });
+  }, []);
 
   // 初期表示時・ホール切り替え時にページ最上部にスクロール
   useEffect(() => {
@@ -208,15 +218,9 @@ export function StepScoring({
     if (pendingScrollIndex.current !== null) {
       const idx = pendingScrollIndex.current;
       pendingScrollIndex.current = null;
-      // DOMが更新された後にスクロール
-      requestAnimationFrame(() => {
-        const el = shotRefs.current.get(idx);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      });
+      requestAnimationFrame(() => scrollToShot(idx));
     }
-  }, [hole.shots.length]);
+  }, [hole.shots.length, scrollToShot]);
 
   // サブコース情報を計算
   const subCourseInfo = useMemo(() => {
@@ -318,7 +322,7 @@ export function StepScoring({
   return (
     <div className="min-h-screen bg-gray-50 pb-40">
       {/* Stickyヘッダー（スコア概要 + ホールナビのみ） */}
-      <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
+      <div ref={stickyHeaderRef} className="sticky top-0 z-20 bg-white border-b shadow-sm">
         <ScoreSummaryBar
           sectionScores={stats.sectionScores}
           totalScore={stats.totalScore}
