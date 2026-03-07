@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
@@ -23,6 +23,7 @@ import { PuttHeatmap } from "@/components/putt-heatmap";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { CourseAnalysisTab } from "@/components/course-analysis-tab";
 import { RoundHistoryTab } from "@/components/round-history/round-list";
+import { FetchError } from "@/components/fetch-error";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Loader2, Sparkles, Settings, Check, ChevronDown, ChevronUp,
@@ -86,6 +87,7 @@ function MyStatsContent() {
   const [advice, setAdvice] = useState<string>("");
   const [isLoadingAdvice, setIsLoadingAdvice] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Profile editing state
   const [isProfileSectionOpen, setIsProfileSectionOpen] = useState(false);
@@ -141,29 +143,32 @@ function MyStatsContent() {
     }
   };
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!member) return;
 
-    async function fetchData() {
-      // Fetch all rounds with scores and member info (including distance and shots_detail)
-      const { data: rounds, error } = await supabase
-        .from("rounds")
-        .select(
-          `
-          id,
-          member_id,
-          date,
-          members!inner(name),
-          scores(hole_number, par, score, putts, fairway_result, distance, shots_detail)
-        `
-        )
-        .order("date", { ascending: false });
+    setIsLoading(true);
+    setFetchError(null);
 
-      if (error) {
-        console.error("Failed to fetch rounds:", error);
-        setIsLoading(false);
-        return;
-      }
+    // Fetch all rounds with scores and member info (including distance and shots_detail)
+    const { data: rounds, error } = await supabase
+      .from("rounds")
+      .select(
+        `
+        id,
+        member_id,
+        date,
+        members!inner(name),
+        scores(hole_number, par, score, putts, fairway_result, distance, shots_detail)
+      `
+      )
+      .order("date", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch rounds:", error);
+      setFetchError("スタッツデータの取得に失敗しました。通信状況を確認してください。");
+      setIsLoading(false);
+      return;
+    }
 
       // Transform data for calculation
       const roundData = (rounds ?? []).map((r) => ({
@@ -234,10 +239,11 @@ function MyStatsContent() {
       setDetailedStats(detailed);
 
       setIsLoading(false);
-    }
-
-    fetchData();
   }, [member]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const generateAdvice = async () => {
     if (!myStats || allStats.length === 0) return;
@@ -314,6 +320,15 @@ function MyStatsContent() {
     const c = clubComparisons[cat];
     return c ? { clubAvg: c.clubAvg, rank: c.rank, totalMembers: c.totalMembers } : {};
   };
+
+  if (fetchError) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">マイページ</h2>
+        <FetchError message={fetchError} onRetry={fetchData} />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

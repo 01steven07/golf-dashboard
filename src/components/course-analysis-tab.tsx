@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, type ReactNode } from "react";
+import { useEffect, useState, useMemo, useCallback, type ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -49,6 +49,7 @@ import {
   Flag, TrendingUp, Triangle, Square, Star,
   Locate, Trees,
 } from "lucide-react";
+import { FetchError } from "@/components/fetch-error";
 
 /** パターアイコン */
 function PutterIcon({ className }: { className?: string }) {
@@ -128,89 +129,95 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [fetchCoursesError, setFetchCoursesError] = useState<string | null>(null);
+  const [fetchDataError, setFetchDataError] = useState<string | null>(null);
 
   // Fetch played courses
-  useEffect(() => {
-    async function fetchCourses() {
-      const { data, error } = await supabase
-        .from("rounds")
-        .select("course_id, courses!inner(id, name, pref)")
-        .eq("member_id", memberId)
-        .not("course_id", "is", null);
+  const fetchCourses = useCallback(async () => {
+    setIsLoadingCourses(true);
+    setFetchCoursesError(null);
 
-      if (error) {
-        console.error("Failed to fetch courses:", error);
-        setIsLoadingCourses(false);
-        return;
-      }
+    const { data, error } = await supabase
+      .from("rounds")
+      .select("course_id, courses!inner(id, name, pref)")
+      .eq("member_id", memberId)
+      .not("course_id", "is", null);
 
-      const courseMap = new Map<string, CourseOption>();
-      for (const row of data ?? []) {
-        const course = row.courses as unknown as { id: string; name: string; pref: string | null };
-        if (!courseMap.has(course.id)) {
-          courseMap.set(course.id, { id: course.id, name: course.name, pref: course.pref });
-        }
-      }
-
-      setCourses(Array.from(courseMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
+    if (error) {
+      console.error("Failed to fetch courses:", error);
+      setFetchCoursesError("コース一覧の取得に失敗しました。通信状況を確認してください。");
       setIsLoadingCourses(false);
+      return;
     }
 
-    fetchCourses();
+    const courseMap = new Map<string, CourseOption>();
+    for (const row of data ?? []) {
+      const course = row.courses as unknown as { id: string; name: string; pref: string | null };
+      if (!courseMap.has(course.id)) {
+        courseMap.set(course.id, { id: course.id, name: course.name, pref: course.pref });
+      }
+    }
+
+    setCourses(Array.from(courseMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
+    setIsLoadingCourses(false);
   }, [memberId]);
 
-  // Fetch data when course is selected
   useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  // Fetch data when course is selected
+  const fetchCourseData = useCallback(async () => {
     if (!selectedCourseId) return;
 
-    async function fetchCourseData() {
-      setIsLoadingData(true);
-      setSelectedHole(null);
+    setIsLoadingData(true);
+    setFetchDataError(null);
+    setSelectedHole(null);
 
-      const [myResult, teamResult] = await Promise.all([
-        supabase
-          .from("rounds")
-          .select("id, date, out_course_name, in_course_name, scores(hole_number, par, score, putts, fairway_result, pin_position, shots_detail)")
-          .eq("member_id", memberId)
-          .eq("course_id", selectedCourseId)
-          .order("date", { ascending: false }),
-        supabase
-          .from("rounds")
-          .select("id, member_id, scores(hole_number, par, score, putts, fairway_result)")
-          .eq("course_id", selectedCourseId)
-          .order("date", { ascending: false }),
-      ]);
+    const [myResult, teamResult] = await Promise.all([
+      supabase
+        .from("rounds")
+        .select("id, date, out_course_name, in_course_name, scores(hole_number, par, score, putts, fairway_result, pin_position, shots_detail)")
+        .eq("member_id", memberId)
+        .eq("course_id", selectedCourseId)
+        .order("date", { ascending: false }),
+      supabase
+        .from("rounds")
+        .select("id, member_id, scores(hole_number, par, score, putts, fairway_result)")
+        .eq("course_id", selectedCourseId)
+        .order("date", { ascending: false }),
+    ]);
 
-      if (myResult.error) {
-        console.error("Failed to fetch my rounds:", myResult.error);
-      } else {
-        setMyRounds(
-          (myResult.data ?? []).map((r) => ({
-            id: r.id,
-            date: r.date,
-            out_course_name: (r as Record<string, unknown>).out_course_name as string | null,
-            in_course_name: (r as Record<string, unknown>).in_course_name as string | null,
-            scores: (r.scores as ScoreRow[]) ?? [],
-          }))
-        );
-      }
-
-      if (teamResult.error) {
-        console.error("Failed to fetch team rounds:", teamResult.error);
-      } else {
-        setTeamRounds(
-          (teamResult.data ?? []).map((r) => ({
-            member_id: r.member_id,
-            scores: (r.scores as unknown as ScoreRow[]) ?? [],
-          }))
-        );
-      }
-
+    if (myResult.error || teamResult.error) {
+      console.error("Failed to fetch course data:", myResult.error || teamResult.error);
+      setFetchDataError("コースデータの取得に失敗しました。通信状況を確認してください。");
       setIsLoadingData(false);
+      return;
     }
 
-    fetchCourseData();
+    setMyRounds(
+      (myResult.data ?? []).map((r) => ({
+        id: r.id,
+        date: r.date,
+        out_course_name: (r as Record<string, unknown>).out_course_name as string | null,
+        in_course_name: (r as Record<string, unknown>).in_course_name as string | null,
+        scores: (r.scores as ScoreRow[]) ?? [],
+      }))
+    );
+
+    setTeamRounds(
+      (teamResult.data ?? []).map((r) => ({
+        member_id: r.member_id,
+        scores: (r.scores as unknown as ScoreRow[]) ?? [],
+      }))
+    );
+
+    setIsLoadingData(false);
   }, [memberId, selectedCourseId]);
+
+  useEffect(() => {
+    fetchCourseData();
+  }, [fetchCourseData]);
 
   // All my scores for this course (flat array)
   const allMyScores = useMemo(() => myRounds.flatMap((r) => r.scores), [myRounds]);
@@ -384,6 +391,10 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
     return allMyScores.some((s) => s.hole_number === selectedHole && s.pin_position);
   }, [allMyScores, selectedHole]);
 
+  if (fetchCoursesError) {
+    return <FetchError message={fetchCoursesError} onRetry={fetchCourses} />;
+  }
+
   if (isLoadingCourses) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -425,6 +436,10 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
             コースを選択してください
           </CardContent>
         </Card>
+      )}
+
+      {fetchDataError && (
+        <FetchError message={fetchDataError} onRetry={fetchCourseData} />
       )}
 
       {isLoadingData && (

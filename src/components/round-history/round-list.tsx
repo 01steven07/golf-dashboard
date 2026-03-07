@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { Score } from "@/types/database";
 import { formatMonthGroup } from "@/utils/round-stats";
 import { RoundCard } from "./round-card";
 import { Loader2 } from "lucide-react";
+import { FetchError } from "@/components/fetch-error";
 
 interface RoundData {
   id: string;
@@ -26,43 +27,48 @@ interface RoundHistoryTabProps {
 export function RoundHistoryTab({ memberId }: RoundHistoryTabProps) {
   const [rounds, setRounds] = useState<RoundData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchRounds() {
-      const { data, error } = await supabase
-        .from("rounds")
-        .select(
-          `id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels,
-          courses(name, pref),
-          scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
-        )
-        .eq("member_id", memberId)
-        .order("date", { ascending: false });
+  const fetchRounds = useCallback(async () => {
+    setIsLoading(true);
+    setFetchError(null);
 
-      if (error) {
-        console.error("Failed to fetch rounds:", error);
-        setIsLoading(false);
-        return;
-      }
+    const { data, error } = await supabase
+      .from("rounds")
+      .select(
+        `id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels,
+        courses(name, pref),
+        scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
+      )
+      .eq("member_id", memberId)
+      .order("date", { ascending: false });
 
-      const roundData: RoundData[] = (data ?? []).map((r) => ({
-        id: r.id,
-        date: r.date,
-        tee_color: r.tee_color,
-        weather: r.weather,
-        out_course_name: r.out_course_name,
-        in_course_name: r.in_course_name,
-        ext_course_labels: (r.ext_course_labels as string[]) ?? [],
-        courses: r.courses as unknown as { name: string; pref: string | null } | null,
-        scores: (r.scores as unknown as Score[]) ?? [],
-      }));
-
-      setRounds(roundData);
+    if (error) {
+      console.error("Failed to fetch rounds:", error);
+      setFetchError("ラウンド履歴の取得に失敗しました。通信状況を確認してください。");
       setIsLoading(false);
+      return;
     }
 
-    fetchRounds();
+    const roundData: RoundData[] = (data ?? []).map((r) => ({
+      id: r.id,
+      date: r.date,
+      tee_color: r.tee_color,
+      weather: r.weather,
+      out_course_name: r.out_course_name,
+      in_course_name: r.in_course_name,
+      ext_course_labels: (r.ext_course_labels as string[]) ?? [],
+      courses: r.courses as unknown as { name: string; pref: string | null } | null,
+      scores: (r.scores as unknown as Score[]) ?? [],
+    }));
+
+    setRounds(roundData);
+    setIsLoading(false);
   }, [memberId]);
+
+  useEffect(() => {
+    fetchRounds();
+  }, [fetchRounds]);
 
   if (isLoading) {
     return (
@@ -70,6 +76,10 @@ export function RoundHistoryTab({ memberId }: RoundHistoryTabProps) {
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
+  }
+
+  if (fetchError) {
+    return <FetchError message={fetchError} onRetry={fetchRounds} />;
   }
 
   if (rounds.length === 0) {
