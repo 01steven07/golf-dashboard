@@ -60,7 +60,7 @@ function HalfTable({
             <TableCell className="text-center px-1 font-bold">{totalPar}</TableCell>
           </TableRow>
 
-          {/* Score row */}
+          {/* Score row - symbols */}
           <TableRow>
             <TableCell className={`font-medium ${stickyClass}`}>Score</TableCell>
             {sorted.map((s) => {
@@ -70,11 +70,21 @@ function HalfTable({
                   key={s.hole_number}
                   className={`text-center px-1 font-bold ${sym.bgColor} ${sym.color}`}
                 >
-                  {s.score}
+                  {sym.symbol}
                 </TableCell>
               );
             })}
-            <TableCell className="text-center px-1 font-bold">{totalScore}</TableCell>
+            {(() => {
+              const overPar = totalScore - totalPar;
+              const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
+              const overParColor = overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
+              return (
+                <TableCell className="text-center px-1 font-bold">
+                  <div>{totalScore}</div>
+                  <div className={`text-[10px] ${overParColor}`}>{overParStr}</div>
+                </TableCell>
+              );
+            })()}
           </TableRow>
 
           {/* Putt row */}
@@ -148,22 +158,27 @@ export function ScorecardTable({ scores, extCourseLabels = [] }: ScorecardTableP
         />
       ))}
 
-      {sections.length >= 2 && (
-        <div className="grid grid-cols-3 gap-3 pt-2 border-t">
-          <div className="text-center">
-            <p className="text-[10px] text-muted-foreground uppercase">Total Par</p>
-            <p className="text-sm font-bold">{totalPar}</p>
+      {sections.length >= 2 && (() => {
+        const overPar = totalScore - totalPar;
+        const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
+        const overParColor = overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
+        return (
+          <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase">Score</p>
+              <p className="text-lg font-bold">{totalScore}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase">±Par</p>
+              <p className={`text-lg font-bold ${overParColor}`}>{overParStr}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase">Putt</p>
+              <p className="text-lg font-bold">{totalPutts}</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-[10px] text-muted-foreground uppercase">Total Score</p>
-            <p className="text-lg font-bold">{totalScore}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] text-muted-foreground uppercase">Total Putt</p>
-            <p className="text-sm font-bold">{totalPutts}</p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

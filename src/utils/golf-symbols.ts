@@ -1,4 +1,5 @@
 import { FairwayResult } from "@/types/database";
+import { SCORE_TW } from "@/utils/score-colors";
 
 export interface ScoreSymbolInfo {
   label: string;
@@ -23,28 +24,22 @@ export function getScoreSymbol(score: number, par: number): ScoreSymbolInfo {
 
   const diff = score - par;
 
-  if (diff <= -3) {
-    return { label: "Albatross", symbol: "◎◎", color: "text-purple-700", bgColor: "bg-purple-100" };
-  }
-  if (diff === -2) {
-    return { label: "Eagle", symbol: "◎", color: "text-yellow-700", bgColor: "bg-yellow-100" };
+  if (diff <= -2) {
+    return { label: diff <= -3 ? "Albatross" : "Eagle", symbol: diff <= -3 ? "◎◎" : "◎", ...SCORE_TW.eagle };
   }
   if (diff === -1) {
-    return { label: "Birdie", symbol: "○", color: "text-blue-700", bgColor: "bg-blue-100" };
+    return { label: "Birdie", symbol: "○", ...SCORE_TW.birdie };
   }
   if (diff === 0) {
-    return { label: "Par", symbol: "-", color: "text-green-700", bgColor: "" };
+    return { label: "Par", symbol: "-", ...SCORE_TW.par };
   }
   if (diff === 1) {
-    return { label: "Bogey", symbol: "△", color: "text-orange-700", bgColor: "bg-orange-100" };
+    return { label: "Bogey", symbol: "△", ...SCORE_TW.bogey };
   }
   if (diff === 2) {
-    return { label: "D.Bogey", symbol: "□", color: "text-red-600", bgColor: "bg-red-100" };
+    return { label: "D.Bogey", symbol: "□", ...SCORE_TW.doubleBogey };
   }
-  if (diff === 3) {
-    return { label: "+3", symbol: "+3", color: "text-red-700", bgColor: "bg-red-200" };
-  }
-  return { label: `+${diff}`, symbol: `+${diff}`, color: "text-red-800", bgColor: "bg-red-300" };
+  return { label: `+${diff}`, symbol: `+${diff}`, ...SCORE_TW.triplePlus };
 }
 
 /**
