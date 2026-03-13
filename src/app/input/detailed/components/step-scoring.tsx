@@ -15,6 +15,7 @@ import {
 } from "@/types/shot";
 import { CourseWithDetails } from "@/types/database";
 import { getHoleScore } from "@/utils/shot-aggregation";
+import { isCupIn, isOnGreen, getShotAddWarning, getHoleWarnings } from "@/utils/shot-validation";
 import { TeeShotInput } from "@/components/shot-input/tee-shot-input";
 import { ApproachShotInput } from "@/components/shot-input/approach-shot-input";
 import { PuttInput } from "@/components/shot-input/putt-input";
@@ -51,6 +52,7 @@ import {
   X,
   ArrowUp,
   ArrowDown,
+  CheckCircle2,
 } from "lucide-react";
 
 function getScoreDiffText(score: number, par: number): string {
@@ -185,6 +187,10 @@ export function StepScoring({
   // アコーディオン: 展開中のショットインデックス
   const [expandedShotIndex, setExpandedShotIndex] = useState<number | null>(null);
 
+  // バリデーション用ダイアログ状態
+  const [shotAddWarning, setShotAddWarning] = useState<{ message: string; type: "tee" | "approach" | "putt" } | null>(null);
+  const [holeNavigationWarning, setHoleNavigationWarning] = useState<{ warnings: string[]; targetHole: number } | null>(null);
+
   // ショットカードへのref（スクロール用）
   const shotRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
@@ -276,7 +282,7 @@ export function StepScoring({
     onUpdateHole(updatedHole);
   };
 
-  const addShot = (type: "tee" | "approach" | "putt") => {
+  const addShotDirect = (type: "tee" | "approach" | "putt") => {
     let newShot: Shot;
     switch (type) {
       case "tee":
@@ -291,8 +297,17 @@ export function StepScoring({
     }
     const newIndex = hole.shots.length;
     updateHole({ ...hole, shots: [...hole.shots, newShot] });
-    setExpandedShotIndex(newIndex); // 新しいショット（末尾）を展開
-    pendingScrollIndex.current = newIndex; // スクロール予約
+    setExpandedShotIndex(newIndex);
+    pendingScrollIndex.current = newIndex;
+  };
+
+  const addShot = (type: "tee" | "approach" | "putt") => {
+    const warning = getShotAddWarning(hole.shots, hole.par, type);
+    if (warning) {
+      setShotAddWarning({ message: warning, type });
+      return;
+    }
+    addShotDirect(type);
   };
 
   const updateShot = (index: number, shot: Shot) => {
@@ -306,6 +321,19 @@ export function StepScoring({
     const newShots = hole.shots.filter((_, i) => i !== index);
     updateHole({ ...hole, shots: newShots });
   };
+
+  /** ホール移動（警告チェック付き） */
+  const navigateToHole = (targetHole: number) => {
+    if (targetHole === currentHole) return;
+    const warnings = getHoleWarnings(hole);
+    if (warnings.length > 0) {
+      setHoleNavigationWarning({ warnings, targetHole });
+      return;
+    }
+    onCurrentHoleChange(targetHole);
+  };
+
+  const cupIn = isCupIn(hole.shots);
 
   const moveShot = (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
@@ -332,7 +360,7 @@ export function StepScoring({
         <HoleNavigation
           holes={roundData.holes}
           currentHole={currentHole}
-          onHoleSelect={onCurrentHoleChange}
+          onHoleSelect={navigateToHole}
         />
       </div>
 
@@ -387,39 +415,46 @@ export function StepScoring({
           </CardContent>
         </Card>
 
-        {/* ショット追加ボタン */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addShot("tee")}
-            className="flex-1 h-12 text-green-700 border-green-300 bg-green-50"
-          >
-            <Flag className="w-4 h-4 mr-1" />
-            ティー
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addShot("approach")}
-            className="flex-1 h-12 text-blue-700 border-blue-300 bg-blue-50"
-          >
-            <Target className="w-4 h-4 mr-1" />
-            ショット
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addShot("putt")}
-            className="flex-1 h-12 text-purple-700 border-purple-300 bg-purple-50"
-          >
-            <Circle className="w-4 h-4 mr-1" />
-            パット
-          </Button>
-        </div>
+        {/* ショット追加ボタン / カップイン済み表示 */}
+        {cupIn ? (
+          <div className="flex items-center justify-center gap-2 mb-4 py-3 bg-green-50 border border-green-300 rounded-lg text-green-700">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-medium">カップイン済み</span>
+          </div>
+        ) : (
+          <div className="flex gap-2 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addShot("tee")}
+              className="flex-1 h-12 text-green-700 border-green-300 bg-green-50"
+            >
+              <Flag className="w-4 h-4 mr-1" />
+              ティー
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addShot("approach")}
+              className="flex-1 h-12 text-blue-700 border-blue-300 bg-blue-50"
+            >
+              <Target className="w-4 h-4 mr-1" />
+              ショット
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addShot("putt")}
+              className="flex-1 h-12 text-purple-700 border-purple-300 bg-purple-50"
+            >
+              <Circle className="w-4 h-4 mr-1" />
+              パット
+            </Button>
+          </div>
+        )}
 
         {/* ショット一覧 */}
         <div className="space-y-4">
@@ -570,8 +605,8 @@ export function StepScoring({
             </div>
           )}
 
-          {/* ショットがある場合は下部にも追加ボタンを表示 */}
-          {hole.shots.length > 0 && (
+          {/* ショットがある場合は下部にも追加ボタンを表示（カップイン後は非表示） */}
+          {hole.shots.length > 0 && !cupIn && (
             <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
               <div className="text-center text-sm text-gray-500 mb-3">
                 次のショットを追加
@@ -623,7 +658,7 @@ export function StepScoring({
             variant="outline"
             size="lg"
             onClick={() =>
-              onCurrentHoleChange(Math.max(1, currentHole - 1))
+              navigateToHole(Math.max(1, currentHole - 1))
             }
             disabled={currentHole === 1}
             className="w-24"
@@ -654,7 +689,7 @@ export function StepScoring({
             variant="outline"
             size="lg"
             onClick={() =>
-              onCurrentHoleChange(Math.min(totalHoles, currentHole + 1))
+              navigateToHole(Math.min(totalHoles, currentHole + 1))
             }
             disabled={currentHole === totalHoles}
             className="w-24"
@@ -731,6 +766,60 @@ export function StepScoring({
               className="bg-green-600 hover:bg-green-700"
             >
               保存する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ショット追加警告ダイアログ（グリーンオン後に非パット追加） */}
+      <AlertDialog open={shotAddWarning !== null} onOpenChange={(open) => { if (!open) setShotAddWarning(null); }}>
+        <AlertDialogContent className="mx-4 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              {shotAddWarning?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShotAddWarning(null)}>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (shotAddWarning) addShotDirect(shotAddWarning.type);
+                setShotAddWarning(null);
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              追加する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ホール移動警告ダイアログ */}
+      <AlertDialog open={holeNavigationWarning !== null} onOpenChange={(open) => { if (!open) setHoleNavigationWarning(null); }}>
+        <AlertDialogContent className="mx-4 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>ホール移動の確認</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                {holeNavigationWarning?.warnings.map((w, i) => (
+                  <p key={i} className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
+                    {w}
+                  </p>
+                ))}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setHoleNavigationWarning(null)}>戻って修正</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (holeNavigationWarning) onCurrentHoleChange(holeNavigationWarning.targetHole);
+                setHoleNavigationWarning(null);
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              このまま移動
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
