@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/api-client";
 import { Score, FairwayResult } from "@/types/database";
 import { Shot } from "@/types/shot";
 import { calculateRoundSummary, formatRoundDate } from "@/utils/round-stats";
+import { parseShots } from "@/utils/course-stats";
 import { RoundSummaryStats } from "@/components/round-history/round-summary-stats";
 import { ScorecardTable } from "@/components/round-history/scorecard-table";
 import { ScoreDistributionChart } from "@/components/round-history/score-distribution-chart";
@@ -21,6 +22,9 @@ import { HoleSelector } from "@/components/round-history/hole-selector";
 import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
 import { HoleEditForm } from "@/components/round-history/hole-edit-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ClubRatingChart } from "@/components/round-history/club-rating-chart";
+import { RoundStatsComparison } from "@/components/round-history/round-stats-comparison";
+import { RoundAdviceButton } from "@/components/round-history/round-advice-button";
 
 interface RoundDetail {
   id: string;
@@ -209,6 +213,18 @@ function RoundDetailContent() {
   const scores = round.scores;
   const summary = calculateRoundSummary(scores);
   const courseName = round.courses?.name ?? "不明なコース";
+
+  // 平均星評価を算出
+  const avgRating = (() => {
+    let total = 0, count = 0;
+    for (const s of scores) {
+      for (const shot of parseShots(s.shots_detail)) {
+        total += shot.rating;
+        count++;
+      }
+    }
+    return count > 0 ? total / count : null;
+  })();
   const selectedScore = scores.find((s) => s.hole_number === selectedHole);
   const maxHoleNumber = scores.length > 0
     ? Math.max(...scores.map((s) => s.hole_number))
@@ -287,7 +303,7 @@ function RoundDetailContent() {
       </div>
 
       {/* Summary stats */}
-      <RoundSummaryStats summary={summary} />
+      <RoundSummaryStats summary={summary} avgRating={avgRating} />
 
       {/* Scorecard */}
       <Card>
@@ -333,13 +349,44 @@ function RoundDetailContent() {
         </CardContent>
       </Card>
 
-      {/* Score distribution */}
+      {/* Score distribution + Club rating side by side on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>スコア分布</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScoreDistributionChart scores={scores} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>クラブ別自己評価</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClubRatingChart scores={scores} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stats comparison */}
       <Card>
         <CardHeader>
-          <CardTitle>スコア分布</CardTitle>
+          <CardTitle>スタッツ分析</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScoreDistributionChart scores={scores} />
+          <RoundStatsComparison roundId={roundId} scores={scores} />
+        </CardContent>
+      </Card>
+
+      {/* AI Advice */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI振り返り&アドバイス</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RoundAdviceButton roundId={roundId} />
         </CardContent>
       </Card>
 

@@ -94,13 +94,9 @@ interface CourseAnalysisTabProps {
   memberId: string;
 }
 
-const PIE_COLORS = {
-  eagle: "#16a34a",
-  birdie: "#22c55e",
-  par: "#3b82f6",
-  bogey: "#f59e0b",
-  doublePlus: "#ef4444",
-};
+// スコア種別カラーをアプリ全体で統一
+import { SCORE_COLORS } from "@/utils/score-colors";
+const PIE_COLORS = SCORE_COLORS;
 
 const PIN_POSITIONS: { key: PinPosition; label: string; row: number; col: number }[] = [
   { key: "front-left", label: "FL", row: 0, col: 0 },

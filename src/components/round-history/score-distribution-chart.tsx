@@ -2,6 +2,7 @@
 
 import { Score } from "@/types/database";
 import { calculateScoreDistribution, ScoreDistribution } from "@/utils/course-stats";
+import { SCORE_COLORS } from "@/utils/score-colors";
 
 interface ScoreDistributionChartProps {
   scores: Score[];
@@ -11,14 +12,72 @@ const DISTRIBUTION_ITEMS: {
   key: keyof Omit<ScoreDistribution, "total">;
   label: string;
   color: string;
-  bgColor: string;
 }[] = [
-  { key: "eagle", label: "Eagle-", color: "bg-green-600", bgColor: "bg-green-100" },
-  { key: "birdie", label: "Birdie", color: "bg-blue-500", bgColor: "bg-blue-100" },
-  { key: "par", label: "Par", color: "bg-green-500", bgColor: "bg-green-50" },
-  { key: "bogey", label: "Bogey", color: "bg-orange-400", bgColor: "bg-orange-50" },
-  { key: "doublePlus", label: "D.Bogey+", color: "bg-red-500", bgColor: "bg-red-50" },
+  { key: "eagle", label: "Eagle-", color: SCORE_COLORS.eagle },
+  { key: "birdie", label: "Birdie", color: SCORE_COLORS.birdie },
+  { key: "par", label: "Par", color: SCORE_COLORS.par },
+  { key: "bogey", label: "Bogey", color: SCORE_COLORS.bogey },
+  { key: "doublePlus", label: "D.Bogey+", color: SCORE_COLORS.doublePlus },
 ];
+
+/** SVGベースの円グラフ（ResponsiveContainer不要） */
+function PieChartSVG({ data }: { data: { name: string; value: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return null;
+
+  const size = 120;
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = 54;
+  const innerR = 26;
+
+  let cumAngle = -Math.PI / 2;
+  const slices: { path: string; color: string }[] = [];
+
+  for (const d of data) {
+    const angle = (d.value / total) * 2 * Math.PI;
+    const startAngle = cumAngle;
+    const endAngle = cumAngle + angle;
+    cumAngle = endAngle;
+
+    const largeArc = angle > Math.PI ? 1 : 0;
+    const x1o = cx + outerR * Math.cos(startAngle);
+    const y1o = cy + outerR * Math.sin(startAngle);
+    const x2o = cx + outerR * Math.cos(endAngle);
+    const y2o = cy + outerR * Math.sin(endAngle);
+    const x1i = cx + innerR * Math.cos(endAngle);
+    const y1i = cy + innerR * Math.sin(endAngle);
+    const x2i = cx + innerR * Math.cos(startAngle);
+    const y2i = cy + innerR * Math.sin(startAngle);
+
+    const path = [
+      `M ${x1o} ${y1o}`,
+      `A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2o} ${y2o}`,
+      `L ${x1i} ${y1i}`,
+      `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x2i} ${y2i}`,
+      `Z`,
+    ].join(" ");
+
+    slices.push({ path, color: d.color });
+  }
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {slices.map((slice, i) => (
+        <path key={i} d={slice.path} fill={slice.color} />
+      ))}
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="fill-foreground text-sm font-bold"
+      >
+        {total}H
+      </text>
+    </svg>
+  );
+}
 
 export function ScoreDistributionChart({ scores }: ScoreDistributionChartProps) {
   const dist = calculateScoreDistribution(
@@ -35,36 +94,33 @@ export function ScoreDistributionChart({ scores }: ScoreDistributionChartProps) 
 
   if (dist.total === 0) return null;
 
-  const maxCount = Math.max(...DISTRIBUTION_ITEMS.map((item) => dist[item.key]));
+  const data = DISTRIBUTION_ITEMS
+    .filter((item) => dist[item.key] > 0)
+    .map((item) => ({
+      name: item.label,
+      value: dist[item.key],
+      color: item.color,
+      pct: ((dist[item.key] / dist.total) * 100).toFixed(0),
+    }));
 
   return (
-    <div className="space-y-2">
-      {DISTRIBUTION_ITEMS.map((item) => {
-        const count = dist[item.key];
-        const pct = dist.total > 0 ? (count / dist.total) * 100 : 0;
-        const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
-
-        return (
-          <div key={item.key} className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground w-16 text-right shrink-0">
-              {item.label}
-            </span>
-            <div className="flex-1 h-6 bg-muted/30 rounded overflow-hidden">
-              {count > 0 && (
-                <div
-                  className={`h-full ${item.color} rounded flex items-center px-2 transition-all`}
-                  style={{ width: `${barWidth}%`, minWidth: count > 0 ? "24px" : "0" }}
-                >
-                  <span className="text-[10px] text-white font-medium">{count}</span>
-                </div>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground w-10 shrink-0">
-              {pct.toFixed(0)}%
-            </span>
+    <div className="flex items-center gap-4">
+      <div className="shrink-0">
+        <PieChartSVG data={data} />
+      </div>
+      <div className="flex-1 space-y-1.5">
+        {data.map((item) => (
+          <div key={item.name} className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ backgroundColor: item.color }}
+            />
+            <span className="text-xs text-muted-foreground w-16">{item.name}</span>
+            <span className="text-xs font-bold">{item.value}</span>
+            <span className="text-[10px] text-muted-foreground">({item.pct}%)</span>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
