@@ -13,7 +13,10 @@ import {
 
 interface ScorecardTableProps {
   scores: Score[];
+  /** @deprecated Use sectionLabels instead */
   extCourseLabels?: string[];
+  /** 解決済みセクションラベル（新カラム優先で親が解決） */
+  sectionLabels?: string[];
 }
 
 function HalfTable({
@@ -129,9 +132,9 @@ export function getSectionLabels(extCourseLabels: string[] = []): string[] {
   return ["OUT", "IN", ...extCourseLabels];
 }
 
-export function ScorecardTable({ scores, extCourseLabels = [] }: ScorecardTableProps) {
+export function ScorecardTable({ scores, extCourseLabels = [], sectionLabels }: ScorecardTableProps) {
   const sorted = [...scores].sort((a, b) => a.hole_number - b.hole_number);
-  const labels = getSectionLabels(extCourseLabels);
+  const labels = sectionLabels ?? getSectionLabels(extCourseLabels);
 
   // 9ホールごとにセクション分割（最大4セクション = 36H）
   const sections: { label: string; holes: Score[]; startHole: number }[] = [];

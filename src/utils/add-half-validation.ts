@@ -13,6 +13,7 @@ export interface AddHalfScoreInput {
   distance?: number | null;
   pin_position?: string | null;
   shots_detail?: unknown[] | null;
+  course_hole_id?: string | null;
 }
 
 export interface AddHalfValidationResult {
@@ -121,5 +122,6 @@ export function buildScoreRecords(
     distance: s.distance ?? null,
     pin_position: s.pin_position ?? null,
     shots_detail: s.shots_detail ?? null,
+    course_hole_id: s.course_hole_id ?? null,
   }));
 }

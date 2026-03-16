@@ -98,6 +98,7 @@ export interface Round {
   out_course_name: string | null;
   in_course_name: string | null;
   ext_course_labels: string[];
+  played_sub_course_ids: string[];
 }
 
 export interface Score {
@@ -114,6 +115,7 @@ export interface Score {
   penalty: number;
   pin_position: PinPosition | null;
   shots_detail: unknown[] | null;
+  course_hole_id: string | null;
 }
 
 /** Round with nested scores and course info */

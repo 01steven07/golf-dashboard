@@ -175,15 +175,16 @@ export async function POST(
   try {
     const { id: roundId } = await params;
     const body = await request.json();
-    const { scores, course_label } = body as {
+    const { scores, course_label, sub_course_ids } = body as {
       scores: AddHalfScoreInput[];
       course_label: string;
+      sub_course_ids?: string[];
     };
 
     // ラウンドの所有者チェック
     const { data: round, error: roundError } = await supabase
       .from("rounds")
-      .select("id, member_id, ext_course_labels")
+      .select("id, member_id, ext_course_labels, played_sub_course_ids")
       .eq("id", roundId)
       .single();
 
@@ -243,13 +244,21 @@ export async function POST(
       );
     }
 
-    // ext_course_labels を更新
+    // ext_course_labels + played_sub_course_ids を更新
     const currentLabels: string[] = (round.ext_course_labels as string[]) ?? [];
     const updatedLabels = [...currentLabels, course_label];
 
+    const currentSubCourseIds: string[] = (round.played_sub_course_ids as string[]) ?? [];
+    const updatedSubCourseIds = sub_course_ids
+      ? [...currentSubCourseIds, ...sub_course_ids]
+      : currentSubCourseIds;
+
     const { error: updateError } = await supabase
       .from("rounds")
-      .update({ ext_course_labels: updatedLabels })
+      .update({
+        ext_course_labels: updatedLabels,
+        played_sub_course_ids: updatedSubCourseIds,
+      })
       .eq("id", roundId);
 
     if (updateError) {

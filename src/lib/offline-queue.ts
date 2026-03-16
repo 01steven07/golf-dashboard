@@ -14,6 +14,7 @@ export interface CreateRoundPayload {
   outCourseName: string | null;
   inCourseName: string | null;
   imageUrl: string | null;
+  playedSubCourseIds?: string[];
   scores: {
     hole_number: number;
     par: number;
@@ -26,6 +27,7 @@ export interface CreateRoundPayload {
     penalty: number;
     pin_position?: string | null;
     shots_detail?: unknown[] | null;
+    course_hole_id?: string | null;
   }[];
 }
 
@@ -145,6 +147,7 @@ async function processCreateRound(payload: CreateRoundPayload): Promise<void> {
       image_url: payload.imageUrl,
       out_course_name: payload.outCourseName,
       in_course_name: payload.inCourseName,
+      played_sub_course_ids: payload.playedSubCourseIds ?? [],
     })
     .select()
     .single();
