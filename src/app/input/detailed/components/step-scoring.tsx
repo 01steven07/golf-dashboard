@@ -253,19 +253,22 @@ export function StepScoring({
     return result;
   }, [selectedCourse, roundData.subCourseIds, roundData.holes, totalHoles]);
 
-  // スコア集計
+  // スコア集計（確定済みホール＝カップイン済みのみ）
   const stats = useMemo(() => {
     const sectionScores = subCourseInfo.map((s) => ({
       name: s.name,
-      score: s.holes.reduce((sum, h) => sum + getHoleScore(h), 0),
+      score: s.holes
+        .filter((h) => isCupIn(h.shots))
+        .reduce((sum, h) => sum + getHoleScore(h), 0),
     }));
 
-    const totalScore = roundData.holes.reduce(
+    const completedHoles = roundData.holes.filter((h) => isCupIn(h.shots));
+    const totalScore = completedHoles.reduce(
       (sum, h) => sum + getHoleScore(h),
       0
     );
-    const totalPar = roundData.holes.reduce((sum, h) => sum + h.par, 0);
-    const totalPutts = roundData.holes.reduce(
+    const totalPar = completedHoles.reduce((sum, h) => sum + h.par, 0);
+    const totalPutts = completedHoles.reduce(
       (sum, h) => sum + h.shots.filter((s) => s.type === "putt").length,
       0
     );
