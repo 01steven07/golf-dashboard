@@ -15,6 +15,8 @@ import { Score, FairwayResult } from "@/types/database";
 import { Shot } from "@/types/shot";
 import { calculateRoundSummary, formatRoundDate } from "@/utils/round-stats";
 import { parseShots } from "@/utils/course-stats";
+import { fetchSectionLabelsFromIds } from "@/utils/fetch-section-labels";
+import { getFallbackSectionLabels } from "@/utils/resolve-section-labels";
 import { RoundSummaryStats } from "@/components/round-history/round-summary-stats";
 import { ScorecardTable } from "@/components/round-history/scorecard-table";
 import { ScoreDistributionChart } from "@/components/round-history/score-distribution-chart";
@@ -35,6 +37,7 @@ interface RoundDetail {
   out_course_name: string | null;
   in_course_name: string | null;
   ext_course_labels: string[];
+  played_sub_course_ids: string[];
   courses: { id: string; name: string; pref: string | null } | null;
   scores: Score[];
 }
@@ -43,9 +46,9 @@ async function fetchRoundData(roundId: string, memberId: string): Promise<RoundD
   const { data, error: fetchError } = await supabase
     .from("rounds")
     .select(
-      `id, member_id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels,
+      `id, member_id, date, tee_color, weather, out_course_name, in_course_name, ext_course_labels, played_sub_course_ids,
       courses(id, name, pref),
-      scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail)`
+      scores(id, round_id, hole_number, par, distance, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail, course_hole_id)`
     )
     .eq("id", roundId)
     .single();
@@ -71,6 +74,7 @@ async function fetchRoundData(roundId: string, memberId: string): Promise<RoundD
     out_course_name: data.out_course_name,
     in_course_name: data.in_course_name,
     ext_course_labels: (data.ext_course_labels as string[]) ?? [],
+    played_sub_course_ids: (data.played_sub_course_ids as string[]) ?? [],
     courses: data.courses as unknown as { id: string; name: string; pref: string | null } | null,
     scores: (data.scores as unknown as Score[]) ?? [],
   };
@@ -90,6 +94,7 @@ function RoundDetailContent() {
   const roundId = params.id as string;
 
   const [round, setRound] = useState<RoundDetail | null>(null);
+  const [sectionLabels, setSectionLabels] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -112,14 +117,23 @@ function RoundDetailContent() {
     let cancelled = false;
 
     fetchRoundData(roundId, member.id)
-      .then((data) => {
+      .then(async (data) => {
+        if (cancelled) return;
+        setRound(data);
+        setIsLoading(false);
+        if (data.scores.length > 0) {
+          const first = [...data.scores].sort((a, b) => a.hole_number - b.hole_number)[0];
+          setSelectedHole(first.hole_number);
+        }
+        // セクションラベル解決: 新カラム優先 → 旧カラムフォールバック
+        let resolvedLabels: string[] | null = null;
+        if (data.played_sub_course_ids.length > 0) {
+          resolvedLabels = await fetchSectionLabelsFromIds(data.played_sub_course_ids);
+        }
         if (!cancelled) {
-          setRound(data);
-          setIsLoading(false);
-          if (data.scores.length > 0) {
-            const first = [...data.scores].sort((a, b) => a.hole_number - b.hole_number)[0];
-            setSelectedHole(first.hole_number);
-          }
+          setSectionLabels(
+            resolvedLabels ?? getFallbackSectionLabels(data.out_course_name, data.in_course_name, data.ext_course_labels)
+          );
         }
       })
       .catch((err) => {
@@ -260,9 +274,9 @@ function RoundDetailContent() {
                 {round.weather}
               </Badge>
             )}
-            {round.out_course_name && round.in_course_name && (
+            {sectionLabels && sectionLabels.length > 0 && (
               <span className="text-xs text-muted-foreground">
-                {round.out_course_name} / {round.in_course_name}
+                {sectionLabels.join(" / ")}
               </span>
             )}
           </div>
@@ -311,7 +325,7 @@ function RoundDetailContent() {
           <CardTitle>スコアカード</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScorecardTable scores={scores} extCourseLabels={round.ext_course_labels} />
+          <ScorecardTable scores={scores} extCourseLabels={round.ext_course_labels} sectionLabels={sectionLabels ?? undefined} />
         </CardContent>
       </Card>
 

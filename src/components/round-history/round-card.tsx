@@ -15,9 +15,12 @@ interface RoundCardProps {
     out_course_name: string | null;
     in_course_name: string | null;
     ext_course_labels?: string[];
+    played_sub_course_ids?: string[];
     courses: { name: string; pref: string | null } | null;
     scores: Score[];
   };
+  /** 解決済みセクションラベル（親で解決） */
+  sectionLabels?: string[];
 }
 
 const WEATHER_ICONS: Record<string, string> = {
@@ -59,7 +62,7 @@ function ScoreSymbolRow({ scores, label, total }: { scores: Score[]; label: stri
   );
 }
 
-export function RoundCard({ round }: RoundCardProps) {
+export function RoundCard({ round, sectionLabels }: RoundCardProps) {
   const scores = round.scores;
   const summary = calculateRoundSummary(scores);
   const overPar = summary.totalScore - summary.totalPar;
@@ -82,19 +85,21 @@ export function RoundCard({ round }: RoundCardProps) {
   const courseName = round.courses?.name ?? "不明なコース";
   const extLabels = round.ext_course_labels ?? [];
 
-  // Build labels for each 9-hole group
-  const outLabel = round.out_course_name || "OUT";
-  const inLabel = round.in_course_name || "IN";
-  const ext1Label = extLabels[0] || "EXT1";
-  const ext2Label = extLabels[1] || "EXT2";
+  // Build labels: sectionLabels優先 → 旧カラムフォールバック
+  const outLabel = sectionLabels?.[0] ?? (round.out_course_name || "OUT");
+  const inLabel = sectionLabels?.[1] ?? (round.in_course_name || "IN");
+  const ext1Label = sectionLabels?.[2] ?? (extLabels[0] || "EXT1");
+  const ext2Label = sectionLabels?.[3] ?? (extLabels[1] || "EXT2");
 
   const outTotal = outScores.reduce((sum, s) => sum + s.score, 0);
   const inTotal = inScores.reduce((sum, s) => sum + s.score, 0);
   const ext1Total = ext1Scores.reduce((sum, s) => sum + s.score, 0);
   const ext2Total = ext2Scores.reduce((sum, s) => sum + s.score, 0);
 
-  // Course names display
-  const courseNames = [round.out_course_name, round.in_course_name, ...extLabels].filter(Boolean);
+  // Course names display: sectionLabels優先
+  const courseNames = sectionLabels
+    ? sectionLabels.filter(Boolean)
+    : [round.out_course_name, round.in_course_name, ...extLabels].filter(Boolean);
 
   return (
     <Link href={`/my-stats/rounds/${round.id}`}>

@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { authFetch } from "@/lib/api-client";
 import { aggregateHoleData } from "@/utils/shot-aggregation";
 import { validateScores } from "@/utils/score-validation";
+import { buildCourseHoleIdMap } from "@/utils/resolve-course-holes";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { enqueue, isNetworkError, CreateRoundPayload, AddScoresPayload } from "@/lib/offline-queue";
 import { Suspense } from "react";
@@ -419,6 +420,11 @@ function DetailedInputContent() {
         }).filter((n): n is string => n !== null);
         const courseLabel = subCourseNames[0] ?? "追加";
 
+        // 追加モード用の course_hole_id マッピング
+        const addCourseHoleIdMap = selectedCourse
+          ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds, addModeHoleOffset)
+          : new Map<number, string>();
+
         const scores = aggregated.map((agg) => ({
           par: agg.par,
           score: agg.score,
@@ -430,12 +436,17 @@ function DetailedInputContent() {
           distance: agg.distance,
           pin_position: agg.pin_position,
           shots_detail: agg.shots_detail,
+          course_hole_id: addCourseHoleIdMap.get(agg.hole_number) ?? null,
         }));
 
         const res = await authFetch(`/api/rounds/${addToRoundId}/scores`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ scores, course_label: courseLabel }),
+          body: JSON.stringify({
+            scores,
+            course_label: courseLabel,
+            sub_course_ids: roundData.subCourseIds,
+          }),
         });
 
         if (!res.ok) {
@@ -462,12 +473,14 @@ function DetailedInputContent() {
           const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
           return sc?.name ?? null;
         }).filter((n): n is string => n !== null);
-        const outCourseName = subCourseNames[0] ?? null;
+        // サブコースが未登録/未選択の場合はデフォルトで OUT / IN をセット
+        const holeCount = aggregated.length;
+        const outCourseName = subCourseNames[0] ?? (holeCount > 0 ? "OUT" : null);
         const inCourseName = subCourseNames.length > 1
           ? subCourseNames.slice(1).join(" / ")
-          : null;
+          : (holeCount > 9 ? "IN" : null);
 
-        // rounds テーブルに insert
+        // rounds テーブルに insert（旧カラム + 新カラム両方書き）
         const { data: round, error: roundError } = await supabase
           .from("rounds")
           .insert({
@@ -477,6 +490,7 @@ function DetailedInputContent() {
             tee_color: roundData.teeColor,
             out_course_name: outCourseName,
             in_course_name: inCourseName,
+            played_sub_course_ids: roundData.subCourseIds,
           })
           .select()
           .single();
@@ -492,7 +506,12 @@ function DetailedInputContent() {
           return;
         }
 
-        // scores テーブルに一括 insert
+        // course_hole_id マッピングを構築
+        const courseHoleIdMap = selectedCourse
+          ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds)
+          : new Map<number, string>();
+
+        // scores テーブルに一括 insert（course_hole_id 付き）
         const scoreRecords = aggregated.map((agg) => ({
           round_id: round.id,
           hole_number: agg.hole_number,
@@ -506,6 +525,7 @@ function DetailedInputContent() {
           penalty: agg.penalty,
           pin_position: agg.pin_position,
           shots_detail: agg.shots_detail,
+          course_hole_id: courseHoleIdMap.get(agg.hole_number) ?? null,
         }));
 
         const { error: scoresError } = await supabase
@@ -551,6 +571,10 @@ function DetailedInputContent() {
             return sc?.name ?? null;
           }).filter((n): n is string => n !== null);
 
+          const offlineCourseHoleIdMap = selectedCourse
+            ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds)
+            : new Map<number, string>();
+
           enqueue("create-round", {
             memberId: member.id,
             courseName: roundData.courseName,
@@ -560,6 +584,7 @@ function DetailedInputContent() {
             outCourseName: scNames[0] ?? null,
             inCourseName: scNames.length > 1 ? scNames.slice(1).join(" / ") : null,
             imageUrl: null,
+            playedSubCourseIds: roundData.subCourseIds,
             scores: agg.map((a) => ({
               hole_number: a.hole_number,
               par: a.par,
@@ -572,6 +597,7 @@ function DetailedInputContent() {
               penalty: a.penalty,
               pin_position: a.pin_position,
               shots_detail: a.shots_detail,
+              course_hole_id: offlineCourseHoleIdMap.get(a.hole_number) ?? null,
             })),
           } satisfies CreateRoundPayload);
         }

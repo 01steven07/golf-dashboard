@@ -336,8 +336,8 @@ function InputContent() {
           date: roundDate,
           tee_color: teeColor,
           image_url: imageUrl,
-          out_course_name: outCourseName || null,
-          in_course_name: inCourseName || null,
+          out_course_name: outCourseName || (scores.length > 0 ? "OUT" : null),
+          in_course_name: inCourseName || (scores.length > 9 ? "IN" : null),
         })
         .select()
         .single();

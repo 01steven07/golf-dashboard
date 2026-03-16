@@ -267,6 +267,7 @@ describe("buildScoreRecords", () => {
       distance: 480,
       pin_position: null,
       shots_detail: null,
+      course_hole_id: null,
     });
   });
 });
