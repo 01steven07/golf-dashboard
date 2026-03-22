@@ -131,22 +131,20 @@ function ScoreNumberPad({
               type="button"
               onClick={() => onChange(n)}
               className={cn(
-                "h-10 rounded-lg text-sm font-bold transition-colors relative",
+                "h-10 rounded-lg font-bold transition-colors flex flex-col items-center justify-center",
                 !isSelected && "active:scale-95",
                 getScoreButtonStyle(n, par, isSelected)
               )}
             >
-              <span>{n}</span>
-              {!isSelected && (
-                <span
-                  className={cn(
-                    "absolute bottom-0 left-1/2 -translate-x-1/2 text-[8px] leading-none",
-                    scoreInfo.color
-                  )}
-                >
-                  {scoreInfo.symbol}
-                </span>
-              )}
+              <span className="text-sm leading-none">{n}</span>
+              <span
+                className={cn(
+                  "text-[8px] leading-none h-2.5",
+                  isSelected ? "invisible" : scoreInfo.color
+                )}
+              >
+                {scoreInfo.symbol || "\u00A0"}
+              </span>
             </button>
           );
         })}
@@ -237,14 +235,14 @@ function TeeClubSelector({
   }, [memberClubs]);
 
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1.5 flex-wrap">
       {clubs.map((c) => (
         <button
           key={c.value}
           type="button"
           onClick={() => onChange(value === c.value ? null : c.value)}
           className={cn(
-            "px-2 py-1 rounded-md text-xs font-medium transition-colors",
+            "min-w-[2.75rem] h-8 px-2.5 rounded-lg text-xs font-bold transition-colors",
             value === c.value
               ? "bg-green-600 text-white ring-1 ring-green-400"
               : "bg-gray-100 text-gray-600 active:bg-gray-200"
@@ -379,13 +377,13 @@ export function SimpleScoring({
         />
 
         {/* Hole navigation */}
-        <div className="flex items-center gap-0.5 px-2 py-1.5 overflow-x-auto">
+        <div className="flex items-center gap-0.5 px-2 py-1 overflow-x-auto">
           {holeNavButtons.map((h) => (
             <button
               key={h.holeNumber}
               onClick={() => onCurrentHoleChange(h.holeNumber)}
               className={cn(
-                "flex-shrink-0 min-w-[2.25rem] h-9 px-1 rounded-lg text-xs font-medium transition-all flex flex-col items-center justify-center",
+                "flex-shrink-0 min-w-[2rem] h-8 px-1 rounded-lg text-xs font-medium transition-all flex flex-col items-center justify-center",
                 currentHole === h.holeNumber
                   ? "bg-green-600 text-white shadow-md"
                   : !h.hasData
@@ -406,30 +404,30 @@ export function SimpleScoring({
 
       {/* Current hole content — swipeable, fills remaining space */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-2 space-y-2 max-w-lg mx-auto w-full"
+        className="flex-1 min-h-0 overflow-y-auto px-2 py-1.5 space-y-1.5 max-w-lg mx-auto w-full"
         {...swipeHandlers}
       >
         {/* Hole header: info left, score+putt right */}
-        <div className="flex items-center justify-between bg-white rounded-xl border-2 border-green-300 px-3 py-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-green-600 text-white flex flex-col items-center justify-center">
-              <span className="text-[8px] leading-none">HOLE</span>
-              <span className="text-base font-bold leading-none">{currentHole}</span>
+        <div className="flex items-center justify-between bg-white rounded-lg border-2 border-green-300 px-2.5 py-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-green-600 text-white flex flex-col items-center justify-center">
+              <span className="text-[7px] leading-none">HOLE</span>
+              <span className="text-sm font-bold leading-none">{currentHole}</span>
             </div>
             <div>
               <span className="text-sm font-bold text-green-700">Par {hole.par}</span>
               {hole.distance && (
-                <span className="text-xs text-gray-500 ml-1.5">{hole.distance}yd</span>
+                <span className="text-xs text-gray-500 ml-1">{hole.distance}yd</span>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ScoreDisplay score={hole.score} par={hole.par} size="md" />
-            <div className="w-10 h-10 rounded-lg bg-purple-50 flex flex-col items-center justify-center">
-              <span className="text-[8px] text-purple-400 leading-none">Putt</span>
+          <div className="flex items-center gap-1.5">
+            <ScoreDisplay score={hole.score} par={hole.par} size="sm" />
+            <div className="w-9 h-9 rounded-lg bg-purple-50 flex flex-col items-center justify-center">
+              <span className="text-[7px] text-purple-400 leading-none">Putt</span>
               <span
                 className={cn(
-                  "text-base font-bold leading-none",
+                  "text-sm font-bold leading-none",
                   hole.putts > 0 ? "text-purple-700" : "text-gray-300"
                 )}
               >
@@ -440,7 +438,7 @@ export function SimpleScoring({
         </div>
 
         {/* Score number pad */}
-        <div className="bg-white rounded-xl border px-3 py-2">
+        <div className="bg-white rounded-lg border px-2.5 py-1.5">
           <ScoreNumberPad
             value={hole.score}
             par={hole.par}
@@ -449,13 +447,13 @@ export function SimpleScoring({
         </div>
 
         {/* Putt number pad */}
-        <div className="bg-white rounded-xl border px-3 py-2">
+        <div className="bg-white rounded-lg border px-2.5 py-1.5">
           <PuttNumberPad value={hole.putts} onChange={(v) => updateField("putts", v)} />
         </div>
 
-        {/* Tee shot section (FW + Club for par4+, just counters for par3) */}
+        {/* Tee shot section */}
         {hole.par >= 4 ? (
-          <div className="bg-white rounded-xl border px-3 py-2 space-y-2">
+          <div className="bg-white rounded-lg border px-2.5 py-1.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-gray-600">ティーショット</span>
               <div className="flex gap-1">
@@ -469,7 +467,7 @@ export function SimpleScoring({
                     type="button"
                     onClick={() => updateField("fairwayResult", fw.value)}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors",
                       hole.fairwayResult === fw.value
                         ? fw.value === "keep"
                           ? "bg-green-600 text-white"
@@ -484,7 +482,7 @@ export function SimpleScoring({
             </div>
             {/* Club selector */}
             <div className="pt-1 border-t border-gray-100">
-              <span className="text-[10px] text-gray-400 mb-1 block">クラブ</span>
+              <span className="text-[10px] text-gray-400 mb-0.5 block">クラブ</span>
               <TeeClubSelector value={hole.teeClub} onChange={(v) => updateField("teeClub", v)} />
             </div>
             {/* OB / Bunker / Penalty */}
@@ -515,11 +513,11 @@ export function SimpleScoring({
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border px-3 py-2 space-y-2">
-            {/* Club selector for par3 too */}
+          <div className="bg-white rounded-lg border px-2.5 py-1.5 space-y-1.5">
+            {/* Club selector for par3 */}
             <div>
               <span className="text-xs font-medium text-gray-600">ティーショット</span>
-              <div className="mt-1">
+              <div className="mt-0.5">
                 <TeeClubSelector value={hole.teeClub} onChange={(v) => updateField("teeClub", v)} />
               </div>
             </div>
