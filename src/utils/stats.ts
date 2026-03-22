@@ -85,11 +85,7 @@ export function calculateExtendedRadarData(
   myStats: MemberStats,
   allStats: MemberStats[]
 ): RadarChartData[] {
-  const deviationData = (
-    label: string,
-    getter: (s: MemberStats) => number,
-    inverse: boolean
-  ) => {
+  const deviationData = (label: string, getter: (s: MemberStats) => number, inverse: boolean) => {
     const values = allStats.map(getter);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     return {
@@ -151,9 +147,7 @@ export interface HoleAnalysis {
 /**
  * ホール別分析データを生成
  */
-export function calculateHoleAnalysis(
-  scores: { par: number; score: number }[]
-): HoleAnalysis[] {
+export function calculateHoleAnalysis(scores: { par: number; score: number }[]): HoleAnalysis[] {
   const par3 = scores.filter((s) => s.par === 3);
   const par4 = scores.filter((s) => s.par === 4);
   const par5 = scores.filter((s) => s.par === 5);

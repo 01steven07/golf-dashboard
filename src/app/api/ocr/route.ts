@@ -128,7 +128,10 @@ export async function POST(request: NextRequest) {
     // JSONを抽出（```json ... ``` で囲まれている場合に対応）
     const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json({ error: "解析結果をJSON形式で取得できませんでした" }, { status: 500 });
+      return NextResponse.json(
+        { error: "解析結果をJSON形式で取得できませんでした" },
+        { status: 500 }
+      );
     }
 
     const jsonStr = jsonMatch[1] || jsonMatch[0];
@@ -147,9 +150,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(ocrResult);
   } catch (error) {
     console.error("OCR Error:", error);
-    return NextResponse.json(
-      { error: "スコアカードの解析に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "スコアカードの解析に失敗しました" }, { status: 500 });
   }
 }

@@ -82,7 +82,8 @@ function getCategoryFromClub(club: Club): ClubCategory {
   if (["1W", "3W", "5W", "7W"].includes(club)) return "wood";
   if (club.startsWith("UT")) return "ut";
   if (["2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I"].includes(club)) return "iron";
-  if (club === "PW" || ["46", "48", "50", "52", "54", "56", "58", "60"].includes(club)) return "wedge";
+  if (club === "PW" || ["46", "48", "50", "52", "54", "56", "58", "60"].includes(club))
+    return "wedge";
   return "putter";
 }
 
@@ -92,9 +93,7 @@ export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorPro
   const [activeCategory, setActiveCategory] = useState<ClubCategory>(getCategoryFromClub(value));
 
   const categories = useMemo(() => {
-    let cats = excludePutter
-      ? CLUB_CATEGORIES.filter((c) => c.id !== "putter")
-      : CLUB_CATEGORIES;
+    let cats = excludePutter ? CLUB_CATEGORIES.filter((c) => c.id !== "putter") : CLUB_CATEGORIES;
 
     // メンバーがクラブセットを登録済みの場合、登録クラブのみ表示
     if (memberClubs && memberClubs.length > 0) {
@@ -129,8 +128,8 @@ export function ClubSelector({ value, onChange, excludePutter }: ClubSelectorPro
                 isActive
                   ? "bg-green-600 text-white"
                   : hasSelectedClub
-                  ? "bg-green-100 text-green-700 border border-green-300"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-green-100 text-green-700 border border-green-300"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
               {category.name}

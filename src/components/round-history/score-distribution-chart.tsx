@@ -94,14 +94,12 @@ export function ScoreDistributionChart({ scores }: ScoreDistributionChartProps) 
 
   if (dist.total === 0) return null;
 
-  const data = DISTRIBUTION_ITEMS
-    .filter((item) => dist[item.key] > 0)
-    .map((item) => ({
-      name: item.label,
-      value: dist[item.key],
-      color: item.color,
-      pct: ((dist[item.key] / dist.total) * 100).toFixed(0),
-    }));
+  const data = DISTRIBUTION_ITEMS.filter((item) => dist[item.key] > 0).map((item) => ({
+    name: item.label,
+    value: dist[item.key],
+    color: item.color,
+    pct: ((dist[item.key] / dist.total) * 100).toFixed(0),
+  }));
 
   return (
     <div className="flex items-center gap-4">

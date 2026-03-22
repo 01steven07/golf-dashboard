@@ -2,7 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DetailedRoundData, HoleData, OptionalFieldSettings, DEFAULT_OPTIONAL_FIELDS } from "@/types/shot";
+import {
+  DetailedRoundData,
+  HoleData,
+  OptionalFieldSettings,
+  DEFAULT_OPTIONAL_FIELDS,
+} from "@/types/shot";
 import { CourseWithDetails } from "@/types/database";
 import { createInitialHoles, createHolesFromCourse } from "@/utils/hole-builder";
 import { StepSettings } from "./components/step-settings";
@@ -22,7 +27,6 @@ type InputStep = "settings" | "scoring";
 
 const STORAGE_KEY = "detailed-input-draft";
 const OPTIONAL_FIELDS_KEY = "detailed-input-optional-fields";
-
 
 interface DraftData {
   step: InputStep;
@@ -89,7 +93,8 @@ function DetailedInputContent() {
   const [saveConfirm, setSaveConfirm] = useState<{ warnings: string[] } | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<CourseWithDetails | null>(null);
   const [draftInfo, setDraftInfo] = useState<{ courseName: string; date: string } | null>(null);
-  const [optionalFields, setOptionalFields] = useState<OptionalFieldSettings>(DEFAULT_OPTIONAL_FIELDS);
+  const [optionalFields, setOptionalFields] =
+    useState<OptionalFieldSettings>(DEFAULT_OPTIONAL_FIELDS);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDraftDiscardDialog, setShowDraftDiscardDialog] = useState(false);
@@ -146,7 +151,11 @@ function DetailedInputContent() {
       setAddModeHoleOffset(maxHole);
 
       // コース詳細を取得（サブコース情報付き）
-      const courseInfo = roundData.courses as unknown as { id: string; name: string; pref: string | null } | null;
+      const courseInfo = roundData.courses as unknown as {
+        id: string;
+        name: string;
+        pref: string | null;
+      } | null;
       if (courseInfo?.id) {
         const res = await fetch(`/api/courses/${courseInfo.id}`);
         if (res.ok && !cancelled) {
@@ -162,7 +171,7 @@ function DetailedInputContent() {
             date: roundData.date,
             teeColor: roundData.tee_color,
             teeId: matchedTee?.id ?? null,
-            subCourseIds: [],  // ユーザーが追加する分を選択
+            subCourseIds: [], // ユーザーが追加する分を選択
             holes: [],
           });
           setAddModeReady(true);
@@ -170,7 +179,9 @@ function DetailedInputContent() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [addToRoundId, member]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 自動保存: step/currentHole/roundData 変更時に localStorage へ保存（追加モードでは無効）
@@ -203,161 +214,182 @@ function DetailedInputContent() {
   }, []);
 
   // コース選択時のコールバック
-  const handleCourseSelect = useCallback((course: CourseWithDetails | null) => {
-    setSelectedCourse(course);
-    if (course) {
-      const allSubCourseIds = course.sub_courses.map((sc) => sc.id);
-      const defaultTee = course.tees.length > 0 ? course.tees[0] : null;
-      const teeName = defaultTee?.name ?? null;
+  const handleCourseSelect = useCallback(
+    (course: CourseWithDetails | null) => {
+      setSelectedCourse(course);
+      if (course) {
+        const allSubCourseIds = course.sub_courses.map((sc) => sc.id);
+        const defaultTee = course.tees.length > 0 ? course.tees[0] : null;
+        const teeName = defaultTee?.name ?? null;
 
-      const newHoles = createHolesFromCourse(
-        course.sub_courses,
-        allSubCourseIds,
-        teeName
-      );
+        const newHoles = createHolesFromCourse(course.sub_courses, allSubCourseIds, teeName);
 
-      updateRoundData((prev) => ({
-        ...prev,
-        courseId: course.id,
-        courseName: course.name,
-        teeColor: defaultTee?.name ?? "White",
-        teeId: defaultTee?.id ?? null,
-        subCourseIds: allSubCourseIds,
-        holes: newHoles,
-      }));
-      setCurrentHole(1);
-    } else {
+        updateRoundData((prev) => ({
+          ...prev,
+          courseId: course.id,
+          courseName: course.name,
+          teeColor: defaultTee?.name ?? "White",
+          teeId: defaultTee?.id ?? null,
+          subCourseIds: allSubCourseIds,
+          holes: newHoles,
+        }));
+        setCurrentHole(1);
+      } else {
+        updateRoundData((prev) => ({
+          ...prev,
+          courseId: null,
+          courseName: "",
+          teeId: null,
+          subCourseIds: [],
+          holes: createInitialHoles(),
+        }));
+        setCurrentHole(1);
+      }
+    },
+    [updateRoundData]
+  );
+
+  const handleManualInput = useCallback(
+    (name: string) => {
       updateRoundData((prev) => ({
         ...prev,
         courseId: null,
-        courseName: "",
-        teeId: null,
-        subCourseIds: [],
-        holes: createInitialHoles(),
+        courseName: name,
       }));
+    },
+    [updateRoundData]
+  );
+
+  const handleSubCourseAdd = useCallback(
+    (subCourseId: string) => {
+      if (!selectedCourse) return;
+
+      updateRoundData((prev) => {
+        const newIds = [...prev.subCourseIds, subCourseId];
+
+        const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+        const teeName = selectedTee?.name ?? null;
+
+        const newHoles = createHolesFromCourse(
+          selectedCourse.sub_courses,
+          newIds,
+          teeName,
+          prev.holes
+        );
+
+        return {
+          ...prev,
+          subCourseIds: newIds,
+          holes: newHoles,
+        };
+      });
+    },
+    [selectedCourse, updateRoundData]
+  );
+
+  const handleSubCourseRemove = useCallback(
+    (index: number) => {
+      if (!selectedCourse) return;
+
+      updateRoundData((prev) => {
+        const newIds = prev.subCourseIds.filter((_, i) => i !== index);
+
+        const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+        const teeName = selectedTee?.name ?? null;
+
+        const newHoles = createHolesFromCourse(
+          selectedCourse.sub_courses,
+          newIds,
+          teeName,
+          prev.holes
+        );
+
+        return {
+          ...prev,
+          subCourseIds: newIds,
+          holes: newHoles,
+        };
+      });
       setCurrentHole(1);
-    }
-  }, [updateRoundData]);
+    },
+    [selectedCourse, updateRoundData]
+  );
 
-  const handleManualInput = useCallback((name: string) => {
-    updateRoundData((prev) => ({
-      ...prev,
-      courseId: null,
-      courseName: name,
-    }));
-  }, [updateRoundData]);
+  const handleSubCourseReorder = useCallback(
+    (reorderedIds: string[]) => {
+      if (!selectedCourse) return;
 
-  const handleSubCourseAdd = useCallback((subCourseId: string) => {
-    if (!selectedCourse) return;
+      updateRoundData((prev) => {
+        const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
+        const teeName = selectedTee?.name ?? null;
 
-    updateRoundData((prev) => {
-      const newIds = [...prev.subCourseIds, subCourseId];
+        const newHoles = createHolesFromCourse(
+          selectedCourse.sub_courses,
+          reorderedIds,
+          teeName,
+          prev.holes
+        );
 
-      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
-      const teeName = selectedTee?.name ?? null;
+        return {
+          ...prev,
+          subCourseIds: reorderedIds,
+          holes: newHoles,
+        };
+      });
+      setCurrentHole(1);
+    },
+    [selectedCourse, updateRoundData]
+  );
 
-      const newHoles = createHolesFromCourse(
-        selectedCourse.sub_courses,
-        newIds,
-        teeName,
-        prev.holes
-      );
+  const handleTeeSelect = useCallback(
+    (teeId: string) => {
+      if (!selectedCourse) return;
 
-      return {
+      const tee = selectedCourse.tees.find((t) => t.id === teeId);
+      if (!tee) return;
+
+      updateRoundData((prev) => {
+        const newHoles = createHolesFromCourse(
+          selectedCourse.sub_courses,
+          prev.subCourseIds,
+          tee.name,
+          prev.holes
+        );
+
+        return {
+          ...prev,
+          teeId: teeId,
+          teeColor: tee.name,
+          holes: newHoles,
+        };
+      });
+    },
+    [selectedCourse, updateRoundData]
+  );
+
+  const handleDateChange = useCallback(
+    (date: string) => {
+      updateRoundData((prev) => ({ ...prev, date }));
+    },
+    [updateRoundData]
+  );
+
+  const handleTeeColorChange = useCallback(
+    (teeColor: string) => {
+      updateRoundData((prev) => ({ ...prev, teeColor }));
+    },
+    [updateRoundData]
+  );
+
+  const handleUpdateHole = useCallback(
+    (updatedHole: HoleData) => {
+      updateRoundData((prev) => ({
         ...prev,
-        subCourseIds: newIds,
-        holes: newHoles,
-      };
-    });
-  }, [selectedCourse, updateRoundData]);
-
-  const handleSubCourseRemove = useCallback((index: number) => {
-    if (!selectedCourse) return;
-
-    updateRoundData((prev) => {
-      const newIds = prev.subCourseIds.filter((_, i) => i !== index);
-
-      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
-      const teeName = selectedTee?.name ?? null;
-
-      const newHoles = createHolesFromCourse(
-        selectedCourse.sub_courses,
-        newIds,
-        teeName,
-        prev.holes
-      );
-
-      return {
-        ...prev,
-        subCourseIds: newIds,
-        holes: newHoles,
-      };
-    });
-    setCurrentHole(1);
-  }, [selectedCourse, updateRoundData]);
-
-  const handleSubCourseReorder = useCallback((reorderedIds: string[]) => {
-    if (!selectedCourse) return;
-
-    updateRoundData((prev) => {
-      const selectedTee = selectedCourse.tees.find((t) => t.id === prev.teeId);
-      const teeName = selectedTee?.name ?? null;
-
-      const newHoles = createHolesFromCourse(
-        selectedCourse.sub_courses,
-        reorderedIds,
-        teeName,
-        prev.holes
-      );
-
-      return {
-        ...prev,
-        subCourseIds: reorderedIds,
-        holes: newHoles,
-      };
-    });
-    setCurrentHole(1);
-  }, [selectedCourse, updateRoundData]);
-
-  const handleTeeSelect = useCallback((teeId: string) => {
-    if (!selectedCourse) return;
-
-    const tee = selectedCourse.tees.find((t) => t.id === teeId);
-    if (!tee) return;
-
-    updateRoundData((prev) => {
-      const newHoles = createHolesFromCourse(
-        selectedCourse.sub_courses,
-        prev.subCourseIds,
-        tee.name,
-        prev.holes
-      );
-
-      return {
-        ...prev,
-        teeId: teeId,
-        teeColor: tee.name,
-        holes: newHoles,
-      };
-    });
-  }, [selectedCourse, updateRoundData]);
-
-  const handleDateChange = useCallback((date: string) => {
-    updateRoundData((prev) => ({ ...prev, date }));
-  }, [updateRoundData]);
-
-  const handleTeeColorChange = useCallback((teeColor: string) => {
-    updateRoundData((prev) => ({ ...prev, teeColor }));
-  }, [updateRoundData]);
-
-  const handleUpdateHole = useCallback((updatedHole: HoleData) => {
-    updateRoundData((prev) => ({
-      ...prev,
-      holes: prev.holes.map((h) =>
-        h.holeNumber === updatedHole.holeNumber ? updatedHole : h
-      ),
-    }));
-  }, [updateRoundData]);
+        holes: prev.holes.map((h) => (h.holeNumber === updatedHole.holeNumber ? updatedHole : h)),
+      }));
+    },
+    [updateRoundData]
+  );
 
   /** 保存前の確認チェック → 警告があれば確認ダイアログ、なければそのまま保存 */
   const handleSaveRequest = useCallback(() => {
@@ -414,15 +446,21 @@ function DetailedInputContent() {
       if (addToRoundId) {
         // ======== 追加モード: 既存ラウンドにスコア追加 ========
         // サブコース名を取得（ext_course_labelsに使用）
-        const subCourseNames = roundData.subCourseIds.map((scId) => {
-          const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
-          return sc?.name ?? null;
-        }).filter((n): n is string => n !== null);
+        const subCourseNames = roundData.subCourseIds
+          .map((scId) => {
+            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+            return sc?.name ?? null;
+          })
+          .filter((n): n is string => n !== null);
         const courseLabel = subCourseNames[0] ?? "追加";
 
         // 追加モード用の course_hole_id マッピング
         const addCourseHoleIdMap = selectedCourse
-          ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds, addModeHoleOffset)
+          ? buildCourseHoleIdMap(
+              selectedCourse.sub_courses,
+              roundData.subCourseIds,
+              addModeHoleOffset
+            )
           : new Map<number, string>();
 
         const scores = aggregated.map((agg) => ({
@@ -469,16 +507,21 @@ function DetailedInputContent() {
         }
 
         // サブコース名を解決
-        const subCourseNames = roundData.subCourseIds.map((scId) => {
-          const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
-          return sc?.name ?? null;
-        }).filter((n): n is string => n !== null);
+        const subCourseNames = roundData.subCourseIds
+          .map((scId) => {
+            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+            return sc?.name ?? null;
+          })
+          .filter((n): n is string => n !== null);
         // サブコースが未登録/未選択の場合はデフォルトで OUT / IN をセット
         const holeCount = aggregated.length;
         const outCourseName = subCourseNames[0] ?? (holeCount > 0 ? "OUT" : null);
-        const inCourseName = subCourseNames.length > 1
-          ? subCourseNames.slice(1).join(" / ")
-          : (holeCount > 9 ? "IN" : null);
+        const inCourseName =
+          subCourseNames.length > 1
+            ? subCourseNames.slice(1).join(" / ")
+            : holeCount > 9
+              ? "IN"
+              : null;
 
         // rounds テーブルに insert（旧カラム + 新カラム両方書き）
         const { data: round, error: roundError } = await supabase
@@ -528,9 +571,7 @@ function DetailedInputContent() {
           course_hole_id: courseHoleIdMap.get(agg.hole_number) ?? null,
         }));
 
-        const { error: scoresError } = await supabase
-          .from("scores")
-          .insert(scoreRecords);
+        const { error: scoresError } = await supabase.from("scores").insert(scoreRecords);
 
         if (scoresError) throw scoresError;
 
@@ -544,10 +585,12 @@ function DetailedInputContent() {
         const agg = playedHoles2.map((hole) => aggregateHoleData(hole));
 
         if (addToRoundId) {
-          const scNames = roundData.subCourseIds.map((scId) => {
-            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
-            return sc?.name ?? null;
-          }).filter((n): n is string => n !== null);
+          const scNames = roundData.subCourseIds
+            .map((scId) => {
+              const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+              return sc?.name ?? null;
+            })
+            .filter((n): n is string => n !== null);
 
           enqueue("add-scores", {
             roundId: addToRoundId,
@@ -566,10 +609,12 @@ function DetailedInputContent() {
             courseLabel: scNames[0] ?? "追加",
           } satisfies AddScoresPayload);
         } else {
-          const scNames = roundData.subCourseIds.map((scId) => {
-            const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
-            return sc?.name ?? null;
-          }).filter((n): n is string => n !== null);
+          const scNames = roundData.subCourseIds
+            .map((scId) => {
+              const sc = selectedCourse?.sub_courses.find((s) => s.id === scId);
+              return sc?.name ?? null;
+            })
+            .filter((n): n is string => n !== null);
 
           const offlineCourseHoleIdMap = selectedCourse
             ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds)

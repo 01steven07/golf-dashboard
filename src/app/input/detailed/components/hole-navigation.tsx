@@ -11,11 +11,7 @@ interface HoleNavigationProps {
   onHoleSelect: (holeNumber: number) => void;
 }
 
-export function HoleNavigation({
-  holes,
-  currentHole,
-  onHoleSelect,
-}: HoleNavigationProps) {
+export function HoleNavigation({ holes, currentHole, onHoleSelect }: HoleNavigationProps) {
   return (
     <div className="flex items-center gap-1 px-2 py-2 overflow-x-auto">
       {holes.map((h) => {
@@ -41,9 +37,7 @@ export function HoleNavigation({
             )}
           >
             <span>{h.holeNumber}</span>
-            {holeScore > 0 && (
-              <span className="text-[10px] leading-none">{scoreSymbol}</span>
-            )}
+            {holeScore > 0 && <span className="text-[10px] leading-none">{scoreSymbol}</span>}
           </button>
         );
       })}

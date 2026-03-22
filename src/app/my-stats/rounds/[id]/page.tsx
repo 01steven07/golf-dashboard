@@ -132,7 +132,12 @@ function RoundDetailContent() {
         }
         if (!cancelled) {
           setSectionLabels(
-            resolvedLabels ?? getFallbackSectionLabels(data.out_course_name, data.in_course_name, data.ext_course_labels)
+            resolvedLabels ??
+              getFallbackSectionLabels(
+                data.out_course_name,
+                data.in_course_name,
+                data.ext_course_labels
+              )
           );
         }
       })
@@ -144,7 +149,9 @@ function RoundDetailContent() {
         }
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [member, roundId]);
 
   const refreshRound = async () => {
@@ -214,9 +221,7 @@ function RoundDetailContent() {
           ラウンド履歴
         </Link>
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            {error}
-          </CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{error}</CardContent>
         </Card>
       </div>
     );
@@ -230,7 +235,8 @@ function RoundDetailContent() {
 
   // 平均星評価を算出
   const avgRating = (() => {
-    let total = 0, count = 0;
+    let total = 0,
+      count = 0;
     for (const s of scores) {
       for (const shot of parseShots(s.shots_detail)) {
         total += shot.rating;
@@ -240,9 +246,7 @@ function RoundDetailContent() {
     return count > 0 ? total / count : null;
   })();
   const selectedScore = scores.find((s) => s.hole_number === selectedHole);
-  const maxHoleNumber = scores.length > 0
-    ? Math.max(...scores.map((s) => s.hole_number))
-    : 0;
+  const maxHoleNumber = scores.length > 0 ? Math.max(...scores.map((s) => s.hole_number)) : 0;
   const canAddHalf = maxHoleNumber > 0 && maxHoleNumber % 9 === 0 && maxHoleNumber + 9 <= 36;
 
   return (
@@ -261,9 +265,7 @@ function RoundDetailContent() {
         <div>
           <h2 className="text-xl font-bold">{courseName}</h2>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-sm text-muted-foreground">
-              {formatRoundDate(round.date)}
-            </span>
+            <span className="text-sm text-muted-foreground">{formatRoundDate(round.date)}</span>
             {round.tee_color && (
               <Badge variant="outline" className="text-xs">
                 {round.tee_color}
@@ -275,20 +277,14 @@ function RoundDetailContent() {
               </Badge>
             )}
             {sectionLabels && sectionLabels.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {sectionLabels.join(" / ")}
-              </span>
+              <span className="text-xs text-muted-foreground">{sectionLabels.join(" / ")}</span>
             )}
           </div>
         </div>
 
         <div className="flex gap-2">
           {canAddHalf && !isEditMode && (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
+            <Button variant="outline" size="sm" asChild>
               <Link href={`/input/detailed?addToRound=${roundId}`}>
                 <PlusCircle className="w-4 h-4 mr-1" />
                 ハーフ追加
@@ -325,7 +321,11 @@ function RoundDetailContent() {
           <CardTitle>スコアカード</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScorecardTable scores={scores} extCourseLabels={round.ext_course_labels} sectionLabels={sectionLabels ?? undefined} />
+          <ScorecardTable
+            scores={scores}
+            extCourseLabels={round.ext_course_labels}
+            sectionLabels={sectionLabels ?? undefined}
+          />
         </CardContent>
       </Card>
 
@@ -342,14 +342,10 @@ function RoundDetailContent() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <HoleSelector
-            scores={scores}
-            selectedHole={selectedHole}
-            onSelect={setSelectedHole}
-          />
+          <HoleSelector scores={scores} selectedHole={selectedHole} onSelect={setSelectedHole} />
 
-          {selectedScore && (
-            isEditMode ? (
+          {selectedScore &&
+            (isEditMode ? (
               <HoleEditForm
                 key={selectedScore.id}
                 score={selectedScore}
@@ -358,8 +354,7 @@ function RoundDetailContent() {
               />
             ) : (
               <HoleDetailCard score={selectedScore} />
-            )
-          )}
+            ))}
         </CardContent>
       </Card>
 
@@ -406,7 +401,9 @@ function RoundDetailContent() {
 
       <ConfirmDialog
         open={pendingSaveData !== null}
-        onOpenChange={(open) => { if (!open) setPendingSaveData(null); }}
+        onOpenChange={(open) => {
+          if (!open) setPendingSaveData(null);
+        }}
         title="ホールデータを保存しますか？"
         description="編集内容を保存します。"
         confirmLabel="保存する"

@@ -13,27 +13,34 @@ export async function GET(request: NextRequest) {
       // ネストselectで1クエリで全データ取得
       const { data: courses, error } = await supabase
         .from("courses")
-        .select(`
+        .select(
+          `
           *,
           course_tees(*),
           course_sub_courses(*, course_holes(*))
-        `)
+        `
+        )
         .order("name");
 
       if (error) throw error;
 
       // レスポンスのキー名を変換 + ソート
       const result: CourseWithDetails[] = (courses || []).map((course) => {
-        const tees = (course.course_tees ?? [])
-          .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
+        const tees = (course.course_tees ?? []).sort(
+          (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+        );
         const sub_courses = (course.course_sub_courses ?? [])
-          .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)
+          .sort(
+            (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+          )
           .map((sc: { course_holes?: { hole_number: number }[] }) => {
             const { course_holes, ...rest } = sc;
             return {
               ...rest,
-              holes: (course_holes ?? [])
-                .sort((a: { hole_number: number }, b: { hole_number: number }) => a.hole_number - b.hole_number),
+              holes: (course_holes ?? []).sort(
+                (a: { hole_number: number }, b: { hole_number: number }) =>
+                  a.hole_number - b.hole_number
+              ),
             };
           });
 
@@ -49,20 +56,14 @@ export async function GET(request: NextRequest) {
     }
 
     // シンプル一覧
-    const { data: courses, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("name");
+    const { data: courses, error } = await supabase.from("courses").select("*").order("name");
 
     if (error) throw error;
 
     return NextResponse.json(courses);
   } catch (error) {
     console.error("Courses GET error:", error);
-    return NextResponse.json(
-      { error: "コース一覧の取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コース一覧の取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -76,10 +77,7 @@ export async function POST(request: NextRequest) {
     const { name, pref, source_url, green_types, tees, sub_courses } = body;
 
     if (!name) {
-      return NextResponse.json(
-        { error: "コース名は必須です" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "コース名は必須です" }, { status: 400 });
     }
 
     // コース作成
@@ -96,27 +94,20 @@ export async function POST(request: NextRequest) {
 
     if (courseError) {
       if (courseError.code === "23505") {
-        return NextResponse.json(
-          { error: "同名のコースが既に登録されています" },
-          { status: 409 }
-        );
+        return NextResponse.json({ error: "同名のコースが既に登録されています" }, { status: 409 });
       }
       throw courseError;
     }
 
     // ティー登録
     if (tees && tees.length > 0) {
-      const teeRows = tees.map(
-        (t: { name: string; color: string; sort_order: number }) => ({
-          course_id: course.id,
-          name: t.name,
-          color: t.color || null,
-          sort_order: t.sort_order,
-        })
-      );
-      const { error: teeError } = await supabase
-        .from("course_tees")
-        .insert(teeRows);
+      const teeRows = tees.map((t: { name: string; color: string; sort_order: number }) => ({
+        course_id: course.id,
+        name: t.name,
+        color: t.color || null,
+        sort_order: t.sort_order,
+      }));
+      const { error: teeError } = await supabase.from("course_tees").insert(teeRows);
       if (teeError) throw teeError;
     }
 
@@ -151,9 +142,7 @@ export async function POST(request: NextRequest) {
               distances: h.distances || {},
             })
           );
-          const { error: holeError } = await supabase
-            .from("course_holes")
-            .insert(holeRows);
+          const { error: holeError } = await supabase.from("course_holes").insert(holeRows);
           if (holeError) throw holeError;
         }
       }
@@ -162,9 +151,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: course.id }, { status: 201 });
   } catch (error) {
     console.error("Courses POST error:", error);
-    return NextResponse.json(
-      { error: "コースの登録に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コースの登録に失敗しました" }, { status: 500 });
   }
 }

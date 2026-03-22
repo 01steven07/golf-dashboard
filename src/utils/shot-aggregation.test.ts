@@ -120,11 +120,7 @@ describe("aggregateHoleData", () => {
 
   it("C-5: バンカーショット → bunker=1", () => {
     const hole = makeHole({
-      shots: [
-        makeTeeShot(),
-        makeApproach({ lie: "left-bunker", result: "on-center" }),
-        makePutt(),
-      ],
+      shots: [makeTeeShot(), makeApproach({ lie: "left-bunker", result: "on-center" }), makePutt()],
     });
     const result = aggregateHoleData(hole);
 
@@ -149,12 +145,7 @@ describe("aggregateHoleData", () => {
 
   it("C-7: アプローチペナルティ → penalty=1", () => {
     const hole = makeHole({
-      shots: [
-        makeTeeShot(),
-        makeApproach({ result: "penalty-right" }),
-        makeApproach(),
-        makePutt(),
-      ],
+      shots: [makeTeeShot(), makeApproach({ result: "penalty-right" }), makeApproach(), makePutt()],
     });
     const result = aggregateHoleData(hole);
 
@@ -215,7 +206,11 @@ describe("aggregateHoleData", () => {
 
   it("C-12: fairway_result — ラフ右 → 'right'", () => {
     const hole = makeHole({
-      shots: [makeTeeShot({ result: "rough", resultDirection: "right" }), makeApproach(), makePutt()],
+      shots: [
+        makeTeeShot({ result: "rough", resultDirection: "right" }),
+        makeApproach(),
+        makePutt(),
+      ],
     });
     const result = aggregateHoleData(hole);
 
@@ -224,7 +219,11 @@ describe("aggregateHoleData", () => {
 
   it("C-13: fairway_result — ラフ左 → 'left'", () => {
     const hole = makeHole({
-      shots: [makeTeeShot({ result: "rough", resultDirection: "left" }), makeApproach(), makePutt()],
+      shots: [
+        makeTeeShot({ result: "rough", resultDirection: "left" }),
+        makeApproach(),
+        makePutt(),
+      ],
     });
     const result = aggregateHoleData(hole);
 
@@ -235,7 +234,13 @@ describe("aggregateHoleData", () => {
     const hole = makeHole({
       par: 6 as 3 | 4 | 5 | 6,
       distance: 900,
-      shots: [makeTeeShot(), makeApproach(), makeApproach(), makePutt({ result: "back" }), makePutt()],
+      shots: [
+        makeTeeShot(),
+        makeApproach(),
+        makeApproach(),
+        makePutt({ result: "back" }),
+        makePutt(),
+      ],
     });
     const result = aggregateHoleData(hole);
 

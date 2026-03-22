@@ -6,11 +6,7 @@ import { CourseFormData } from "@/types/course";
 import { CourseWithDetails } from "@/types/database";
 import { Loader2 } from "lucide-react";
 
-export default function EditCoursePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [formData, setFormData] = useState<CourseFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,20 +67,14 @@ export default function EditCoursePage({
   }
 
   if (error || !formData) {
-    return (
-      <div className="text-center py-12 text-red-500">
-        {error || "エラーが発生しました"}
-      </div>
-    );
+    return <div className="text-center py-12 text-red-500">{error || "エラーが発生しました"}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">コース編集</h2>
-        <p className="text-sm text-muted-foreground">
-          コース情報を編集します
-        </p>
+        <p className="text-sm text-muted-foreground">コース情報を編集します</p>
       </div>
       <CourseForm initialData={formData} courseId={id} />
     </div>

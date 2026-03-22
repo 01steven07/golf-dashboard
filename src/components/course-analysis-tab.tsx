@@ -45,16 +45,32 @@ import {
   ReferenceLine,
 } from "recharts";
 import {
-  Loader2, Trophy, Crosshair, TreePine, RotateCcw,
-  Flag, TrendingUp, Triangle, Square, Star,
-  Locate, Trees,
+  Loader2,
+  Trophy,
+  Crosshair,
+  TreePine,
+  RotateCcw,
+  Flag,
+  TrendingUp,
+  Triangle,
+  Square,
+  Star,
+  Locate,
+  Trees,
 } from "lucide-react";
 import { FetchError } from "@/components/fetch-error";
 
 /** パターアイコン */
 function PutterIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className={className}>
+    <svg
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      className={className}
+    >
       <line x1="7" y1="1" x2="7" y2="10" />
       <line x1="4" y1="10.5" x2="10" y2="10.5" strokeWidth="2" />
     </svg>
@@ -173,7 +189,9 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
     const [myResult, teamResult] = await Promise.all([
       supabase
         .from("rounds")
-        .select("id, date, out_course_name, in_course_name, scores(hole_number, par, score, putts, fairway_result, pin_position, shots_detail)")
+        .select(
+          "id, date, out_course_name, in_course_name, scores(hole_number, par, score, putts, fairway_result, pin_position, shots_detail)"
+        )
         .eq("member_id", memberId)
         .eq("course_id", selectedCourseId)
         .order("date", { ascending: false }),
@@ -219,36 +237,15 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
   const allMyScores = useMemo(() => myRounds.flatMap((r) => r.scores), [myRounds]);
 
   // Stats calculations
-  const myBasicStats = useMemo(
-    () => calculateCourseBasicStats(myRounds),
-    [myRounds]
-  );
-  const teamBasicStats = useMemo(
-    () => calculateCourseBasicStats(teamRounds),
-    [teamRounds]
-  );
-  const scoreDistribution = useMemo(
-    () => calculateScoreDistribution(allMyScores),
-    [allMyScores]
-  );
-  const holeScorePattern = useMemo(
-    () => calculateHoleScorePattern(allMyScores),
-    [allMyScores]
-  );
+  const myBasicStats = useMemo(() => calculateCourseBasicStats(myRounds), [myRounds]);
+  const teamBasicStats = useMemo(() => calculateCourseBasicStats(teamRounds), [teamRounds]);
+  const scoreDistribution = useMemo(() => calculateScoreDistribution(allMyScores), [allMyScores]);
+  const holeScorePattern = useMemo(() => calculateHoleScorePattern(allMyScores), [allMyScores]);
 
   // Extended stats
-  const courseScoringStats = useMemo(
-    () => calculateCourseScoringStats(myRounds),
-    [myRounds]
-  );
-  const coursePuttingStats = useMemo(
-    () => calculateCoursePuttingStats(myRounds),
-    [myRounds]
-  );
-  const courseShotStats = useMemo(
-    () => calculateCourseShotStats(myRounds),
-    [myRounds]
-  );
+  const courseScoringStats = useMemo(() => calculateCourseScoringStats(myRounds), [myRounds]);
+  const coursePuttingStats = useMemo(() => calculateCoursePuttingStats(myRounds), [myRounds]);
+  const courseShotStats = useMemo(() => calculateCourseShotStats(myRounds), [myRounds]);
 
   // Per-member course stats for club comparison
   const memberCourseStats = useMemo(() => {
@@ -271,7 +268,7 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
   /** コース概要の部内順位を計算するヘルパー */
   const basicComp = (
     statKey: "avgScore" | "avgPutts" | "girRate" | "fairwayKeepRate",
-    lowerIsBetter: boolean,
+    lowerIsBetter: boolean
   ) => {
     if (memberCourseStats.length === 0) return { rank: 0, totalMembers: 0 };
     const sorted = [...memberCourseStats].sort((a, b) => {
@@ -285,9 +282,13 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
 
   /** コーススタッツの部内比較を計算するヘルパー */
   const courseComp = (
-    accessor: (m: { scoring: CourseScoringStats; putting: CoursePuttingStats; shot: CourseShotStats }) => number,
+    accessor: (m: {
+      scoring: CourseScoringStats;
+      putting: CoursePuttingStats;
+      shot: CourseShotStats;
+    }) => number,
     lowerIsBetter: boolean,
-    format: "score" | "percent",
+    format: "score" | "percent"
   ) => {
     if (memberCourseStats.length === 0) return {};
     const values = memberCourseStats.map((m) => accessor(m));
@@ -434,9 +435,7 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
         </Card>
       )}
 
-      {fetchDataError && (
-        <FetchError message={fetchDataError} onRetry={fetchCourseData} />
-      )}
+      {fetchDataError && <FetchError message={fetchDataError} onRetry={fetchCourseData} />}
 
       {isLoadingData && (
         <div className="flex items-center justify-center py-12">
@@ -492,7 +491,8 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
               />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              ラウンド数: 自分 {myBasicStats.roundCount}回 / チーム全体 {teamBasicStats.roundCount}回
+              ラウンド数: 自分 {myBasicStats.roundCount}回 / チーム全体 {teamBasicStats.roundCount}
+              回
             </p>
           </div>
 
@@ -508,26 +508,40 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                     <Pie
                       data={[
                         { name: "Eagle-", value: scoreDistribution.eagle, color: PIE_COLORS.eagle },
-                        { name: "Birdie", value: scoreDistribution.birdie, color: PIE_COLORS.birdie },
+                        {
+                          name: "Birdie",
+                          value: scoreDistribution.birdie,
+                          color: PIE_COLORS.birdie,
+                        },
                         { name: "Par", value: scoreDistribution.par, color: PIE_COLORS.par },
                         { name: "Bogey", value: scoreDistribution.bogey, color: PIE_COLORS.bogey },
-                        { name: "Double+", value: scoreDistribution.doublePlus, color: PIE_COLORS.doublePlus },
+                        {
+                          name: "Double+",
+                          value: scoreDistribution.doublePlus,
+                          color: PIE_COLORS.doublePlus,
+                        },
                       ].filter((d) => d.value > 0)}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
-                      label={({ name, percent }) =>
-                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                      }
+                      label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                     >
                       {[
                         { name: "Eagle-", value: scoreDistribution.eagle, color: PIE_COLORS.eagle },
-                        { name: "Birdie", value: scoreDistribution.birdie, color: PIE_COLORS.birdie },
+                        {
+                          name: "Birdie",
+                          value: scoreDistribution.birdie,
+                          color: PIE_COLORS.birdie,
+                        },
                         { name: "Par", value: scoreDistribution.par, color: PIE_COLORS.par },
                         { name: "Bogey", value: scoreDistribution.bogey, color: PIE_COLORS.bogey },
-                        { name: "Double+", value: scoreDistribution.doublePlus, color: PIE_COLORS.doublePlus },
+                        {
+                          name: "Double+",
+                          value: scoreDistribution.doublePlus,
+                          color: PIE_COLORS.doublePlus,
+                        },
                       ]
                         .filter((d) => d.value > 0)
                         .map((entry, index) => (
@@ -559,7 +573,12 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                     <XAxis
                       dataKey="hole"
                       tick={{ fontSize: 12 }}
-                      label={{ value: "ホール", position: "insideBottomRight", offset: -5, fontSize: 11 }}
+                      label={{
+                        value: "ホール",
+                        position: "insideBottomRight",
+                        offset: -5,
+                        fontSize: 11,
+                      }}
                     />
                     <YAxis
                       tick={{ fontSize: 12 }}
@@ -606,29 +625,95 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
               <StatGroupSection
                 title="スコアリング"
                 stats={[
-                  { label: "Par3平均", value: courseScoringStats.par3Avg.toFixed(1), description: "Par3ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.par3Avg, true, "score") },
-                  { label: "Par4平均", value: courseScoringStats.par4Avg.toFixed(1), description: "Par4ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.par4Avg, true, "score") },
-                  { label: "Par5平均", value: courseScoringStats.par5Avg.toFixed(1), description: "Par5ホールの平均スコア", icon: <Flag className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.par5Avg, true, "score") },
-                  { label: "バウンスバック率", value: `${courseScoringStats.bounceBackRate.toFixed(1)}%`, description: "ボギー以上の次ホールでパー以下を取れた率", icon: <TrendingUp className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.bounceBackRate, false, "percent") },
-                  { label: "ボギー回避率", value: `${courseScoringStats.bogeyAvoidance.toFixed(1)}%`, description: "ボギー以下を叩かなかった割合", icon: <Triangle className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.bogeyAvoidance, false, "percent") },
-                  { label: "ダボ回避率", value: `${courseScoringStats.doubleBogeyAvoidance.toFixed(1)}%`, description: "ダブルボギー以下を叩かなかった割合", icon: <Square className="h-3.5 w-3.5" />, ...courseComp((m) => m.scoring.doubleBogeyAvoidance, false, "percent") },
+                  {
+                    label: "Par3平均",
+                    value: courseScoringStats.par3Avg.toFixed(1),
+                    description: "Par3ホールの平均スコア",
+                    icon: <Flag className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.par3Avg, true, "score"),
+                  },
+                  {
+                    label: "Par4平均",
+                    value: courseScoringStats.par4Avg.toFixed(1),
+                    description: "Par4ホールの平均スコア",
+                    icon: <Flag className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.par4Avg, true, "score"),
+                  },
+                  {
+                    label: "Par5平均",
+                    value: courseScoringStats.par5Avg.toFixed(1),
+                    description: "Par5ホールの平均スコア",
+                    icon: <Flag className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.par5Avg, true, "score"),
+                  },
+                  {
+                    label: "バウンスバック率",
+                    value: `${courseScoringStats.bounceBackRate.toFixed(1)}%`,
+                    description: "ボギー以上の次ホールでパー以下を取れた率",
+                    icon: <TrendingUp className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.bounceBackRate, false, "percent"),
+                  },
+                  {
+                    label: "ボギー回避率",
+                    value: `${courseScoringStats.bogeyAvoidance.toFixed(1)}%`,
+                    description: "ボギー以下を叩かなかった割合",
+                    icon: <Triangle className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.bogeyAvoidance, false, "percent"),
+                  },
+                  {
+                    label: "ダボ回避率",
+                    value: `${courseScoringStats.doubleBogeyAvoidance.toFixed(1)}%`,
+                    description: "ダブルボギー以下を叩かなかった割合",
+                    icon: <Square className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.scoring.doubleBogeyAvoidance, false, "percent"),
+                  },
                 ]}
               />
 
               <StatGroupSection
                 title="パッティング"
                 stats={[
-                  { label: "パーオン時パット", value: coursePuttingStats.puttsPerGir.toFixed(1), description: "パーオンホールでの平均パット数", icon: <PutterIcon className="h-3.5 w-3.5" />, ...courseComp((m) => m.putting.puttsPerGir, true, "score") },
-                  { label: "3パット回避率", value: `${coursePuttingStats.threePuttAvoidance.toFixed(1)}%`, description: "3パット以上にならなかった割合", icon: <PutterIcon className="h-3.5 w-3.5" />, ...courseComp((m) => m.putting.threePuttAvoidance, false, "percent") },
-                  { label: "1パット率", value: `${coursePuttingStats.onePuttRate.toFixed(1)}%`, description: "1パットで沈めた割合", icon: <Star className="h-3.5 w-3.5" />, ...courseComp((m) => m.putting.onePuttRate, false, "percent") },
+                  {
+                    label: "パーオン時パット",
+                    value: coursePuttingStats.puttsPerGir.toFixed(1),
+                    description: "パーオンホールでの平均パット数",
+                    icon: <PutterIcon className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.putting.puttsPerGir, true, "score"),
+                  },
+                  {
+                    label: "3パット回避率",
+                    value: `${coursePuttingStats.threePuttAvoidance.toFixed(1)}%`,
+                    description: "3パット以上にならなかった割合",
+                    icon: <PutterIcon className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.putting.threePuttAvoidance, false, "percent"),
+                  },
+                  {
+                    label: "1パット率",
+                    value: `${coursePuttingStats.onePuttRate.toFixed(1)}%`,
+                    description: "1パットで沈めた割合",
+                    icon: <Star className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.putting.onePuttRate, false, "percent"),
+                  },
                 ]}
               />
 
               <StatGroupSection
                 title="ショット"
                 stats={[
-                  { label: "パーオン率(FW)", value: `${courseShotStats.girFromFairway.toFixed(1)}%`, description: "フェアウェイからのパーオン率", icon: <Locate className="h-3.5 w-3.5" />, ...courseComp((m) => m.shot.girFromFairway, false, "percent") },
-                  { label: "パーオン率(ラフ)", value: `${courseShotStats.girFromRough.toFixed(1)}%`, description: "ラフからのパーオン率", icon: <Trees className="h-3.5 w-3.5" />, ...courseComp((m) => m.shot.girFromRough, false, "percent") },
+                  {
+                    label: "パーオン率(FW)",
+                    value: `${courseShotStats.girFromFairway.toFixed(1)}%`,
+                    description: "フェアウェイからのパーオン率",
+                    icon: <Locate className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.shot.girFromFairway, false, "percent"),
+                  },
+                  {
+                    label: "パーオン率(ラフ)",
+                    value: `${courseShotStats.girFromRough.toFixed(1)}%`,
+                    description: "ラフからのパーオン率",
+                    icon: <Trees className="h-3.5 w-3.5" />,
+                    ...courseComp((m) => m.shot.girFromRough, false, "percent"),
+                  },
                 ]}
               />
             </CardContent>
@@ -644,7 +729,9 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
               <div className="space-y-2">
                 {/* OUT / first sub-course */}
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">{subCourseLabels.out}</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                    {subCourseLabels.out}
+                  </p>
                   <div className="flex gap-1.5 overflow-x-auto pb-1">
                     {Array.from({ length: Math.min(9, holeCount) }, (_, i) => i + 1).map((hole) => {
                       const holeScore = allMyScores.find((s) => s.hole_number === hole);
@@ -670,27 +757,31 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                 {/* IN / second sub-course */}
                 {holeCount > 9 && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1.5">{subCourseLabels.in}</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                      {subCourseLabels.in}
+                    </p>
                     <div className="flex gap-1.5 overflow-x-auto pb-1">
-                      {Array.from({ length: Math.min(9, holeCount - 9) }, (_, i) => i + 10).map((hole) => {
-                        const holeScore = allMyScores.find((s) => s.hole_number === hole);
-                        return (
-                          <button
-                            key={hole}
-                            onClick={() => setSelectedHole(selectedHole === hole ? null : hole)}
-                            className={`flex-shrink-0 w-10 h-10 rounded-lg text-sm font-medium transition-colors flex flex-col items-center justify-center ${
-                              selectedHole === hole
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted hover:bg-muted/80 text-foreground"
-                            }`}
-                          >
-                            <span>{hole}</span>
-                            {holeScore && (
-                              <span className="text-[8px] opacity-70">P{holeScore.par}</span>
-                            )}
-                          </button>
-                        );
-                      })}
+                      {Array.from({ length: Math.min(9, holeCount - 9) }, (_, i) => i + 10).map(
+                        (hole) => {
+                          const holeScore = allMyScores.find((s) => s.hole_number === hole);
+                          return (
+                            <button
+                              key={hole}
+                              onClick={() => setSelectedHole(selectedHole === hole ? null : hole)}
+                              className={`flex-shrink-0 w-10 h-10 rounded-lg text-sm font-medium transition-colors flex flex-col items-center justify-center ${
+                                selectedHole === hole
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted hover:bg-muted/80 text-foreground"
+                              }`}
+                            >
+                              <span>{hole}</span>
+                              {holeScore && (
+                                <span className="text-[8px] opacity-70">P{holeScore.par}</span>
+                              )}
+                            </button>
+                          );
+                        }
+                      )}
                     </div>
                   </div>
                 )}
@@ -718,7 +809,9 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                       <span className="text-xs text-muted-foreground">{subCourseLabels.in}</span>
                     )}
                     {holeGir && (
-                      <span className="text-xs text-muted-foreground ml-auto">{holeGir.count}ラウンド</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {holeGir.count}ラウンド
+                      </span>
                     )}
                   </div>
 
@@ -730,9 +823,17 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                           <Crosshair className="h-3 w-3 text-muted-foreground" />
                           <p className="text-xs text-muted-foreground">パーオン率</p>
                         </div>
-                        <p className={`text-lg font-bold mt-0.5 ${
-                          holeGir.girRate >= 50 ? "text-green-600" : holeGir.girRate >= 25 ? "text-foreground" : "text-red-500"
-                        }`}>{holeGir.girRate.toFixed(0)}%</p>
+                        <p
+                          className={`text-lg font-bold mt-0.5 ${
+                            holeGir.girRate >= 50
+                              ? "text-green-600"
+                              : holeGir.girRate >= 25
+                                ? "text-foreground"
+                                : "text-red-500"
+                          }`}
+                        >
+                          {holeGir.girRate.toFixed(0)}%
+                        </p>
                       </div>
                     )}
                     {holePutts && (
@@ -741,9 +842,17 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                           <PutterIcon className="h-3 w-3 text-muted-foreground" />
                           <p className="text-xs text-muted-foreground">平均パット</p>
                         </div>
-                        <p className={`text-lg font-bold mt-0.5 ${
-                          holePutts.avgPutts <= 1.8 ? "text-green-600" : holePutts.avgPutts <= 2.1 ? "text-foreground" : "text-red-500"
-                        }`}>{holePutts.avgPutts.toFixed(1)}</p>
+                        <p
+                          className={`text-lg font-bold mt-0.5 ${
+                            holePutts.avgPutts <= 1.8
+                              ? "text-green-600"
+                              : holePutts.avgPutts <= 2.1
+                                ? "text-foreground"
+                                : "text-red-500"
+                          }`}
+                        >
+                          {holePutts.avgPutts.toFixed(1)}
+                        </p>
                       </div>
                     )}
                     {holeScramble && holeScramble.opportunities > 0 && (
@@ -752,25 +861,39 @@ export function CourseAnalysisTab({ memberId }: CourseAnalysisTabProps) {
                           <RotateCcw className="h-3 w-3 text-muted-foreground" />
                           <p className="text-xs text-muted-foreground">リカバリー率</p>
                         </div>
-                        <p className={`text-lg font-bold mt-0.5 ${
-                          holeScramble.scrambleRate >= 50 ? "text-green-600" : holeScramble.scrambleRate >= 25 ? "text-foreground" : "text-red-500"
-                        }`}>{holeScramble.scrambleRate.toFixed(0)}%</p>
+                        <p
+                          className={`text-lg font-bold mt-0.5 ${
+                            holeScramble.scrambleRate >= 50
+                              ? "text-green-600"
+                              : holeScramble.scrambleRate >= 25
+                                ? "text-foreground"
+                                : "text-red-500"
+                          }`}
+                        >
+                          {holeScramble.scrambleRate.toFixed(0)}%
+                        </p>
                       </div>
                     )}
-                    {holeScoreDist && holeScoreDist.total > 0 && (() => {
-                      const avgOP = holeScorePattern.find((h) => h.hole === selectedHole)?.avgOverPar ?? 0;
-                      return (
-                        <div className="p-3 rounded-lg bg-muted/50">
-                          <div className="flex items-center gap-1.5">
-                            <Flag className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">平均スコア</p>
+                    {holeScoreDist &&
+                      holeScoreDist.total > 0 &&
+                      (() => {
+                        const avgOP =
+                          holeScorePattern.find((h) => h.hole === selectedHole)?.avgOverPar ?? 0;
+                        return (
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <div className="flex items-center gap-1.5">
+                              <Flag className="h-3 w-3 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">平均スコア</p>
+                            </div>
+                            <p
+                              className={`text-lg font-bold mt-0.5 ${avgOP <= 0 ? "text-green-600" : avgOP <= 1 ? "text-foreground" : "text-red-500"}`}
+                            >
+                              {avgOP > 0 ? "+" : ""}
+                              {avgOP.toFixed(1)}
+                            </p>
                           </div>
-                          <p className={`text-lg font-bold mt-0.5 ${avgOP <= 0 ? "text-green-600" : avgOP <= 1 ? "text-foreground" : "text-red-500"}`}>
-                            {avgOP > 0 ? "+" : ""}{avgOP.toFixed(1)}
-                          </p>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                   </div>
 
                   {/* Score distribution full-width bar */}
@@ -864,9 +987,11 @@ function CourseOverviewCard({
   const colors = hasRank ? getRankColor(rank, totalMembers) : null;
 
   return (
-    <div className={`p-4 rounded-lg border-l-[3px] bg-muted/50 ${
-      colors ? colors.border : "border-l-transparent"
-    }`}>
+    <div
+      className={`p-4 rounded-lg border-l-[3px] bg-muted/50 ${
+        colors ? colors.border : "border-l-transparent"
+      }`}
+    >
       <div className="flex items-center gap-1.5">
         <span className="text-muted-foreground flex-shrink-0">{icon}</span>
         <p className="text-sm text-muted-foreground truncate">{label}</p>
@@ -889,7 +1014,11 @@ function CourseOverviewCard({
                 width: `${Math.max(8, ((totalMembers - rank + 1) / totalMembers) * 100)}%`,
                 backgroundColor:
                   rank <= 3
-                    ? rank === 1 ? "#f59e0b" : rank === 2 ? "#9ca3af" : "#f97316"
+                    ? rank === 1
+                      ? "#f59e0b"
+                      : rank === 2
+                        ? "#9ca3af"
+                        : "#f97316"
                     : rank / totalMembers <= 0.33
                       ? "#22c55e"
                       : rank / totalMembers <= 0.66
@@ -925,7 +1054,18 @@ function ClubBadgeList({ clubs }: { clubs: { club: string; count: number }[] }) 
 }
 
 /** ホール別スコア分布バー（横長・ラベル付き） */
-function HoleScoreDistBar({ dist }: { dist: { eagle: number; birdie: number; par: number; bogey: number; doublePlus: number; total: number } }) {
+function HoleScoreDistBar({
+  dist,
+}: {
+  dist: {
+    eagle: number;
+    birdie: number;
+    par: number;
+    bogey: number;
+    doublePlus: number;
+    total: number;
+  };
+}) {
   if (dist.total === 0) return null;
   const items = [
     { key: "eagle", count: dist.eagle, color: "#16a34a", label: "イーグル" },
@@ -955,7 +1095,10 @@ function HoleScoreDistBar({ dist }: { dist: { eagle: number; birdie: number; par
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
         {items.map((item) => (
           <span key={item.key} className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: item.color }} />
+            <span
+              className="w-2 h-2 rounded-sm inline-block"
+              style={{ backgroundColor: item.color }}
+            />
             {item.label} {item.count}回
           </span>
         ))}
@@ -964,7 +1107,11 @@ function HoleScoreDistBar({ dist }: { dist: { eagle: number; birdie: number; par
   );
 }
 
-function TeeShotTendencyBar({ tendency }: { tendency: { left: number; center: number; right: number } }) {
+function TeeShotTendencyBar({
+  tendency,
+}: {
+  tendency: { left: number; center: number; right: number };
+}) {
   const total = tendency.left + tendency.center + tendency.right;
   if (total === 0) {
     return <p className="text-sm text-muted-foreground">データなし</p>;
@@ -1011,7 +1158,11 @@ function TeeShotTendencyBar({ tendency }: { tendency: { left: number; center: nu
   );
 }
 
-function PinPositionGrid({ pinScores }: { pinScores: { position: string; avgOverPar: number; count: number }[] }) {
+function PinPositionGrid({
+  pinScores,
+}: {
+  pinScores: { position: string; avgOverPar: number; count: number }[];
+}) {
   const scoreMap = new Map(pinScores.map((p) => [p.position, p]));
 
   return (

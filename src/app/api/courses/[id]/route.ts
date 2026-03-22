@@ -3,41 +3,40 @@ import { supabase } from "@/lib/supabase";
 import { requireAuth, isAuthError } from "@/lib/api-auth";
 
 /** GET /api/courses/[id] - コース詳細取得 */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
     const { data: course, error } = await supabase
       .from("courses")
-      .select(`
+      .select(
+        `
         *,
         course_tees(*),
         course_sub_courses(*, course_holes(*))
-      `)
+      `
+      )
       .eq("id", id)
       .single();
 
     if (error || !course) {
-      return NextResponse.json(
-        { error: "コースが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "コースが見つかりません" }, { status: 404 });
     }
 
     // レスポンスのキー名を変換 + ソート
-    const tees = (course.course_tees ?? [])
-      .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order);
+    const tees = (course.course_tees ?? []).sort(
+      (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+    );
     const sub_courses = (course.course_sub_courses ?? [])
       .sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)
       .map((sc: { course_holes?: { hole_number: number }[] }) => {
         const { course_holes, ...rest } = sc;
         return {
           ...rest,
-          holes: (course_holes ?? [])
-            .sort((a: { hole_number: number }, b: { hole_number: number }) => a.hole_number - b.hole_number),
+          holes: (course_holes ?? []).sort(
+            (a: { hole_number: number }, b: { hole_number: number }) =>
+              a.hole_number - b.hole_number
+          ),
         };
       });
 
@@ -50,18 +49,12 @@ export async function GET(
     });
   } catch (error) {
     console.error("Course GET error:", error);
-    return NextResponse.json(
-      { error: "コース詳細の取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コース詳細の取得に失敗しました" }, { status: 500 });
   }
 }
 
 /** PUT /api/courses/[id] - コース更新 */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
   if (isAuthError(auth)) return auth;
 
@@ -86,17 +79,13 @@ export async function PUT(
     // ティー: 既存削除→再登録
     await supabase.from("course_tees").delete().eq("course_id", id);
     if (tees && tees.length > 0) {
-      const teeRows = tees.map(
-        (t: { name: string; color: string; sort_order: number }) => ({
-          course_id: id,
-          name: t.name,
-          color: t.color || null,
-          sort_order: t.sort_order,
-        })
-      );
-      const { error: teeError } = await supabase
-        .from("course_tees")
-        .insert(teeRows);
+      const teeRows = tees.map((t: { name: string; color: string; sort_order: number }) => ({
+        course_id: id,
+        name: t.name,
+        color: t.color || null,
+        sort_order: t.sort_order,
+      }));
+      const { error: teeError } = await supabase.from("course_tees").insert(teeRows);
       if (teeError) throw teeError;
     }
 
@@ -132,9 +121,7 @@ export async function PUT(
               distances: h.distances || {},
             })
           );
-          const { error: holeError } = await supabase
-            .from("course_holes")
-            .insert(holeRows);
+          const { error: holeError } = await supabase.from("course_holes").insert(holeRows);
           if (holeError) throw holeError;
         }
       }
@@ -143,10 +130,7 @@ export async function PUT(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Course PUT error:", error);
-    return NextResponse.json(
-      { error: "コースの更新に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コースの更新に失敗しました" }, { status: 500 });
   }
 }
 
@@ -181,9 +165,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Course DELETE error:", error);
-    return NextResponse.json(
-      { error: "コースの削除に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コースの削除に失敗しました" }, { status: 500 });
   }
 }

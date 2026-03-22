@@ -25,7 +25,11 @@ export function getScoreSymbol(score: number, par: number): ScoreSymbolInfo {
   const diff = score - par;
 
   if (diff <= -2) {
-    return { label: diff <= -3 ? "Albatross" : "Eagle", symbol: diff <= -3 ? "◎◎" : "◎", ...SCORE_TW.eagle };
+    return {
+      label: diff <= -3 ? "Albatross" : "Eagle",
+      symbol: diff <= -3 ? "◎◎" : "◎",
+      ...SCORE_TW.eagle,
+    };
   }
   if (diff === -1) {
     return { label: "Birdie", symbol: "○", ...SCORE_TW.birdie };

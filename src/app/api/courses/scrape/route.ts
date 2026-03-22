@@ -64,9 +64,7 @@ function extractText(html: string): string {
   text = text.replace(/&lt;/g, "<");
   text = text.replace(/&gt;/g, ">");
   text = text.replace(/&quot;/g, '"');
-  text = text.replace(/&#(\d+);/g, (_, code) =>
-    String.fromCharCode(Number(code))
-  );
+  text = text.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
 
   // 連続空白・改行を圧縮
   text = text.replace(/[ \t]+/g, " ");
@@ -87,10 +85,7 @@ export async function POST(request: NextRequest) {
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {
-      return NextResponse.json(
-        { error: "URLを入力してください" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "URLを入力してください" }, { status: 400 });
     }
 
     // URLバリデーション
@@ -98,10 +93,7 @@ export async function POST(request: NextRequest) {
     try {
       parsedUrl = new URL(url);
     } catch {
-      return NextResponse.json(
-        { error: "有効なURLを入力してください" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "有効なURLを入力してください" }, { status: 400 });
     }
 
     // HTTPSのみ許可
@@ -138,15 +130,9 @@ export async function POST(request: NextRequest) {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
-        return NextResponse.json(
-          { error: "ページの取得がタイムアウトしました" },
-          { status: 504 }
-        );
+        return NextResponse.json({ error: "ページの取得がタイムアウトしました" }, { status: 504 });
       }
-      return NextResponse.json(
-        { error: "ページの取得に失敗しました" },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: "ページの取得に失敗しました" }, { status: 502 });
     }
 
     // テキスト抽出・圧縮
@@ -169,8 +155,7 @@ export async function POST(request: NextRequest) {
 
     // JSONを抽出
     const jsonMatch =
-      responseText.match(/```json\s*([\s\S]*?)\s*```/) ||
-      responseText.match(/\{[\s\S]*\}/);
+      responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
       return NextResponse.json(
@@ -186,9 +171,7 @@ export async function POST(request: NextRequest) {
     const scrapingResult: CourseScrapingResult = {
       course_name: rawResult.course_name ?? "",
       pref: rawResult.pref ?? null,
-      green_types: Array.isArray(rawResult.green_types)
-        ? rawResult.green_types
-        : [],
+      green_types: Array.isArray(rawResult.green_types) ? rawResult.green_types : [],
       tees: Array.isArray(rawResult.tees) ? rawResult.tees : [],
       sub_courses: Array.isArray(rawResult.sub_courses)
         ? rawResult.sub_courses.map(
@@ -208,9 +191,7 @@ export async function POST(request: NextRequest) {
                     par: h.par ?? 4,
                     handicap: h.handicap ?? null,
                     distances:
-                      typeof h.distances === "object" && h.distances !== null
-                        ? h.distances
-                        : {},
+                      typeof h.distances === "object" && h.distances !== null ? h.distances : {},
                   }))
                 : [],
             })
@@ -221,9 +202,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(scrapingResult);
   } catch (error) {
     console.error("Scrape error:", error);
-    return NextResponse.json(
-      { error: "コース情報の解析に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "コース情報の解析に失敗しました" }, { status: 500 });
   }
 }

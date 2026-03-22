@@ -125,9 +125,6 @@ ${distanceSection}
     return NextResponse.json({ advice });
   } catch (error) {
     console.error("Advice generation error:", error);
-    return NextResponse.json(
-      { error: "アドバイスの生成に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "アドバイスの生成に失敗しました" }, { status: 500 });
   }
 }

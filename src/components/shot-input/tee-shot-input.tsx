@@ -17,7 +17,12 @@ interface TeeShotInputProps {
   optionalFields?: OptionalFieldSettings;
 }
 
-const TEE_RESULTS_DEFAULT: { value: TeeResult; label: string; icon: React.ReactNode; color: string }[] = [
+const TEE_RESULTS_DEFAULT: {
+  value: TeeResult;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}[] = [
   { value: "fairway", label: "FW", icon: <Target className="w-4 h-4" />, color: "green" },
   { value: "rough", label: "ラフ", icon: <TreePine className="w-4 h-4" />, color: "yellow" },
   { value: "bunker", label: "バンカー", icon: <Waves className="w-4 h-4" />, color: "amber" },
@@ -25,7 +30,12 @@ const TEE_RESULTS_DEFAULT: { value: TeeResult; label: string; icon: React.ReactN
   { value: "penalty", label: "ペナ", icon: <AlertTriangle className="w-4 h-4" />, color: "orange" },
 ];
 
-const TEE_RESULTS_PAR3: { value: TeeResult; label: string; icon: React.ReactNode; color: string }[] = [
+const TEE_RESULTS_PAR3: {
+  value: TeeResult;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}[] = [
   { value: "fairway", label: "ON", icon: <Target className="w-4 h-4" />, color: "green" },
   { value: "rough", label: "外し", icon: <TreePine className="w-4 h-4" />, color: "yellow" },
   { value: "bunker", label: "バンカー", icon: <Waves className="w-4 h-4" />, color: "amber" },
@@ -54,7 +64,9 @@ export function TeeShotInput({ shot, onChange, par, optionalFields }: TeeShotInp
             <Input
               type="number"
               value={shot.distance || ""}
-              onChange={(e) => onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })}
+              onChange={(e) =>
+                onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })
+              }
               className="w-24 text-center text-lg font-bold"
               min={0}
               max={300}
@@ -110,12 +122,12 @@ export function TeeShotInput({ shot, onChange, par, optionalFields }: TeeShotInp
                   ? result.color === "green"
                     ? "bg-green-500 text-white shadow-lg"
                     : result.color === "yellow"
-                    ? "bg-yellow-500 text-white shadow-lg"
-                    : result.color === "amber"
-                    ? "bg-amber-500 text-white shadow-lg"
-                    : result.color === "red"
-                    ? "bg-red-500 text-white shadow-lg"
-                    : "bg-orange-500 text-white shadow-lg"
+                      ? "bg-yellow-500 text-white shadow-lg"
+                      : result.color === "amber"
+                        ? "bg-amber-500 text-white shadow-lg"
+                        : result.color === "red"
+                          ? "bg-red-500 text-white shadow-lg"
+                          : "bg-orange-500 text-white shadow-lg"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
@@ -144,10 +156,7 @@ export function TeeShotInput({ shot, onChange, par, optionalFields }: TeeShotInp
           <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
             💨 風
           </Label>
-          <WindSelector
-            value={shot.wind}
-            onChange={(wind) => onChange({ ...shot, wind })}
-          />
+          <WindSelector value={shot.wind} onChange={(wind) => onChange({ ...shot, wind })} />
         </div>
       )}
 

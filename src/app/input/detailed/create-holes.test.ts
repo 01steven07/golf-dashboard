@@ -34,16 +34,33 @@ function makeSubCourse(
 /** ショット入力済みのHoleDataを生成 */
 function makePlayedHole(holeNumber: number, par: 3 | 4 | 5 | 6 = 4): HoleData {
   const tee: TeeShot = {
-    type: "tee", club: "1W", result: "fairway", resultDirection: "center",
-    wind: "none", rating: 3, note: "",
+    type: "tee",
+    club: "1W",
+    result: "fairway",
+    resultDirection: "center",
+    wind: "none",
+    rating: 3,
+    note: "",
   };
   const approach: ApproachShot = {
-    type: "approach", club: "7I", lie: "fairway", slope: "flat",
-    result: "on-center", wind: "none", distance: 150, rating: 3, note: "",
+    type: "approach",
+    club: "7I",
+    lie: "fairway",
+    slope: "flat",
+    result: "on-center",
+    wind: "none",
+    distance: 150,
+    rating: 3,
+    note: "",
   };
   const putt: PuttShot = {
-    type: "putt", distance: 5, slope: "flat", break: "straight",
-    result: "in", rating: 3, note: "",
+    type: "putt",
+    distance: 5,
+    slope: "flat",
+    break: "straight",
+    result: "in",
+    rating: 3,
+    note: "",
   };
 
   return {
@@ -140,9 +157,7 @@ describe("createHolesFromCourse", () => {
 
   it("B-7: サブコース削除 → 残りホールのshots保持", () => {
     // 27H分のデータ
-    const existingHoles = Array.from({ length: 27 }, (_, i) =>
-      makePlayedHole(i + 1)
-    );
+    const existingHoles = Array.from({ length: 27 }, (_, i) => makePlayedHole(i + 1));
 
     // 3つ目を削除 → 18Hに
     const holes = createHolesFromCourse(
@@ -164,12 +179,7 @@ describe("createHolesFromCourse", () => {
     );
 
     // White → Blue に変更
-    const holes = createHolesFromCourse(
-      ALL_SUB_COURSES,
-      ["sc-out"],
-      "Blue",
-      existingHoles
-    );
+    const holes = createHolesFromCourse(ALL_SUB_COURSES, ["sc-out"], "Blue", existingHoles);
 
     expect(holes).toHaveLength(9);
     for (let i = 0; i < 9; i++) {

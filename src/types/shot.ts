@@ -59,15 +59,15 @@ export type ShotLie = "fairway" | "left-rough" | "right-rough" | "left-bunker" |
 /** ショット/アプローチの結果 - 8方向 + 中央 */
 export type ShotResult =
   // グリーンON (9方向)
-  | "on-center"       // ピン付近
-  | "on-front"        // 手前
-  | "on-back"         // 奥
-  | "on-left"         // 左
-  | "on-right"        // 右
-  | "on-front-left"   // 手前左
-  | "on-front-right"  // 手前右
-  | "on-back-left"    // 奥左
-  | "on-back-right"   // 奥右
+  | "on-center" // ピン付近
+  | "on-front" // 手前
+  | "on-back" // 奥
+  | "on-left" // 左
+  | "on-right" // 右
+  | "on-front-left" // 手前左
+  | "on-front-right" // 手前右
+  | "on-back-left" // 奥左
+  | "on-back-right" // 奥右
   // グリーン外し (8方向)
   | "miss-front"
   | "miss-back"
@@ -100,15 +100,15 @@ export type PuttLine = "straight" | "left-to-right" | "right-to-left" | "uphill"
 
 /** パット結果 - 8方向 + カップイン */
 export type PuttResult =
-  | "in"              // カップイン
-  | "front"           // ショート
-  | "back"            // オーバー
-  | "left"            // 左
-  | "right"           // 右
-  | "front-left"      // ショート左
-  | "front-right"     // ショート右
-  | "back-left"       // オーバー左
-  | "back-right";     // オーバー右
+  | "in" // カップイン
+  | "front" // ショート
+  | "back" // オーバー
+  | "left" // 左
+  | "right" // 右
+  | "front-left" // ショート左
+  | "front-right" // ショート右
+  | "back-left" // オーバー左
+  | "back-right"; // オーバー右
 
 /** 5点採点 */
 export type Rating = 1 | 2 | 3 | 4 | 5;
@@ -120,7 +120,7 @@ export interface TeeShot {
   result: TeeResult;
   resultDirection: LeftRight;
   wind: WindDirection;
-  distance?: number;  // Par3用: ティーショット距離 (yd)
+  distance?: number; // Par3用: ティーショット距離 (yd)
   rating: Rating;
   note: string;
 }
@@ -142,8 +142,8 @@ export interface ApproachShot {
 export interface PuttShot {
   type: "putt";
   distance: number;
-  slope: PuttSlope;    // 傾斜: flat/uphill/downhill
-  break: PuttBreak;    // 曲がり: straight/slice/hook
+  slope: PuttSlope; // 傾斜: flat/uphill/downhill
+  break: PuttBreak; // 曲がり: straight/slice/hook
   result: PuttResult;
   rating: Rating;
   note: string;

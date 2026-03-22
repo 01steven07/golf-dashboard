@@ -77,8 +77,10 @@ function getDisplayShotNumber(shots: Shot[], index: number): number {
     } else if (s.type === "approach") {
       const result = s.result;
       if (
-        result === "ob-left" || result === "ob-right" ||
-        result === "penalty-left" || result === "penalty-right"
+        result === "ob-left" ||
+        result === "ob-right" ||
+        result === "penalty-left" ||
+        result === "penalty-right"
       ) {
         cumulativePenalties++;
       }
@@ -188,8 +190,14 @@ export function StepScoring({
   const [expandedShotIndex, setExpandedShotIndex] = useState<number | null>(null);
 
   // バリデーション用ダイアログ状態
-  const [shotAddWarning, setShotAddWarning] = useState<{ message: string; type: "tee" | "approach" | "putt" } | null>(null);
-  const [holeNavigationWarning, setHoleNavigationWarning] = useState<{ warnings: string[]; targetHole: number } | null>(null);
+  const [shotAddWarning, setShotAddWarning] = useState<{
+    message: string;
+    type: "tee" | "approach" | "putt";
+  } | null>(null);
+  const [holeNavigationWarning, setHoleNavigationWarning] = useState<{
+    warnings: string[];
+    targetHole: number;
+  } | null>(null);
 
   // ショットカードへのref（スクロール用）
   const shotRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -214,9 +222,7 @@ export function StepScoring({
   // 初期表示時・ホール切り替え時にページ最上部にスクロール
   useEffect(() => {
     window.scrollTo(0, 0);
-    setExpandedShotIndex(
-      hole.shots.length > 0 ? hole.shots.length - 1 : null
-    );
+    setExpandedShotIndex(hole.shots.length > 0 ? hole.shots.length - 1 : null);
   }, [currentHole]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ショット追加後のスクロール
@@ -257,16 +263,11 @@ export function StepScoring({
   const stats = useMemo(() => {
     const sectionScores = subCourseInfo.map((s) => ({
       name: s.name,
-      score: s.holes
-        .filter((h) => isCupIn(h.shots))
-        .reduce((sum, h) => sum + getHoleScore(h), 0),
+      score: s.holes.filter((h) => isCupIn(h.shots)).reduce((sum, h) => sum + getHoleScore(h), 0),
     }));
 
     const completedHoles = roundData.holes.filter((h) => isCupIn(h.shots));
-    const totalScore = completedHoles.reduce(
-      (sum, h) => sum + getHoleScore(h),
-      0
-    );
+    const totalScore = completedHoles.reduce((sum, h) => sum + getHoleScore(h), 0);
     const totalPar = completedHoles.reduce((sum, h) => sum + h.par, 0);
     const totalPutts = completedHoles.reduce(
       (sum, h) => sum + h.shots.filter((s) => s.type === "putt").length,
@@ -277,9 +278,7 @@ export function StepScoring({
   }, [roundData.holes, subCourseInfo]);
 
   const currentHoleScore = getHoleScore(hole);
-  const currentHolePutts = hole.shots.filter(
-    (s) => s.type === "putt"
-  ).length;
+  const currentHolePutts = hole.shots.filter((s) => s.type === "putt").length;
 
   const updateHole = (updatedHole: HoleData) => {
     onUpdateHole(updatedHole);
@@ -386,11 +385,7 @@ export function StepScoring({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ScoreDisplay
-                  score={currentHoleScore}
-                  par={hole.par}
-                  size="lg"
-                />
+                <ScoreDisplay score={currentHoleScore} par={hole.par} size="lg" />
                 <div className="text-left">
                   <div className="text-xs text-gray-500">
                     {currentHolePutts > 0 ? `${currentHolePutts}パット` : ""}
@@ -475,7 +470,11 @@ export function StepScoring({
                     onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                      )}
                       <Flag className="w-4 h-4 text-green-600 shrink-0" />
                       <span className="font-medium text-green-800 shrink-0">
                         {getDisplayShotNumber(hole.shots, index)}打目 - ティーショット
@@ -488,9 +487,38 @@ export function StepScoring({
                     </div>
                     {isExpanded && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "up");
+                          }}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "down");
+                          }}
+                          disabled={index === hole.shots.length - 1}
+                          className="p-1 text-gray-500 hover:bg-green-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeShot(index);
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -520,7 +548,11 @@ export function StepScoring({
                     onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                      )}
                       <Target className="w-4 h-4 text-blue-600 shrink-0" />
                       <span className="font-medium text-blue-800 shrink-0">
                         {getDisplayShotNumber(hole.shots, index)}打目 - ショット/アプローチ
@@ -533,9 +565,38 @@ export function StepScoring({
                     </div>
                     {isExpanded && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "up");
+                          }}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "down");
+                          }}
+                          disabled={index === hole.shots.length - 1}
+                          className="p-1 text-gray-500 hover:bg-blue-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeShot(index);
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -567,10 +628,15 @@ export function StepScoring({
                     onClick={() => setExpandedShotIndex(isExpanded ? null : index)}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />}
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                      )}
                       <Circle className="w-4 h-4 text-purple-600 shrink-0" />
                       <span className="font-medium text-purple-800 shrink-0">
-                        {getDisplayShotNumber(hole.shots, index)}打目 - {isOkPutt ? "OKパット" : "パット"}
+                        {getDisplayShotNumber(hole.shots, index)}打目 -{" "}
+                        {isOkPutt ? "OKパット" : "パット"}
                       </span>
                       {!isExpanded && (
                         <span className="text-xs text-gray-500 truncate ml-1">
@@ -580,9 +646,38 @@ export function StepScoring({
                     </div>
                     {isExpanded && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowUp className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === hole.shots.length - 1} className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"><ArrowDown className="w-4 h-4" /></button>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-1 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "up");
+                          }}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveShot(index, "down");
+                          }}
+                          disabled={index === hole.shots.length - 1}
+                          className="p-1 text-gray-500 hover:bg-purple-200 rounded disabled:opacity-30"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeShot(index);
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -611,9 +706,7 @@ export function StepScoring({
           {/* ショットがある場合は下部にも追加ボタンを表示（カップイン後は非表示） */}
           {hole.shots.length > 0 && !cupIn && (
             <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
-              <div className="text-center text-sm text-gray-500 mb-3">
-                次のショットを追加
-              </div>
+              <div className="text-center text-sm text-gray-500 mb-3">次のショットを追加</div>
               <div className="flex gap-2">
                 {!hole.shots.some((s) => s.type === "tee") && (
                   <Button
@@ -660,9 +753,7 @@ export function StepScoring({
           <Button
             variant="outline"
             size="lg"
-            onClick={() =>
-              navigateToHole(Math.max(1, currentHole - 1))
-            }
+            onClick={() => navigateToHole(Math.max(1, currentHole - 1))}
             disabled={currentHole === 1}
             className="w-24"
           >
@@ -691,9 +782,7 @@ export function StepScoring({
           <Button
             variant="outline"
             size="lg"
-            onClick={() =>
-              navigateToHole(Math.min(totalHoles, currentHole + 1))
-            }
+            onClick={() => navigateToHole(Math.min(totalHoles, currentHole + 1))}
             disabled={currentHole === totalHoles}
             className="w-24"
           >
@@ -711,12 +800,7 @@ export function StepScoring({
 
         {/* 操作ボタン */}
         <div className="flex gap-2 px-4 pb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBackToSettings}
-            className="px-3"
-          >
+          <Button variant="outline" size="sm" onClick={onBackToSettings} className="px-3">
             <Settings className="w-4 h-4" />
           </Button>
           <Button
@@ -747,14 +831,22 @@ export function StepScoring({
       </div>
 
       {/* 保存確認ダイアログ */}
-      <AlertDialog open={saveConfirm !== null} onOpenChange={(open) => { if (!open) onSaveCancel(); }}>
+      <AlertDialog
+        open={saveConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) onSaveCancel();
+        }}
+      >
         <AlertDialogContent className="mx-4 max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>保存内容の確認</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 {saveConfirm?.warnings.map((w, i) => (
-                  <p key={i} className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
+                  <p
+                    key={i}
+                    className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm"
+                  >
                     {w}
                   </p>
                 ))}
@@ -764,10 +856,7 @@ export function StepScoring({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>戻る</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onSaveConfirm}
-              className="bg-green-600 hover:bg-green-700"
-            >
+            <AlertDialogAction onClick={onSaveConfirm} className="bg-green-600 hover:bg-green-700">
               保存する
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -775,16 +864,21 @@ export function StepScoring({
       </AlertDialog>
 
       {/* ショット追加警告ダイアログ（グリーンオン後に非パット追加） */}
-      <AlertDialog open={shotAddWarning !== null} onOpenChange={(open) => { if (!open) setShotAddWarning(null); }}>
+      <AlertDialog
+        open={shotAddWarning !== null}
+        onOpenChange={(open) => {
+          if (!open) setShotAddWarning(null);
+        }}
+      >
         <AlertDialogContent className="mx-4 max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>確認</AlertDialogTitle>
-            <AlertDialogDescription>
-              {shotAddWarning?.message}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{shotAddWarning?.message}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShotAddWarning(null)}>キャンセル</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShotAddWarning(null)}>
+              キャンセル
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (shotAddWarning) addShotDirect(shotAddWarning.type);
@@ -799,14 +893,22 @@ export function StepScoring({
       </AlertDialog>
 
       {/* ホール移動警告ダイアログ */}
-      <AlertDialog open={holeNavigationWarning !== null} onOpenChange={(open) => { if (!open) setHoleNavigationWarning(null); }}>
+      <AlertDialog
+        open={holeNavigationWarning !== null}
+        onOpenChange={(open) => {
+          if (!open) setHoleNavigationWarning(null);
+        }}
+      >
         <AlertDialogContent className="mx-4 max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>ホール移動の確認</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 {holeNavigationWarning?.warnings.map((w, i) => (
-                  <p key={i} className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
+                  <p
+                    key={i}
+                    className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm"
+                  >
                     {w}
                   </p>
                 ))}
@@ -814,7 +916,9 @@ export function StepScoring({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setHoleNavigationWarning(null)}>戻って修正</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setHoleNavigationWarning(null)}>
+              戻って修正
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (holeNavigationWarning) onCurrentHoleChange(holeNavigationWarning.targetHole);

@@ -130,17 +130,18 @@ export function RoundHistoryTab({ memberId }: RoundHistoryTabProps) {
       <p className="text-xs text-muted-foreground">全{rounds.length}ラウンド</p>
       {grouped.map((group) => (
         <div key={group.month}>
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            {group.month}
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">{group.month}</h3>
           <div className="space-y-2">
             {group.rounds.map((round) => {
-              const labels = round.played_sub_course_ids.length > 0
-                ? round.played_sub_course_ids.map((id) => subCourseNameMap.get(id) ?? "???")
-                : getFallbackSectionLabels(round.out_course_name, round.in_course_name, round.ext_course_labels);
-              return (
-                <RoundCard key={round.id} round={round} sectionLabels={labels} />
-              );
+              const labels =
+                round.played_sub_course_ids.length > 0
+                  ? round.played_sub_course_ids.map((id) => subCourseNameMap.get(id) ?? "???")
+                  : getFallbackSectionLabels(
+                      round.out_course_name,
+                      round.in_course_name,
+                      round.ext_course_labels
+                    );
+              return <RoundCard key={round.id} round={round} sectionLabels={labels} />;
             })}
           </div>
         </div>

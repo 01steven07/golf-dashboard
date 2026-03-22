@@ -38,7 +38,15 @@ const TEE_COLORS: Record<string, string> = {
   Black: "text-gray-900",
 };
 
-function ScoreSymbolRow({ scores, label, total }: { scores: Score[]; label: string; total: number }) {
+function ScoreSymbolRow({
+  scores,
+  label,
+  total,
+}: {
+  scores: Score[];
+  label: string;
+  total: number;
+}) {
   if (scores.length === 0) return null;
   return (
     <div className="flex items-center gap-0.5">
@@ -108,9 +116,7 @@ export function RoundCard({ round, sectionLabels }: RoundCardProps) {
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-medium shrink-0">{formatRoundDate(round.date)}</span>
-            <span className="text-sm text-muted-foreground truncate">
-              {courseName}
-            </span>
+            <span className="text-sm text-muted-foreground truncate">{courseName}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {holeCount !== 18 && (
@@ -119,14 +125,14 @@ export function RoundCard({ round, sectionLabels }: RoundCardProps) {
               </span>
             )}
             {round.tee_color && (
-              <span className={`text-xs font-medium ${TEE_COLORS[round.tee_color] ?? "text-gray-500"}`}>
+              <span
+                className={`text-xs font-medium ${TEE_COLORS[round.tee_color] ?? "text-gray-500"}`}
+              >
                 {round.tee_color}
               </span>
             )}
             {round.weather && (
-              <span className="text-sm">
-                {WEATHER_ICONS[round.weather] ?? round.weather}
-              </span>
+              <span className="text-sm">{WEATHER_ICONS[round.weather] ?? round.weather}</span>
             )}
           </div>
         </div>

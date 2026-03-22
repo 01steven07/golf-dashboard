@@ -6,9 +6,7 @@ import { Member } from "@/types/database";
  * リクエストヘッダーからログインユーザーを取得・検証する。
  * x-member-id ヘッダーが必須。DBに存在しなければ null を返す。
  */
-export async function getAuthMember(
-  request: NextRequest
-): Promise<Member | null> {
+export async function getAuthMember(request: NextRequest): Promise<Member | null> {
   const memberId = request.headers.get("x-member-id");
   if (!memberId) return null;
 
@@ -22,9 +20,7 @@ export async function getAuthMember(
 }
 
 /** 認証必須。未認証なら 401 レスポンスを返す。 */
-export async function requireAuth(
-  request: NextRequest
-): Promise<Member | NextResponse> {
+export async function requireAuth(request: NextRequest): Promise<Member | NextResponse> {
   const member = await getAuthMember(request);
   if (!member) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -33,9 +29,7 @@ export async function requireAuth(
 }
 
 /** 管理者権限必須。未認証なら 401、権限不足なら 403 を返す。 */
-export async function requireAdmin(
-  request: NextRequest
-): Promise<Member | NextResponse> {
+export async function requireAdmin(request: NextRequest): Promise<Member | NextResponse> {
   const result = await requireAuth(request);
   if (result instanceof NextResponse) return result;
   if (result.role !== "admin") {
@@ -45,8 +39,6 @@ export async function requireAdmin(
 }
 
 /** requireAuth/requireAdmin の戻り値がエラーレスポンスかどうか判定 */
-export function isAuthError(
-  result: Member | NextResponse
-): result is NextResponse {
+export function isAuthError(result: Member | NextResponse): result is NextResponse {
   return result instanceof NextResponse;
 }

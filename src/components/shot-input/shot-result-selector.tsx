@@ -19,7 +19,12 @@ const CATEGORIES: { id: ResultCategory; label: string; icon: React.ReactNode; co
   { id: "miss", label: "外し", icon: <Circle className="w-5 h-5" />, color: "orange" },
   { id: "layup", label: "レイアップ", icon: <MapPin className="w-5 h-5" />, color: "sky" },
   { id: "ob", label: "OB", icon: <CircleX className="w-5 h-5" />, color: "red" },
-  { id: "penalty", label: "ペナルティ", icon: <AlertTriangle className="w-5 h-5" />, color: "yellow" },
+  {
+    id: "penalty",
+    label: "ペナルティ",
+    icon: <AlertTriangle className="w-5 h-5" />,
+    color: "yellow",
+  },
 ];
 
 // 結果値からカテゴリを取得
@@ -32,7 +37,11 @@ function getCategoryFromResult(result: ShotResult): ResultCategory {
   return "on";
 }
 
-export function ShotResultSelector({ value, onChange, showDirection = true }: ShotResultSelectorProps) {
+export function ShotResultSelector({
+  value,
+  onChange,
+  showDirection = true,
+}: ShotResultSelectorProps) {
   const [category, setCategory] = useState<ResultCategory>(getCategoryFromResult(value));
 
   useEffect(() => {
@@ -76,12 +85,12 @@ export function ShotResultSelector({ value, onChange, showDirection = true }: Sh
                   ? cat.color === "green"
                     ? "bg-green-500 text-white shadow-lg ring-2 ring-green-300"
                     : cat.color === "orange"
-                    ? "bg-orange-500 text-white shadow-lg ring-2 ring-orange-300"
-                    : cat.color === "sky"
-                    ? "bg-sky-500 text-white shadow-lg ring-2 ring-sky-300"
-                    : cat.color === "red"
-                    ? "bg-red-500 text-white shadow-lg ring-2 ring-red-300"
-                    : "bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300"
+                      ? "bg-orange-500 text-white shadow-lg ring-2 ring-orange-300"
+                      : cat.color === "sky"
+                        ? "bg-sky-500 text-white shadow-lg ring-2 ring-sky-300"
+                        : cat.color === "red"
+                          ? "bg-red-500 text-white shadow-lg ring-2 ring-red-300"
+                          : "bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
@@ -111,17 +120,17 @@ export function ShotResultSelector({ value, onChange, showDirection = true }: Sh
       {/* レイアップ方向 */}
       {showDirection && category === "layup" && (
         <div className="p-4 bg-gray-50 rounded-xl">
-          <div className="text-center text-sm text-gray-600 mb-3">
-            レイアップ先
-          </div>
+          <div className="text-center text-sm text-gray-600 mb-3">レイアップ先</div>
           <div className="flex flex-wrap justify-center gap-2">
-            {([
-              { value: "layup-fairway", label: "FW" },
-              { value: "layup-rough-left", label: "ラフ左" },
-              { value: "layup-rough-right", label: "ラフ右" },
-              { value: "layup-bunker-left", label: "バンカー左" },
-              { value: "layup-bunker-right", label: "バンカー右" },
-            ] as const).map((opt) => (
+            {(
+              [
+                { value: "layup-fairway", label: "FW" },
+                { value: "layup-rough-left", label: "ラフ左" },
+                { value: "layup-rough-right", label: "ラフ右" },
+                { value: "layup-bunker-left", label: "バンカー左" },
+                { value: "layup-bunker-right", label: "バンカー右" },
+              ] as const
+            ).map((opt) => (
               <button
                 key={opt.value}
                 type="button"

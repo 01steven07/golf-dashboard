@@ -48,16 +48,9 @@ export function SlopeRateChart({ data, title, color = "#22c55e" }: SlopeRateChar
 
   return (
     <div className="space-y-2">
-      {title && (
-        <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>
-      )}
+      {title && <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>}
       <div className="flex justify-center">
-        <svg
-          viewBox={`0 0 ${svgW} ${svgH}`}
-          width={svgW}
-          height={svgH}
-          className="max-w-full"
-        >
+        <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} className="max-w-full">
           {/* 4 direction sectors */}
           {DIRECTIONS.map((dir) => {
             const entry = dataMap.get(dir.key);

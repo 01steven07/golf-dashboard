@@ -41,8 +41,13 @@ interface ComparisonResult {
 
 /** lowerIsBetter なスタッツキー */
 const LOWER_IS_BETTER = new Set([
-  "avg_score", "avg_putts", "par3_avg", "par4_avg", "par5_avg",
-  "putts_per_gir", "ob_count",
+  "avg_score",
+  "avg_putts",
+  "par3_avg",
+  "par4_avg",
+  "par5_avg",
+  "putts_per_gir",
+  "ob_count",
 ]);
 
 function calcStatsForOneRound(scores: ScoreRow[]): StatsValues {
@@ -50,47 +55,105 @@ function calcStatsForOneRound(scores: ScoreRow[]): StatsValues {
   const totalHoles = sorted.length;
   if (totalHoles === 0) {
     return {
-      avg_score: 0, avg_putts: 0, gir_rate: 0, fairway_keep_rate: 0,
-      scramble_rate: 0, birdie_count: 0, par3_avg: 0, par4_avg: 0, par5_avg: 0,
-      bogey_avoidance: 0, double_bogey_avoidance: 0, putts_per_gir: 0,
-      three_putt_avoidance: 0, one_putt_rate: 0, gir_from_fairway: 0,
-      gir_from_rough: 0, bounce_back_rate: 0, ob_count: 0,
+      avg_score: 0,
+      avg_putts: 0,
+      gir_rate: 0,
+      fairway_keep_rate: 0,
+      scramble_rate: 0,
+      birdie_count: 0,
+      par3_avg: 0,
+      par4_avg: 0,
+      par5_avg: 0,
+      bogey_avoidance: 0,
+      double_bogey_avoidance: 0,
+      putts_per_gir: 0,
+      three_putt_avoidance: 0,
+      one_putt_rate: 0,
+      gir_from_fairway: 0,
+      gir_from_rough: 0,
+      bounce_back_rate: 0,
+      ob_count: 0,
     };
   }
 
-  let totalScore = 0, totalPutts = 0, obCount = 0;
-  let girCount = 0, fwKeep = 0, fwHoles = 0;
-  let scrambleOpp = 0, scrambleOk = 0, birdies = 0;
-  let p3t = 0, p3c = 0, p4t = 0, p4c = 0, p5t = 0, p5c = 0;
-  let bogeyPlus = 0, dbPlus = 0;
-  let puttsGir = 0, girH = 0, tp = 0, op = 0;
-  let girFw = 0, fwApp = 0, girRo = 0, roApp = 0;
-  let bbOpp = 0, bbOk = 0;
+  let totalScore = 0,
+    totalPutts = 0,
+    obCount = 0;
+  let girCount = 0,
+    fwKeep = 0,
+    fwHoles = 0;
+  let scrambleOpp = 0,
+    scrambleOk = 0,
+    birdies = 0;
+  let p3t = 0,
+    p3c = 0,
+    p4t = 0,
+    p4c = 0,
+    p5t = 0,
+    p5c = 0;
+  let bogeyPlus = 0,
+    dbPlus = 0;
+  let puttsGir = 0,
+    girH = 0,
+    tp = 0,
+    op = 0;
+  let girFw = 0,
+    fwApp = 0,
+    girRo = 0,
+    roApp = 0;
+  let bbOpp = 0,
+    bbOk = 0;
 
   for (let i = 0; i < sorted.length; i++) {
     const s = sorted[i];
-    totalScore += s.score; totalPutts += s.putts; obCount += s.ob;
+    totalScore += s.score;
+    totalPutts += s.putts;
+    obCount += s.ob;
     const diff = s.score - s.par;
     const isGir = s.score - s.putts <= s.par - 2;
     if (isGir) girCount++;
     if (diff < 0) birdies++;
     if (diff >= 1) bogeyPlus++;
     if (diff >= 2) dbPlus++;
-    if (s.par >= 4) { fwHoles++; if (s.fairway_result === "keep") fwKeep++; }
-    if (!isGir) { scrambleOpp++; if (s.score <= s.par) scrambleOk++; }
-    if (s.par === 3) { p3t += s.score; p3c++; }
-    else if (s.par === 4) { p4t += s.score; p4c++; }
-    else if (s.par === 5) { p5t += s.score; p5c++; }
-    if (isGir) { puttsGir += s.putts; girH++; }
+    if (s.par >= 4) {
+      fwHoles++;
+      if (s.fairway_result === "keep") fwKeep++;
+    }
+    if (!isGir) {
+      scrambleOpp++;
+      if (s.score <= s.par) scrambleOk++;
+    }
+    if (s.par === 3) {
+      p3t += s.score;
+      p3c++;
+    } else if (s.par === 4) {
+      p4t += s.score;
+      p4c++;
+    } else if (s.par === 5) {
+      p5t += s.score;
+      p5c++;
+    }
+    if (isGir) {
+      puttsGir += s.putts;
+      girH++;
+    }
     if (s.putts >= 3) tp++;
     if (s.putts === 1) op++;
     if (s.par >= 4) {
-      if (s.fairway_result === "keep") { fwApp++; if (isGir) girFw++; }
-      else if (s.fairway_result === "left" || s.fairway_result === "right") { roApp++; if (isGir) girRo++; }
+      if (s.fairway_result === "keep") {
+        fwApp++;
+        if (isGir) girFw++;
+      } else if (s.fairway_result === "left" || s.fairway_result === "right") {
+        roApp++;
+        if (isGir) girRo++;
+      }
     }
     if (i > 0) {
       const prev = sorted[i - 1];
-      if (prev.score - prev.par >= 1) { bbOpp++; if (diff <= 0) bbOk++; }
+      if (prev.score - prev.par >= 1) {
+        bbOpp++;
+        if (diff <= 0) bbOk++;
+      }
     }
   }
 
@@ -156,10 +219,7 @@ function calcRankings(
 }
 
 // GET: ラウンドの比較データを取得
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
   if (isAuthError(auth)) return auth;
 
@@ -169,7 +229,9 @@ export async function GET(
     // 対象ラウンドの情報取得
     const { data: round, error: roundError } = await supabase
       .from("rounds")
-      .select("id, member_id, course_id, date, scores(hole_number, par, score, putts, fairway_result, ob)")
+      .select(
+        "id, member_id, course_id, date, scores(hole_number, par, score, putts, fairway_result, ob)"
+      )
       .eq("id", roundId)
       .single();
 
@@ -276,9 +338,6 @@ export async function GET(
     return NextResponse.json({ sameDay, clubAvg, selfAvg });
   } catch (error) {
     console.error("Comparison data error:", error);
-    return NextResponse.json(
-      { error: "比較データの取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "比較データの取得に失敗しました" }, { status: 500 });
   }
 }

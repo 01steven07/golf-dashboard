@@ -59,13 +59,13 @@ export function useOnlineStatus() {
   const isOnline = useSyncExternalStore(
     subscribeOnline,
     getOnlineSnapshot,
-    getServerOnlineSnapshot,
+    getServerOnlineSnapshot
   );
 
   const queueLength = useSyncExternalStore(
     subscribeQueue,
     getQueueSnapshot,
-    getServerQueueSnapshot,
+    getServerQueueSnapshot
   );
 
   // Auto-sync when back online

@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  calculateMemberStats,
-  getRankedStats,
-  getStatValue,
-  RoundData,
-} from "./ranking";
+import { calculateMemberStats, getRankedStats, getStatValue, RoundData } from "./ranking";
 import { MemberStats } from "@/types/database";
 
 // ======================================
@@ -13,7 +8,10 @@ import { MemberStats } from "@/types/database";
 
 type ScoreOverrides = Partial<RoundData["scores"][number]>;
 
-function makeScore(holeNumber: number, overrides: ScoreOverrides = {}): RoundData["scores"][number] {
+function makeScore(
+  holeNumber: number,
+  overrides: ScoreOverrides = {}
+): RoundData["scores"][number] {
   return {
     hole_number: holeNumber,
     par: 4,
@@ -64,11 +62,17 @@ describe("calculateMemberStats: コアスタッツ", () => {
     // score=par+1, putts=2: (par+1)-2 = par-1 > par-2 → NOT GIR
     // Par配列: [4,3,4,4,5,4,3,4,5,4,3,4,4,5,4,3,4,5]
     // 全ホールをボギー2パットにすると、GIR外しになる
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
-      const par = pars[h - 1];
-      return { score: par + 1, putts: 2 }; // 全ホールGIR外し
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
+          const par = pars[h - 1];
+          return { score: par + 1, putts: 2 }; // 全ホールGIR外し
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].gir_rate).toBeCloseTo(0);
 
@@ -80,11 +84,17 @@ describe("calculateMemberStats: コアスタッツ", () => {
 
   it("A-4: fairway_keep_rate - Par4+が14H、うち10Hキープ → 71.4%（Par3除外）", () => {
     // Par構成: Par3×4, Par4×10, Par5×4 = Par4+が14H
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      // Par4+のうち最初の4ホール(h=1,4,5,6)をleftに → keep=10/14
-      if (h <= 4) return { fairway_result: "left" };
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          // Par4+のうち最初の4ホール(h=1,4,5,6)をleftに → keep=10/14
+          if (h <= 4) return { fairway_result: "left" };
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     // Par3が4Hあるので、fairwayHoles = 14
     // h<=4 のうちPar3はh=2のみ(Par3除外されるのでfairwayに影響しない)
@@ -105,11 +115,17 @@ describe("calculateMemberStats: コアスタッツ", () => {
     // Par配列: [4,3,4,4,5,4,3,4,5,4,3,4,4,5,4,3,4,5]
     // h=1(Par4): score=3 → birdie, h=3(Par4): score=3 → birdie, h=4(Par4): score=3 → birdie
     // h=2はPar3なのでscore=3はパー → birdieではない
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      // Par4ホールのうち3つをバーディーにする: h=1,3,4 (全てPar4)
-      if (h === 1 || h === 3 || h === 4) return { score: 3 };
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          // Par4ホールのうち3つをバーディーにする: h=1,3,4 (全てPar4)
+          if (h === 1 || h === 3 || h === 4) return { score: 3 };
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].avg_birdies).toBeCloseTo(3.0);
   });
@@ -119,15 +135,21 @@ describe("calculateMemberStats: コアスタッツ", () => {
     // 全ホールをGIR外し(score=par+1, putts=2: (par+1)-2=par-1 > par-2)にして
     // 一部をパーセーブ(score=par, putts=1: par-1=par-1 > par-2 → NOT GIR, score<=par → scramble成功)
     const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      const par = pars[h - 1];
-      if (h <= 6) {
-        // パーセーブ（GIR外し）: score=par, putts=1 → score-putts = par-1 > par-2
-        return { score: par, putts: 1 };
-      }
-      // ボギー（GIR外し）: score=par+1, putts=2
-      return { score: par + 1, putts: 2 };
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          const par = pars[h - 1];
+          if (h <= 6) {
+            // パーセーブ（GIR外し）: score=par, putts=1 → score-putts = par-1 > par-2
+            return { score: par, putts: 1 };
+          }
+          // ボギー（GIR外し）: score=par+1, putts=2
+          return { score: par + 1, putts: 2 };
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     // 全18H GIR外し、うち6Hパーセーブ → 6/18 = 33.3%
     expect(stats[0].scramble_rate).toBeCloseTo((6 / 18) * 100, 0);
@@ -139,16 +161,22 @@ describe("calculateMemberStats: コアスタッツ", () => {
 // ======================================
 describe("calculateMemberStats: スコアリングスタッツ", () => {
   it("B-1: par3/4/5_avg - Par別平均スコアが正しい", () => {
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      // Pars: [4,3,4,4,5,4,3,4,5,4,3,4,4,5,4,3,4,5]
-      // Par3ホール(h=2,7,11,16): score=par のまま → par3_avg = 3.0
-      // Par4ホール: 全部+1 → par4_avg = 5.0
-      // Par5ホール(h=5,9,14,18): score=par のまま → par5_avg = 5.0
-      const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
-      const par = pars[h - 1];
-      if (par === 4) return { score: 5 };
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          // Pars: [4,3,4,4,5,4,3,4,5,4,3,4,4,5,4,3,4,5]
+          // Par3ホール(h=2,7,11,16): score=par のまま → par3_avg = 3.0
+          // Par4ホール: 全部+1 → par4_avg = 5.0
+          // Par5ホール(h=5,9,14,18): score=par のまま → par5_avg = 5.0
+          const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
+          const par = pars[h - 1];
+          if (par === 4) return { score: 5 };
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].par3_avg).toBeCloseTo(3.0);
     expect(stats[0].par4_avg).toBeCloseTo(5.0);
@@ -184,19 +212,31 @@ describe("calculateMemberStats: スコアリングスタッツ", () => {
   });
 
   it("B-3: bogey_avoidance - 18H中ボギー4H → (18-4)/18 = 77.8%", () => {
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      if (h <= 4) return { score: 5 }; // 最初4Hボギー
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          if (h <= 4) return { score: 5 }; // 最初4Hボギー
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].bogey_avoidance).toBeCloseTo((14 / 18) * 100, 0);
   });
 
   it("B-4: double_bogey_avoidance - 18H中ダボ1H → (18-1)/18 = 94.4%", () => {
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      if (h === 1) return { score: 6 }; // ダボ
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          if (h === 1) return { score: 6 }; // ダボ
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].double_bogey_avoidance).toBeCloseTo((17 / 18) * 100, 0);
   });
@@ -214,19 +254,31 @@ describe("calculateMemberStats: パッティングスタッツ", () => {
   });
 
   it("C-2: three_putt_avoidance - 18H中3パット2H → 88.9%", () => {
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      if (h <= 2) return { score: 5, putts: 3 }; // 3パットボギー
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          if (h <= 2) return { score: 5, putts: 3 }; // 3パットボギー
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].three_putt_avoidance).toBeCloseTo((16 / 18) * 100, 0);
   });
 
   it("C-3: one_putt_rate - 18H中1パット4H → 22.2%", () => {
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      if (h <= 4) return { score: 3, putts: 1 }; // 1パットバーディー
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          if (h <= 4) return { score: 3, putts: 1 }; // 1パットバーディー
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     expect(stats[0].one_putt_rate).toBeCloseTo((4 / 18) * 100, 0);
   });
@@ -247,19 +299,25 @@ describe("calculateMemberStats: ショットスタッツ", () => {
     // 全Par4+ホールでright(ラフ)、うち半分GIR
     const pars = [4, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 4, 5, 4, 3, 4, 5];
     let roughCount = 0;
-    const rounds = [makeRound("m1", "田中", make18Holes((h) => {
-      const par = pars[h - 1];
-      if (par >= 4) {
-        roughCount++;
-        if (roughCount % 2 === 0) {
-          // GIR外し: score-putts > par-2 → score=par+1, putts=2
-          return { fairway_result: "right", score: par + 1, putts: 2 };
-        }
-        // GIR: score-putts <= par-2 → score=par, putts=2
-        return { fairway_result: "right", score: par, putts: 2 };
-      }
-      return {};
-    }))];
+    const rounds = [
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes((h) => {
+          const par = pars[h - 1];
+          if (par >= 4) {
+            roughCount++;
+            if (roughCount % 2 === 0) {
+              // GIR外し: score-putts > par-2 → score=par+1, putts=2
+              return { fairway_result: "right", score: par + 1, putts: 2 };
+            }
+            // GIR: score-putts <= par-2 → score=par, putts=2
+            return { fairway_result: "right", score: par, putts: 2 };
+          }
+          return {};
+        })
+      ),
+    ];
     const stats = calculateMemberStats(rounds);
     // 14H right, 7H GIR → 50%
     expect(stats[0].gir_from_rough).toBeCloseTo(50, 0);
@@ -270,7 +328,8 @@ describe("calculateMemberStats: ショットスタッツ", () => {
       if (h === 1) {
         // Par4, score=4, putts=1: tee+approach+approach(bunker)+putt = 4打
         return {
-          score: 4, putts: 1,
+          score: 4,
+          putts: 1,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 150, lie: "fairway" },
@@ -282,7 +341,8 @@ describe("calculateMemberStats: ショットスタッツ", () => {
       if (h === 2) {
         // Par3(h=2), score=5, putts=2: tee+approach+approach(bunker)+putt+putt = 5打
         return {
-          score: 5, putts: 2,
+          score: 5,
+          putts: 2,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 50, lie: "fairway" },
@@ -306,7 +366,8 @@ describe("calculateMemberStats: ショットスタッツ", () => {
       if (h === 1) {
         // Par4, score=4, putts=2: tee+approach+putt+putt = 4打
         return {
-          score: 4, putts: 2,
+          score: 4,
+          putts: 2,
           distance: 380, // ホール距離
           shots_detail: [
             { type: "tee" },
@@ -342,9 +403,7 @@ describe("calculateMemberStats: エッジケース", () => {
   });
 
   it("E-2: 9H正規化 - 9Hで合計40 → avg_score = 80（×2倍）", () => {
-    const scores = Array.from({ length: 9 }, (_, i) =>
-      makeScore(i + 1, { par: 4, score: 4 })
-    );
+    const scores = Array.from({ length: 9 }, (_, i) => makeScore(i + 1, { par: 4, score: 4 }));
     // 9H合計: 36 → 18H換算: 72
     const rounds = [makeRound("m1", "田中", scores)];
     const stats = calculateMemberStats(rounds);
@@ -367,7 +426,13 @@ describe("calculateMemberStats: エッジケース", () => {
     for (let i = 0; i < 12; i++) {
       // 最初の10ラウンドはスコア72、残り2は80
       const score = i < 10 ? 4 : 5; // Par4ホール基準
-      rounds.push(makeRound("m1", "田中", make18Holes(() => ({ score }))));
+      rounds.push(
+        makeRound(
+          "m1",
+          "田中",
+          make18Holes(() => ({ score }))
+        )
+      );
     }
     const stats = calculateMemberStats(rounds);
     expect(stats[0].round_count).toBe(10);
@@ -376,8 +441,16 @@ describe("calculateMemberStats: エッジケース", () => {
 
   it("E-4: 複数メンバー - 各人独立した統計", () => {
     const rounds = [
-      makeRound("m1", "田中", make18Holes(() => ({ score: 4 }))), // パー
-      makeRound("m2", "佐藤", make18Holes(() => ({ score: 5 }))), // ボギー
+      makeRound(
+        "m1",
+        "田中",
+        make18Holes(() => ({ score: 4 }))
+      ), // パー
+      makeRound(
+        "m2",
+        "佐藤",
+        make18Holes(() => ({ score: 5 }))
+      ), // ボギー
     ];
     const stats = calculateMemberStats(rounds);
     expect(stats).toHaveLength(2);
@@ -408,34 +481,37 @@ describe("calculateMemberStats: shots_detail依存", () => {
     const scores = make18Holes((h) => {
       if (h === 1) {
         return {
-          score: 4, putts: 2,
+          score: 4,
+          putts: 2,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 100, lie: "fairway" },
             { type: "putt", distance: 0.8, result: "short" }, // 1m以内、外し
-            { type: "putt", distance: 0.3, result: "in" },    // 1m以内、成功
+            { type: "putt", distance: 0.3, result: "in" }, // 1m以内、成功
           ],
         };
       }
       if (h === 2) {
         return {
-          score: 5, putts: 3,
+          score: 5,
+          putts: 3,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 100, lie: "fairway" },
-            { type: "putt", distance: 3, result: "short" },   // 2-5m、外し
-            { type: "putt", distance: 3, result: "short" },   // 2-5m、外し
-            { type: "putt", distance: 0.5, result: "in" },    // 1m以内、成功
+            { type: "putt", distance: 3, result: "short" }, // 2-5m、外し
+            { type: "putt", distance: 3, result: "short" }, // 2-5m、外し
+            { type: "putt", distance: 0.5, result: "in" }, // 1m以内、成功
           ],
         };
       }
       if (h === 3) {
         return {
-          score: 3, putts: 1,
+          score: 3,
+          putts: 1,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 100, lie: "fairway" },
-            { type: "putt", distance: 4, result: "in" },      // 2-5m、成功
+            { type: "putt", distance: 4, result: "in" }, // 2-5m、成功
           ],
         };
       }
@@ -455,7 +531,8 @@ describe("calculateMemberStats: shots_detail依存", () => {
       if (h === 1 || h === 3) {
         // 110ydからグリーンオン (result: "on-green")
         return {
-          score: 4, putts: 2,
+          score: 4,
+          putts: 2,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 110, lie: "fairway", result: "on-green" },
@@ -467,7 +544,8 @@ describe("calculateMemberStats: shots_detail依存", () => {
       if (h === 4) {
         // 115ydからグリーンオン → グリーン奥にこぼれて110ydから再アプローチ失敗
         return {
-          score: 5, putts: 2,
+          score: 5,
+          putts: 2,
           shots_detail: [
             { type: "tee" },
             { type: "approach", distance: 115, lie: "fairway", result: "short" },

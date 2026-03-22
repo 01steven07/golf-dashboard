@@ -25,7 +25,16 @@ function getRankColor(rank: number, total: number): { border: string; badge: str
   return { border: "border-l-rose-300", badge: "bg-rose-50 text-rose-600" };
 }
 
-export function StatCard({ label, value, description, unavailable, clubAvg, rank, totalMembers, icon }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  description,
+  unavailable,
+  clubAvg,
+  rank,
+  totalMembers,
+  icon,
+}: StatCardProps) {
   const [showDescription, setShowDescription] = useState(false);
 
   const hasRank = !unavailable && !!clubAvg && !!rank && !!totalMembers;
@@ -43,9 +52,7 @@ export function StatCard({ label, value, description, unavailable, clubAvg, rank
     >
       <div className="flex items-start justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
-          {icon && (
-            <span className="text-muted-foreground flex-shrink-0">{icon}</span>
-          )}
+          {icon && <span className="text-muted-foreground flex-shrink-0">{icon}</span>}
           <p className="text-sm text-muted-foreground truncate">{label}</p>
         </div>
         {description && (
@@ -58,16 +65,12 @@ export function StatCard({ label, value, description, unavailable, clubAvg, rank
           </button>
         )}
       </div>
-      <p className="text-2xl font-bold mt-1">
-        {unavailable ? "-" : value}
-      </p>
+      <p className="text-2xl font-bold mt-1">{unavailable ? "-" : value}</p>
 
       {hasRank && colors && (
         <div className="mt-2 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              部平均 {clubAvg}
-            </span>
+            <span className="text-xs text-muted-foreground">部平均 {clubAvg}</span>
             <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${colors.badge}`}>
               {rank}位/{totalMembers}人
             </span>
@@ -80,7 +83,11 @@ export function StatCard({ label, value, description, unavailable, clubAvg, rank
                 width: `${Math.max(8, ((totalMembers - rank + 1) / totalMembers) * 100)}%`,
                 backgroundColor:
                   rank <= 3
-                    ? rank === 1 ? "#f59e0b" : rank === 2 ? "#9ca3af" : "#f97316"
+                    ? rank === 1
+                      ? "#f59e0b"
+                      : rank === 2
+                        ? "#9ca3af"
+                        : "#f97316"
                     : rank / totalMembers <= 0.33
                       ? "#22c55e"
                       : rank / totalMembers <= 0.66
@@ -93,9 +100,7 @@ export function StatCard({ label, value, description, unavailable, clubAvg, rank
       )}
 
       {showDescription && description && (
-        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-          {description}
-        </p>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{description}</p>
       )}
       {unavailable && (
         <p className="text-xs text-muted-foreground mt-1">詳細入力データが必要です</p>

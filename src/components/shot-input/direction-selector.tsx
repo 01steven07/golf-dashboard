@@ -11,7 +11,13 @@ interface DirectionSelectorProps {
 }
 
 // 8方向 + 中央のグリッド（風向きと同じUI）
-export function DirectionSelector({ value, onChange, type, centerLabel = "OK", prefix = "" }: DirectionSelectorProps) {
+export function DirectionSelector({
+  value,
+  onChange,
+  type,
+  centerLabel = "OK",
+  prefix = "",
+}: DirectionSelectorProps) {
   if (type === "leftRight") {
     return (
       <div className="flex items-center justify-center gap-1">
@@ -68,7 +74,7 @@ export function DirectionSelector({ value, onChange, type, centerLabel = "OK", p
     { id: "back-right", label: "↘️", position: "bottom-right" },
   ];
 
-  const getFullValue = (id: string) => prefix ? `${prefix}-${id}` : id;
+  const getFullValue = (id: string) => (prefix ? `${prefix}-${id}` : id);
   const getCurrentId = () => {
     if (!value) return "";
     if (prefix && value.startsWith(prefix + "-")) {
@@ -105,16 +111,16 @@ export function DirectionSelector({ value, onChange, type, centerLabel = "OK", p
                     ? "bg-green-600 text-white ring-4 ring-green-200 shadow-lg rounded-full"
                     : "bg-green-100 text-green-700 hover:bg-green-200 rounded-full border-2 border-green-300"
                   : isSelected
-                  ? isGreen
-                    ? "bg-green-500 text-white shadow-md"
-                    : isPutt
-                    ? "bg-purple-500 text-white shadow-md"
-                    : "bg-orange-500 text-white shadow-md"
-                  : isGreen
-                  ? "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
-                  : isPutt
-                  ? "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-                  : "bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
+                    ? isGreen
+                      ? "bg-green-500 text-white shadow-md"
+                      : isPutt
+                        ? "bg-purple-500 text-white shadow-md"
+                        : "bg-orange-500 text-white shadow-md"
+                    : isGreen
+                      ? "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                      : isPutt
+                        ? "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                        : "bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200"
               )}
             >
               {dir.label}
@@ -124,9 +130,7 @@ export function DirectionSelector({ value, onChange, type, centerLabel = "OK", p
       </div>
 
       {/* 自分の位置ラベル */}
-      <div className="text-center text-xs text-gray-400 mt-1">
-        🏌️ 自分
-      </div>
+      <div className="text-center text-xs text-gray-400 mt-1">🏌️ 自分</div>
     </div>
   );
 }

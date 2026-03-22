@@ -18,9 +18,5 @@ export function getFallbackSectionLabels(
   inCourseName: string | null,
   extCourseLabels: string[] = []
 ): string[] {
-  return [
-    outCourseName || "OUT",
-    inCourseName || "IN",
-    ...extCourseLabels,
-  ];
+  return [outCourseName || "OUT", inCourseName || "IN", ...extCourseLabels];
 }

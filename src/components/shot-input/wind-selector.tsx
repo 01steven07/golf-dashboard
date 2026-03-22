@@ -26,9 +26,7 @@ export function WindSelector({ value, onChange }: WindSelectorProps) {
   return (
     <div className="relative w-fit mx-auto">
       {/* ターゲット方向ラベル */}
-      <div className="text-center text-xs text-gray-400 mb-1">
-        ⛳ ターゲット
-      </div>
+      <div className="text-center text-xs text-gray-400 mb-1">⛳ ターゲット</div>
 
       {/* 背景の方向ガイド */}
       <div className="relative">
@@ -84,9 +82,7 @@ export function WindSelector({ value, onChange }: WindSelectorProps) {
             onClick={() => onChange("left")}
             className={cn(
               "w-16 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all",
-              value === "left"
-                ? "bg-sky-500 text-white"
-                : "bg-sky-50 text-sky-700 hover:bg-sky-100"
+              value === "left" ? "bg-sky-500 text-white" : "bg-sky-50 text-sky-700 hover:bg-sky-100"
             )}
           >
             <Wind className={cn("w-4 h-4", WIND_ROTATIONS["left"])} />
@@ -162,9 +158,7 @@ export function WindSelector({ value, onChange }: WindSelectorProps) {
       </div>
 
       {/* 自分の位置ラベル */}
-      <div className="text-center text-xs text-gray-400 mt-1">
-        🏌️ 自分
-      </div>
+      <div className="text-center text-xs text-gray-400 mt-1">🏌️ 自分</div>
     </div>
   );
 }

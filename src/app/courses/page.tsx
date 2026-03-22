@@ -86,9 +86,7 @@ export default function CoursesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">コース管理</h2>
-          <p className="text-sm text-muted-foreground">
-            ゴルフ場のコース情報を管理します
-          </p>
+          <p className="text-sm text-muted-foreground">ゴルフ場のコース情報を管理します</p>
         </div>
         <Link href="/courses/new">
           <Button className="bg-green-600 hover:bg-green-700">
@@ -123,16 +121,12 @@ export default function CoursesPage() {
           </div>
 
           {groupedCourses.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">
-              該当するコースがありません
-            </div>
+            <div className="py-8 text-center text-sm text-gray-400">該当するコースがありません</div>
           ) : (
             <div className="space-y-6">
               {groupedCourses.map(([pref, prefCourses]) => (
                 <div key={pref}>
-                  <h3 className="text-sm font-semibold text-gray-500 mb-2">
-                    {pref}
-                  </h3>
+                  <h3 className="text-sm font-semibold text-gray-500 mb-2">{pref}</h3>
                   <div className="space-y-3">
                     {prefCourses.map((course) => (
                       <Card key={course.id}>
@@ -178,9 +172,13 @@ export default function CoursesPage() {
 
       <ConfirmDialog
         open={pendingDelete !== null}
-        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
         title="コースを削除しますか？"
-        description={pendingDelete ? `「${pendingDelete.name}」を削除します。この操作は取り消せません。` : ""}
+        description={
+          pendingDelete ? `「${pendingDelete.name}」を削除します。この操作は取り消せません。` : ""
+        }
         confirmLabel="削除する"
         variant="destructive"
         onConfirm={executeDelete}

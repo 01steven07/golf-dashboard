@@ -31,7 +31,12 @@ const RATINGS = [1, 2, 3, 4, 5] as const;
 // よく使う距離のプリセット
 const DISTANCE_PRESETS = [50, 80, 100, 120, 150, 180];
 
-export function ApproachShotInput({ shot, onChange, shotNumber, optionalFields }: ApproachShotInputProps) {
+export function ApproachShotInput({
+  shot,
+  onChange,
+  shotNumber,
+  optionalFields,
+}: ApproachShotInputProps) {
   return (
     <div className="space-y-5">
       {/* 残り距離 */}
@@ -44,7 +49,9 @@ export function ApproachShotInput({ shot, onChange, shotNumber, optionalFields }
             <Input
               type="number"
               value={shot.distance || ""}
-              onChange={(e) => onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })}
+              onChange={(e) =>
+                onChange({ ...shot, distance: e.target.value === "" ? 0 : Number(e.target.value) })
+              }
               className="w-24 text-center text-lg font-bold"
               min={0}
               max={600}
@@ -89,10 +96,7 @@ export function ApproachShotInput({ shot, onChange, shotNumber, optionalFields }
           <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
             📍 ライ
           </Label>
-          <LieSelector
-            value={shot.lie}
-            onChange={(lie) => onChange({ ...shot, lie })}
-          />
+          <LieSelector value={shot.lie} onChange={(lie) => onChange({ ...shot, lie })} />
         </div>
       )}
 
@@ -141,10 +145,7 @@ export function ApproachShotInput({ shot, onChange, shotNumber, optionalFields }
           <Label className="text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
             💨 風
           </Label>
-          <WindSelector
-            value={shot.wind}
-            onChange={(wind) => onChange({ ...shot, wind })}
-          />
+          <WindSelector value={shot.wind} onChange={(wind) => onChange({ ...shot, wind })} />
         </div>
       )}
 

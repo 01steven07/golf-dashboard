@@ -62,13 +62,7 @@ function sectorPath(
 }
 
 /** 風向き矢印SVG（外縁→中心方向の小矢印） */
-function windArrow(
-  cx: number,
-  cy: number,
-  angleDeg: number,
-  r: number,
-  len: number,
-): string {
+function windArrow(cx: number, cy: number, angleDeg: number, r: number, len: number): string {
   const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180;
   const rad = toRad(angleDeg);
   // arrow starts at outer edge, points inward
@@ -99,16 +93,9 @@ export function WindRoseChart({ data, title }: WindRoseChartProps) {
 
   return (
     <div className="space-y-2">
-      {title && (
-        <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>
-      )}
+      {title && <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>}
       <div className="flex justify-center">
-        <svg
-          viewBox="0 0 300 310"
-          width="300"
-          height="310"
-          className="max-w-full"
-        >
+        <svg viewBox="0 0 300 310" width="300" height="310" className="max-w-full">
           {/* Target direction indicator */}
           <text
             x={cx}

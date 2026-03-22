@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  validatePar,
-  validateDistance,
-  validateFairwayResult,
-  normalizeOcrScores,
-} from "./route";
+import { validatePar, validateDistance, validateFairwayResult, normalizeOcrScores } from "./route";
 import { OcrScoreData } from "@/types/ocr";
 
 describe("validatePar", () => {
@@ -119,8 +114,28 @@ describe("normalizeOcrScores", () => {
 
   it("should fill missing holes", () => {
     const input = [
-      { hole_number: 1, par: 4 as const, distance: 380, score: 5, putts: 2, fairway_result: "keep" as const, ob: 0, bunker: 0, penalty: 0 },
-      { hole_number: 3, par: 3 as const, distance: 150, score: 3, putts: 1, fairway_result: "keep" as const, ob: 0, bunker: 0, penalty: 0 },
+      {
+        hole_number: 1,
+        par: 4 as const,
+        distance: 380,
+        score: 5,
+        putts: 2,
+        fairway_result: "keep" as const,
+        ob: 0,
+        bunker: 0,
+        penalty: 0,
+      },
+      {
+        hole_number: 3,
+        par: 3 as const,
+        distance: 150,
+        score: 3,
+        putts: 1,
+        fairway_result: "keep" as const,
+        ob: 0,
+        bunker: 0,
+        penalty: 0,
+      },
     ];
 
     const result = normalizeOcrScores(input);

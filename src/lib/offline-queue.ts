@@ -64,7 +64,7 @@ function writeQueue(queue: OfflineQueueItem[]): void {
 
 export function enqueue(
   type: OfflineQueueItemType,
-  payload: CreateRoundPayload | AddScoresPayload,
+  payload: CreateRoundPayload | AddScoresPayload
 ): string {
   const id = crypto.randomUUID();
   const item: OfflineQueueItem = {

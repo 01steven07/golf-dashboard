@@ -7,10 +7,7 @@ export async function POST(request: NextRequest) {
     const { member_id, pin } = await request.json();
 
     if (!member_id || !pin) {
-      return NextResponse.json(
-        { error: "部員IDとPINコードを入力してください" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "部員IDとPINコードを入力してください" }, { status: 400 });
     }
 
     // Fetch member by ID
@@ -21,20 +18,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error || !member) {
-      return NextResponse.json(
-        { error: "部員が見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "部員が見つかりません" }, { status: 404 });
     }
 
     // Verify PIN
     const isValid = await bcrypt.compare(pin, member.pin_hash);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: "PINコードが正しくありません" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "PINコードが正しくありません" }, { status: 401 });
     }
 
     // Return member data (without pin_hash)
@@ -51,9 +42,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "ログイン処理でエラーが発生しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "ログイン処理でエラーが発生しました" }, { status: 500 });
   }
 }
