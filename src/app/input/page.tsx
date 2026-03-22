@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, Upload, Loader2, ClipboardEdit, Search, X } from "lucide-react";
+import { Camera, Upload, Loader2, ClipboardEdit, Search, X, Edit3 } from "lucide-react";
 import Link from "next/link";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
@@ -105,15 +105,19 @@ function InputContent() {
       setHasDraft(true);
 
       // コース一覧も取得（オフライン時はキャッシュを利用）
-      supabase.from("courses").select("*").order("name").then(({ data }) => {
-        if (data) {
-          setCourses(data);
-          setCourseCache(data);
-        } else {
-          const cached = getCourseCache();
-          if (cached) setCourses(cached);
-        }
-      });
+      supabase
+        .from("courses")
+        .select("*")
+        .order("name")
+        .then(({ data }) => {
+          if (data) {
+            setCourses(data);
+            setCourseCache(data);
+          } else {
+            const cached = getCourseCache();
+            if (cached) setCourses(cached);
+          }
+        });
     }
   }, []);
 
@@ -132,7 +136,16 @@ function InputContent() {
         scores,
       });
     }, 500);
-  }, [step, selectedCourseId, newCourseName, roundDate, teeColor, outCourseName, inCourseName, scores]);
+  }, [
+    step,
+    selectedCourseId,
+    newCourseName,
+    roundDate,
+    teeColor,
+    outCourseName,
+    inCourseName,
+    scores,
+  ]);
 
   // ページ離脱時の警告
   useEffect(() => {
@@ -180,10 +193,7 @@ function InputContent() {
     setError("");
 
     // Fetch courses (with cache fallback)
-    const { data: coursesData } = await supabase
-      .from("courses")
-      .select("*")
-      .order("name");
+    const { data: coursesData } = await supabase.from("courses").select("*").order("name");
     if (coursesData) {
       setCourses(coursesData);
       setCourseCache(coursesData);
@@ -268,7 +278,11 @@ function InputContent() {
   const setNewCourseNameDirty = dirtySet(setNewCourseName);
   const setSelectedCourseIdDirty = dirtySet(setSelectedCourseId);
 
-  const updateScore = (index: number, field: keyof OcrScoreData, value: number | FairwayResult | null) => {
+  const updateScore = (
+    index: number,
+    field: keyof OcrScoreData,
+    value: number | FairwayResult | null
+  ) => {
     isDirty.current = true;
     setScores((prev) => {
       const updated = [...prev];
@@ -320,9 +334,7 @@ function InputContent() {
           .upload(fileName, imageFile);
 
         if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from("scorecards")
-            .getPublicUrl(fileName);
+          const { data: urlData } = supabase.storage.from("scorecards").getPublicUrl(fileName);
           imageUrl = urlData.publicUrl;
         }
       }
@@ -443,6 +455,27 @@ function InputContent() {
       {/* 入力方法の選択 */}
       {(step === "select" || step === "upload") && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/input/simple">
+            <Card className="border-2 border-orange-200 bg-orange-50/50 hover:border-orange-400 transition-colors cursor-pointer h-full">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-full bg-orange-100 shrink-0">
+                    <Edit3 className="h-6 w-6 text-orange-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-orange-800">簡易スコア入力</h3>
+                    <p className="text-xs text-orange-600 font-medium mt-0.5">
+                      推奨：ラウンド中にサクッと記録
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      スコア・パット・FW・OB等をホールごとに記録
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
           <Link href="/input/detailed">
             <Card className="border-2 border-blue-200 bg-blue-50/50 hover:border-blue-400 transition-colors cursor-pointer h-full">
               <CardContent className="p-4">
@@ -452,7 +485,9 @@ function InputContent() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-blue-800">詳細ショット入力</h3>
-                    <p className="text-xs text-blue-600 font-medium mt-0.5">推奨：超詳細なデータ分析がしたい人向け</p>
+                    <p className="text-xs text-blue-600 font-medium mt-0.5">
+                      超詳細なデータ分析がしたい人向け
+                    </p>
                     <p className="text-sm text-muted-foreground mt-1">
                       全ショットを手動で詳細に記録
                     </p>
@@ -505,12 +540,7 @@ function InputContent() {
             >
               <Upload className="h-10 w-10 mb-4" />
               <p>ここに画像をドロップ、またはタップして選択</p>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleInputChange}
-              />
+              <input type="file" accept="image/*" className="hidden" onChange={handleInputChange} />
             </label>
             {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
           </CardContent>
@@ -526,7 +556,7 @@ function InputContent() {
         </Card>
       )}
 
-      {step === "confirm" && (scores.length > 0) && (
+      {step === "confirm" && scores.length > 0 && (
         <>
           {hasDraft && (
             <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
@@ -723,11 +753,15 @@ function InputContent() {
                 </div>
                 <div className="rounded-lg bg-gray-50 p-2">
                   <div className="text-muted-foreground text-xs">Bunker</div>
-                  <div className={cn("font-bold", totalBunker > 0 && "text-orange-600")}>{totalBunker}</div>
+                  <div className={cn("font-bold", totalBunker > 0 && "text-orange-600")}>
+                    {totalBunker}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-gray-50 p-2">
                   <div className="text-muted-foreground text-xs">Penalty</div>
-                  <div className={cn("font-bold", totalPenalty > 0 && "text-red-600")}>{totalPenalty}</div>
+                  <div className={cn("font-bold", totalPenalty > 0 && "text-red-600")}>
+                    {totalPenalty}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-gray-50 p-2">
                   <div className="text-muted-foreground text-xs">Par3/4/5</div>
@@ -763,7 +797,9 @@ function InputContent() {
                           <td className="py-2 px-1">
                             <select
                               value={s.par}
-                              onChange={(e) => updateScore(i, "par", Number(e.target.value) as 3 | 4 | 5)}
+                              onChange={(e) =>
+                                updateScore(i, "par", Number(e.target.value) as 3 | 4 | 5)
+                              }
                               className="w-14 h-8 rounded border text-center"
                             >
                               <option value={3}>3</option>
@@ -792,7 +828,13 @@ function InputContent() {
                                 min={1}
                                 max={15}
                                 value={s.score || ""}
-                                onChange={(e) => updateScore(i, "score", e.target.value === "" ? 0 : Number(e.target.value))}
+                                onChange={(e) =>
+                                  updateScore(
+                                    i,
+                                    "score",
+                                    e.target.value === "" ? 0 : Number(e.target.value)
+                                  )
+                                }
                                 className="w-14 h-8 text-center"
                               />
                               {s.score > 0 && (
@@ -808,14 +850,22 @@ function InputContent() {
                               min={0}
                               max={10}
                               value={s.putts || ""}
-                              onChange={(e) => updateScore(i, "putts", e.target.value === "" ? 0 : Number(e.target.value))}
+                              onChange={(e) =>
+                                updateScore(
+                                  i,
+                                  "putts",
+                                  e.target.value === "" ? 0 : Number(e.target.value)
+                                )
+                              }
                               className="w-14 h-8 text-center"
                             />
                           </td>
                           <td className="py-2 px-1">
                             <select
                               value={s.fairway_result}
-                              onChange={(e) => updateScore(i, "fairway_result", e.target.value as FairwayResult)}
+                              onChange={(e) =>
+                                updateScore(i, "fairway_result", e.target.value as FairwayResult)
+                              }
                               className={cn(
                                 "w-14 h-8 rounded border text-center text-sm font-bold",
                                 fwInfo.color
@@ -832,7 +882,13 @@ function InputContent() {
                               min={0}
                               max={5}
                               value={s.ob || ""}
-                              onChange={(e) => updateScore(i, "ob", e.target.value === "" ? 0 : Number(e.target.value))}
+                              onChange={(e) =>
+                                updateScore(
+                                  i,
+                                  "ob",
+                                  e.target.value === "" ? 0 : Number(e.target.value)
+                                )
+                              }
                               className="w-12 h-8 text-center"
                             />
                           </td>
@@ -842,7 +898,13 @@ function InputContent() {
                               min={0}
                               max={5}
                               value={s.bunker || ""}
-                              onChange={(e) => updateScore(i, "bunker", e.target.value === "" ? 0 : Number(e.target.value))}
+                              onChange={(e) =>
+                                updateScore(
+                                  i,
+                                  "bunker",
+                                  e.target.value === "" ? 0 : Number(e.target.value)
+                                )
+                              }
                               className="w-12 h-8 text-center"
                             />
                           </td>
@@ -852,7 +914,13 @@ function InputContent() {
                               min={0}
                               max={5}
                               value={s.penalty || ""}
-                              onChange={(e) => updateScore(i, "penalty", e.target.value === "" ? 0 : Number(e.target.value))}
+                              onChange={(e) =>
+                                updateScore(
+                                  i,
+                                  "penalty",
+                                  e.target.value === "" ? 0 : Number(e.target.value)
+                                )
+                              }
                               className="w-12 h-8 text-center"
                             />
                           </td>
@@ -868,11 +936,7 @@ function InputContent() {
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowDiscardDialog(true)}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => setShowDiscardDialog(true)}>
               やり直す
             </Button>
             <Button className="flex-1" onClick={() => setShowSaveDialog(true)} disabled={isSaving}>
@@ -915,9 +979,20 @@ function InputContent() {
             }}
           >
             <div className="mt-2 space-y-1 text-sm">
-              <p>スコア: <span className="font-bold">{totalScore}</span> ({totalScore - totalPar >= 0 ? "+" : ""}{totalScore - totalPar})</p>
-              <p>パット: <span className="font-bold">{totalPutts}</span></p>
-              <p>FW Keep: <span className="font-bold">{par4or5Count > 0 ? `${Math.round((fwKeepCount / par4or5Count) * 100)}%` : "-"}</span></p>
+              <p>
+                スコア: <span className="font-bold">{totalScore}</span> (
+                {totalScore - totalPar >= 0 ? "+" : ""}
+                {totalScore - totalPar})
+              </p>
+              <p>
+                パット: <span className="font-bold">{totalPutts}</span>
+              </p>
+              <p>
+                FW Keep:{" "}
+                <span className="font-bold">
+                  {par4or5Count > 0 ? `${Math.round((fwKeepCount / par4or5Count) * 100)}%` : "-"}
+                </span>
+              </p>
             </div>
           </ConfirmDialog>
         </>

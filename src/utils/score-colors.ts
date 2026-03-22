@@ -1,29 +1,28 @@
 /**
  * スコア種別のカラーパレット（アプリ全体で統一）
- * パステル寄りの柔らかいトーンで統一
  *
- * Eagle-  : amber    — 特別な成果
- * Birdie  : rose     — 好スコア
- * Par     : sky      — 基準
- * Bogey   : emerald  — 許容範囲
+ * Eagle-  : blue     — 特別な好スコア
+ * Birdie  : blue     — 好スコア
+ * Par     : green    — 基準
+ * Bogey   : slate    — 許容範囲
  * D.Bogey+: slate    — 要改善
  */
 
-/** Hex (グラフ・SVG用) — 300〜400系の柔らかい色 */
+/** Hex (グラフ・SVG用) */
 export const SCORE_COLORS = {
-  eagle: "#fbbf24",      // amber-400
-  birdie: "#fb7185",     // rose-400
-  par: "#38bdf8",        // sky-400
-  bogey: "#34d399",      // emerald-400
-  doublePlus: "#94a3b8", // slate-400
+  eagle: "#3b82f6", // blue-500
+  birdie: "#60a5fa", // blue-400
+  par: "#22c55e", // green-500
+  bogey: "#94a3b8", // slate-400
+  doublePlus: "#64748b", // slate-500
 } as const;
 
 /** Tailwind text/bg (スコアカード・バッジ用) */
 export const SCORE_TW = {
-  eagle: { color: "text-amber-700", bgColor: "bg-amber-100" },
-  birdie: { color: "text-rose-700", bgColor: "bg-rose-100" },
-  par: { color: "text-sky-700", bgColor: "" },
-  bogey: { color: "text-emerald-700", bgColor: "bg-emerald-100" },
-  doubleBogey: { color: "text-slate-600", bgColor: "bg-slate-100" },
-  triplePlus: { color: "text-slate-700", bgColor: "bg-slate-200" },
+  eagle: { color: "text-blue-700", bgColor: "bg-blue-100" },
+  birdie: { color: "text-blue-600", bgColor: "bg-blue-50" },
+  par: { color: "text-green-700", bgColor: "" },
+  bogey: { color: "text-gray-500", bgColor: "bg-gray-100" },
+  doubleBogey: { color: "text-gray-600", bgColor: "bg-gray-200" },
+  triplePlus: { color: "text-gray-700", bgColor: "bg-gray-300" },
 } as const;
