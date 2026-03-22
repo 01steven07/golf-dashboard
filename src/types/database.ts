@@ -138,6 +138,7 @@ export interface Score {
   pin_position: PinPosition | null;
   shots_detail: unknown[] | null;
   course_hole_id: string | null;
+  tee_club: string | null;
 }
 
 /** Round with nested scores and course info */

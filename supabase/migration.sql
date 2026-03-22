@@ -128,6 +128,7 @@ CREATE TABLE scores (
     'back-left', 'back-center', 'back-right'
   )),
   shots_detail JSONB,
+  tee_club TEXT DEFAULT NULL,
   UNIQUE (round_id, hole_number)
 );
 

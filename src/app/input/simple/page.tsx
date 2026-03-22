@@ -61,6 +61,7 @@ function initSimpleScores(roundData: DetailedRoundData): SimpleHoleScore[] {
     score: 0,
     putts: 0,
     fairwayResult: "keep" as FairwayResult,
+    teeClub: null,
     ob: 0,
     bunker: 0,
     penalty: 0,
@@ -172,6 +173,7 @@ function SimpleInputContent() {
           score: 0,
           putts: 0,
           fairwayResult: "keep" as FairwayResult,
+          teeClub: null,
           ob: 0,
           bunker: 0,
           penalty: 0,
@@ -466,6 +468,7 @@ function SimpleInputContent() {
         penalty: h.penalty,
         pin_position: null,
         shots_detail: null,
+        tee_club: h.teeClub,
         course_hole_id: courseHoleIdMap.get(h.holeNumber) ?? null,
       }));
 
@@ -512,6 +515,7 @@ function SimpleInputContent() {
             penalty: h.penalty,
             pin_position: null,
             shots_detail: null,
+            tee_club: h.teeClub,
             course_hole_id: offlineCourseHoleIdMap.get(h.holeNumber) ?? null,
           })),
         } satisfies CreateRoundPayload);

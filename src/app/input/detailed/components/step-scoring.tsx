@@ -54,6 +54,7 @@ import {
   ArrowDown,
   CheckCircle2,
 } from "lucide-react";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 
 function getScoreDiffText(score: number, par: number): string {
   if (score === 0) return "";
@@ -337,6 +338,21 @@ export function StepScoring({
 
   const cupIn = isCupIn(hole.shots);
 
+  const goNextHole = useCallback(() => {
+    const next = Math.min(totalHoles, currentHole + 1);
+    if (next !== currentHole) navigateToHole(next);
+  }, [currentHole, totalHoles]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const goPrevHole = useCallback(() => {
+    const prev = Math.max(1, currentHole - 1);
+    if (prev !== currentHole) navigateToHole(prev);
+  }, [currentHole]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const swipeHandlers = useSwipeNavigation({
+    onSwipeLeft: goNextHole,
+    onSwipeRight: goPrevHole,
+  });
+
   const moveShot = (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= hole.shots.length) return;
@@ -367,7 +383,7 @@ export function StepScoring({
       </div>
 
       {/* 現在のホール */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4" {...swipeHandlers}>
         {/* ホールヘッダー */}
         <Card className="mb-4 border-2 border-green-300">
           <CardContent className="px-4 py-3">

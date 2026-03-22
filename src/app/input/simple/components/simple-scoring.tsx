@@ -4,11 +4,14 @@ import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FairwayResult, CourseWithDetails } from "@/types/database";
+import { Club } from "@/types/shot";
 import { getScoreSymbol } from "@/utils/golf-symbols";
 import { ScoreSummaryBar } from "@/app/input/detailed/components/score-summary-bar";
 import { ChevronLeft, ChevronRight, Loader2, Save, Minus, Plus, Pause, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScoreDisplay } from "@/components/shot-input/score-display";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { useAuth } from "@/contexts/auth-context";
 
 export interface SimpleHoleScore {
   holeNumber: number;
@@ -17,6 +20,7 @@ export interface SimpleHoleScore {
   score: number;
   putts: number;
   fairwayResult: FairwayResult;
+  teeClub: Club | null;
   ob: number;
   bunker: number;
   penalty: number;
@@ -195,6 +199,64 @@ function PuttNumberPad({ value, onChange }: { value: number; onChange: (v: numbe
   );
 }
 
+/** Tee club quick selector (simplified, inline) */
+const TEE_CLUBS: { value: Club; label: string }[] = [
+  { value: "1W", label: "1W" },
+  { value: "3W", label: "3W" },
+  { value: "5W", label: "5W" },
+  { value: "7W", label: "7W" },
+  { value: "UT3", label: "3U" },
+  { value: "UT4", label: "4U" },
+  { value: "UT5", label: "5U" },
+  { value: "3I", label: "3I" },
+  { value: "4I", label: "4I" },
+  { value: "5I", label: "5I" },
+  { value: "6I", label: "6I" },
+  { value: "7I", label: "7I" },
+  { value: "8I", label: "8I" },
+  { value: "9I", label: "9I" },
+  { value: "PW", label: "PW" },
+];
+
+function TeeClubSelector({
+  value,
+  onChange,
+}: {
+  value: Club | null;
+  onChange: (v: Club | null) => void;
+}) {
+  const { member } = useAuth();
+  const memberClubs = member?.clubs;
+
+  // Filter to member's clubs if available, otherwise show all TEE_CLUBS
+  const clubs = useMemo(() => {
+    if (memberClubs && memberClubs.length > 0) {
+      return TEE_CLUBS.filter((c) => memberClubs.includes(c.value as never));
+    }
+    return TEE_CLUBS;
+  }, [memberClubs]);
+
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {clubs.map((c) => (
+        <button
+          key={c.value}
+          type="button"
+          onClick={() => onChange(value === c.value ? null : c.value)}
+          className={cn(
+            "px-2 py-1 rounded-md text-xs font-medium transition-colors",
+            value === c.value
+              ? "bg-green-600 text-white ring-1 ring-green-400"
+              : "bg-gray-100 text-gray-600 active:bg-gray-200"
+          )}
+        >
+          {c.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SimpleScoring({
   holes,
   currentHole,
@@ -221,6 +283,19 @@ export function SimpleScoring({
     },
     [hole, onUpdateHole]
   );
+
+  const goNext = useCallback(() => {
+    if (currentHole < totalHoles) onCurrentHoleChange(currentHole + 1);
+  }, [currentHole, totalHoles, onCurrentHoleChange]);
+
+  const goPrev = useCallback(() => {
+    if (currentHole > 1) onCurrentHoleChange(currentHole - 1);
+  }, [currentHole, onCurrentHoleChange]);
+
+  const swipeHandlers = useSwipeNavigation({
+    onSwipeLeft: goNext,
+    onSwipeRight: goPrev,
+  });
 
   const subCourseInfo = useMemo(() => {
     if (!selectedCourse || subCourseIds.length === 0) {
@@ -277,9 +352,9 @@ export function SimpleScoring({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="h-[100dvh] flex flex-col bg-gray-50">
       {/* Sticky header */}
-      <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
+      <div className="flex-shrink-0 bg-white border-b shadow-sm">
         {/* Action bar */}
         <div className="flex items-center justify-between px-3 py-1 border-b border-gray-100">
           <button onClick={onBackToSettings} className="p-1 -ml-1 text-gray-600">
@@ -329,9 +404,12 @@ export function SimpleScoring({
         </div>
       </div>
 
-      {/* Current hole content */}
-      <div className="px-3 py-2 space-y-2 max-w-lg mx-auto">
-        {/* Hole header: info left, score+putt right (putt always visible) */}
+      {/* Current hole content — swipeable, fills remaining space */}
+      <div
+        className="flex-1 overflow-y-auto px-3 py-2 space-y-2 max-w-lg mx-auto w-full"
+        {...swipeHandlers}
+      >
+        {/* Hole header: info left, score+putt right */}
         <div className="flex items-center justify-between bg-white rounded-xl border-2 border-green-300 px-3 py-2">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-full bg-green-600 text-white flex flex-col items-center justify-center">
@@ -375,11 +453,11 @@ export function SimpleScoring({
           <PuttNumberPad value={hole.putts} onChange={(v) => updateField("putts", v)} />
         </div>
 
-        {/* FW + OB/Bunker/Penalty in one row for par4+ */}
+        {/* Tee shot section (FW + Club for par4+, just counters for par3) */}
         {hole.par >= 4 ? (
           <div className="bg-white rounded-xl border px-3 py-2 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-600">FW</span>
+              <span className="text-xs font-medium text-gray-600">ティーショット</span>
               <div className="flex gap-1">
                 {[
                   { value: "left" as const, label: "← L" },
@@ -404,6 +482,12 @@ export function SimpleScoring({
                 ))}
               </div>
             </div>
+            {/* Club selector */}
+            <div className="pt-1 border-t border-gray-100">
+              <span className="text-[10px] text-gray-400 mb-1 block">クラブ</span>
+              <TeeClubSelector value={hole.teeClub} onChange={(v) => updateField("teeClub", v)} />
+            </div>
+            {/* OB / Bunker / Penalty */}
             <div className="flex justify-around pt-1 border-t border-gray-100">
               <Counter
                 label="OB"
@@ -414,7 +498,7 @@ export function SimpleScoring({
               />
               <div className="w-px bg-gray-100" />
               <Counter
-                label="Bk"
+                label="バンカー"
                 value={hole.bunker}
                 onChange={(v) => updateField("bunker", v)}
                 max={5}
@@ -422,7 +506,7 @@ export function SimpleScoring({
               />
               <div className="w-px bg-gray-100" />
               <Counter
-                label="Pen"
+                label="ペナルティ"
                 value={hole.penalty}
                 onChange={(v) => updateField("penalty", v)}
                 max={5}
@@ -431,8 +515,16 @@ export function SimpleScoring({
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border px-3 py-2">
-            <div className="flex justify-around">
+          <div className="bg-white rounded-xl border px-3 py-2 space-y-2">
+            {/* Club selector for par3 too */}
+            <div>
+              <span className="text-xs font-medium text-gray-600">ティーショット</span>
+              <div className="mt-1">
+                <TeeClubSelector value={hole.teeClub} onChange={(v) => updateField("teeClub", v)} />
+              </div>
+            </div>
+            {/* OB / Bunker / Penalty */}
+            <div className="flex justify-around pt-1 border-t border-gray-100">
               <Counter
                 label="OB"
                 value={hole.ob}
@@ -442,7 +534,7 @@ export function SimpleScoring({
               />
               <div className="w-px bg-gray-100" />
               <Counter
-                label="Bk"
+                label="バンカー"
                 value={hole.bunker}
                 onChange={(v) => updateField("bunker", v)}
                 max={5}
@@ -450,7 +542,7 @@ export function SimpleScoring({
               />
               <div className="w-px bg-gray-100" />
               <Counter
-                label="Pen"
+                label="ペナルティ"
                 value={hole.penalty}
                 onChange={(v) => updateField("penalty", v)}
                 max={5}
@@ -463,13 +555,13 @@ export function SimpleScoring({
         {error && <p className="text-xs text-destructive text-center">{error}</p>}
       </div>
 
-      {/* Bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10">
+      {/* Bottom navigation — fixed at bottom */}
+      <div className="flex-shrink-0 bg-white border-t shadow-lg">
         <div className="flex items-center justify-between px-4 py-2 max-w-lg mx-auto">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onCurrentHoleChange(Math.max(1, currentHole - 1))}
+            onClick={goPrev}
             disabled={currentHole <= 1}
             className="gap-1 h-9"
           >
@@ -486,7 +578,7 @@ export function SimpleScoring({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onCurrentHoleChange(Math.min(totalHoles, currentHole + 1))}
+            onClick={goNext}
             disabled={currentHole >= totalHoles}
             className="gap-1 h-9"
           >
