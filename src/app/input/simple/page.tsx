@@ -454,7 +454,8 @@ function SimpleInputContent() {
         ? buildCourseHoleIdMap(selectedCourse.sub_courses, roundData.subCourseIds)
         : new Map<number, string>();
 
-      // Insert scores (shots_detail = null for simple input)
+      // Insert scores
+      // If tee club is selected, store minimal tee shot in shots_detail
       const scoreRecords = enteredHoles.map((h) => ({
         round_id: round.id,
         hole_number: h.holeNumber,
@@ -467,8 +468,9 @@ function SimpleInputContent() {
         bunker: h.bunker,
         penalty: h.penalty,
         pin_position: null,
-        shots_detail: null,
-        ...(h.teeClub ? { tee_club: h.teeClub } : {}),
+        shots_detail: h.teeClub
+          ? [{ type: "tee", club: h.teeClub, result: "fairway", resultDirection: "center", wind: "none", rating: 3, note: "" }]
+          : null,
         course_hole_id: courseHoleIdMap.get(h.holeNumber) ?? null,
       }));
 
@@ -514,8 +516,9 @@ function SimpleInputContent() {
             bunker: h.bunker,
             penalty: h.penalty,
             pin_position: null,
-            shots_detail: null,
-            ...(h.teeClub ? { tee_club: h.teeClub } : {}),
+            shots_detail: h.teeClub
+              ? [{ type: "tee", club: h.teeClub, result: "fairway", resultDirection: "center", wind: "none", rating: 3, note: "" }]
+              : null,
             course_hole_id: offlineCourseHoleIdMap.get(h.holeNumber) ?? null,
           })),
         } satisfies CreateRoundPayload);
