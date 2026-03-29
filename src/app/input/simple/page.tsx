@@ -469,7 +469,17 @@ function SimpleInputContent() {
         penalty: h.penalty,
         pin_position: null,
         shots_detail: h.teeClub
-          ? [{ type: "tee", club: h.teeClub, result: "fairway", resultDirection: "center", wind: "none", rating: 3, note: "" }]
+          ? [
+              {
+                type: "tee",
+                club: h.teeClub,
+                result: "fairway",
+                resultDirection: "center",
+                wind: "none",
+                rating: 3,
+                note: "",
+              },
+            ]
           : null,
         course_hole_id: courseHoleIdMap.get(h.holeNumber) ?? null,
       }));
@@ -517,7 +527,17 @@ function SimpleInputContent() {
             penalty: h.penalty,
             pin_position: null,
             shots_detail: h.teeClub
-              ? [{ type: "tee", club: h.teeClub, result: "fairway", resultDirection: "center", wind: "none", rating: 3, note: "" }]
+              ? [
+                  {
+                    type: "tee",
+                    club: h.teeClub,
+                    result: "fairway",
+                    resultDirection: "center",
+                    wind: "none",
+                    rating: 3,
+                    note: "",
+                  },
+                ]
               : null,
             course_hole_id: offlineCourseHoleIdMap.get(h.holeNumber) ?? null,
           })),

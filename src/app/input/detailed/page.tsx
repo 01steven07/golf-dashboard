@@ -21,6 +21,8 @@ import { validateScores } from "@/utils/score-validation";
 import { buildCourseHoleIdMap } from "@/utils/resolve-course-holes";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { enqueue, isNetworkError, CreateRoundPayload, AddScoresPayload } from "@/lib/offline-queue";
+import { scoresToHoleData } from "@/utils/score-to-holes";
+import { Score } from "@/types/database";
 import { Suspense } from "react";
 
 type InputStep = "settings" | "scoring";
@@ -74,11 +76,13 @@ function DetailedInputContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const addToRoundId = searchParams.get("addToRound");
+  const editRoundId = searchParams.get("editRound");
   const { member } = useAuth();
   const [step, setStep] = useState<InputStep>("settings");
   const [currentHole, setCurrentHole] = useState(1);
   const [addModeReady, setAddModeReady] = useState(false);
   const [addModeHoleOffset, setAddModeHoleOffset] = useState(0);
+  const [editScores, setEditScores] = useState<Score[]>([]);
   const [roundData, setRoundData] = useState<DetailedRoundData>({
     courseId: null,
     courseName: "",
@@ -104,7 +108,7 @@ function DetailedInputContent() {
 
   // 起動時にドラフトを確認 + optionalFields読み込み（追加モードではドラフト無効）
   useEffect(() => {
-    if (!addToRoundId) {
+    if (!addToRoundId && !editRoundId) {
       const draft = loadDraft();
       if (draft) {
         setDraftInfo({
@@ -184,9 +188,86 @@ function DetailedInputContent() {
     };
   }, [addToRoundId, member]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 編集モード: 既存ラウンドのデータを読み込み、スコアをHoleDataに変換
+  useEffect(() => {
+    if (!editRoundId || !member) return;
+    let cancelled = false;
+
+    (async () => {
+      // ラウンド基本情報を取得
+      const { data: roundInfo, error: roundError } = await supabase
+        .from("rounds")
+        .select("course_id, tee_color, date, played_sub_course_ids, courses(id, name, pref)")
+        .eq("id", editRoundId)
+        .single();
+
+      if (roundError || !roundInfo || cancelled) return;
+
+      // スコアデータを取得
+      const { data: scores, error: scoresError } = await supabase
+        .from("scores")
+        .select("*")
+        .eq("round_id", editRoundId)
+        .order("hole_number");
+
+      if (scoresError || !scores || cancelled) return;
+
+      setEditScores(scores as Score[]);
+
+      // Score[] → HoleData[]
+      const holes = scoresToHoleData(scores as Score[]);
+
+      // コース詳細を取得
+      const courseInfo = roundInfo.courses as unknown as {
+        id: string;
+        name: string;
+        pref: string | null;
+      } | null;
+
+      const playedIds = (roundInfo.played_sub_course_ids as string[]) ?? [];
+
+      if (courseInfo?.id) {
+        const res = await fetch(`/api/courses/${courseInfo.id}`);
+        if (res.ok && !cancelled) {
+          const courseDetails: CourseWithDetails = await res.json();
+          setSelectedCourse(courseDetails);
+
+          const matchedTee = courseDetails.tees.find((t) => t.name === roundInfo.tee_color);
+
+          updateRoundData({
+            courseId: courseInfo.id,
+            courseName: courseInfo.name,
+            date: roundInfo.date,
+            teeColor: roundInfo.tee_color ?? "White",
+            teeId: matchedTee?.id ?? null,
+            subCourseIds: playedIds,
+            holes,
+          });
+        }
+      } else {
+        updateRoundData({
+          courseId: null,
+          courseName: "",
+          date: roundInfo.date,
+          teeColor: roundInfo.tee_color ?? "White",
+          teeId: null,
+          subCourseIds: [],
+          holes,
+        });
+      }
+
+      // 直接スコアリング画面へ
+      setStep("scoring");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editRoundId, member]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 自動保存: step/currentHole/roundData 変更時に localStorage へ保存（追加モードでは無効）
   useEffect(() => {
-    if (!isDirty.current || addToRoundId) return;
+    if (!isDirty.current || addToRoundId || editRoundId) return;
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
       saveDraft({ step, currentHole, roundData });
@@ -493,6 +574,36 @@ function DetailedInputContent() {
         }
 
         router.push(`/my-stats/rounds/${addToRoundId}`);
+      } else if (editRoundId) {
+        // ======== 編集モード: 既存スコアを更新 ========
+        for (const agg of aggregated) {
+          // hole_numberで対応する既存スコアのIDを見つける
+          const existingScore = editScores.find((s) => s.hole_number === agg.hole_number);
+          if (!existingScore) continue;
+
+          const res = await authFetch(`/api/rounds/${editRoundId}/scores`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              score_id: existingScore.id,
+              score: agg.score,
+              putts: agg.putts,
+              fairway_result: agg.fairway_result,
+              ob: agg.ob,
+              bunker: agg.bunker,
+              penalty: agg.penalty,
+              pin_position: agg.pin_position,
+              shots_detail: agg.shots_detail,
+            }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || `ホール${agg.hole_number}の更新に失敗しました`);
+          }
+        }
+
+        router.push(`/my-stats/rounds/${editRoundId}`);
       } else {
         // ======== 通常モード: 新規ラウンド作成 ========
         // course_id の解決
@@ -672,15 +783,17 @@ function DetailedInputContent() {
     setCurrentHole(1);
   };
 
-  // 中断: localStorageに保存して離脱（追加モードでは保存しない）
+  // 中断: localStorageに保存して離脱（追加/編集モードでは保存しない）
   const handleSuspend = useCallback(() => {
-    if (addToRoundId) {
+    if (editRoundId) {
+      router.push(`/my-stats/rounds/${editRoundId}`);
+    } else if (addToRoundId) {
       router.push(`/my-stats/rounds/${addToRoundId}`);
     } else {
       saveDraft({ step, currentHole, roundData });
       router.push("/input");
     }
-  }, [step, currentHole, roundData, router, addToRoundId]);
+  }, [step, currentHole, roundData, router, addToRoundId, editRoundId]);
 
   // 破棄: データを消して離脱
   const handleDiscard = useCallback(() => {
@@ -689,13 +802,15 @@ function DetailedInputContent() {
 
   const executeDiscard = useCallback(() => {
     setShowDiscardDialog(false);
-    if (addToRoundId) {
+    if (editRoundId) {
+      router.push(`/my-stats/rounds/${editRoundId}`);
+    } else if (addToRoundId) {
       router.push(`/my-stats/rounds/${addToRoundId}`);
     } else {
       clearDraft();
       router.push("/input");
     }
-  }, [router, addToRoundId]);
+  }, [router, addToRoundId, editRoundId]);
 
   // ドラフト復元
   const handleResumeDraft = useCallback(() => {
@@ -767,7 +882,7 @@ function DetailedInputContent() {
         <StepSettings
           roundData={roundData}
           selectedCourse={selectedCourse}
-          draftInfo={addToRoundId ? null : draftInfo}
+          draftInfo={addToRoundId || editRoundId ? null : draftInfo}
           optionalFields={optionalFields}
           isAddMode={!!addToRoundId}
           addModeReady={addModeReady}
