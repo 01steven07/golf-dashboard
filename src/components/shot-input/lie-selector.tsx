@@ -80,8 +80,8 @@ export function LieSelector({ value, onChange }: LieSelectorProps) {
                   ? type.color === "green"
                     ? "bg-green-500 text-white shadow-lg ring-2 ring-green-300"
                     : type.color === "yellow"
-                    ? "bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300"
-                    : "bg-amber-500 text-white shadow-lg ring-2 ring-amber-300"
+                      ? "bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300"
+                      : "bg-amber-500 text-white shadow-lg ring-2 ring-amber-300"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >

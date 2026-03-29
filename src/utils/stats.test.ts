@@ -55,7 +55,13 @@ function makeMemberStats(overrides: Partial<MemberStats> = {}): MemberStats {
 // ======================================
 describe("偏差値計算", () => {
   it("I-1: 平均値と同じ → 偏差値50", () => {
-    const myStats = makeMemberStats({ avg_score: 80, avg_putts: 36, gir_rate: 50, fairway_keep_rate: 50, scramble_rate: 30 });
+    const myStats = makeMemberStats({
+      avg_score: 80,
+      avg_putts: 36,
+      gir_rate: 50,
+      fairway_keep_rate: 50,
+      scramble_rate: 30,
+    });
     const allStats = [myStats]; // 1人 → stdDev=0 → 偏差値50
     const radar = calculateRadarData(myStats, allStats);
     for (const item of radar) {
@@ -99,7 +105,11 @@ describe("calculateRadarData", () => {
     const radar = calculateRadarData(myStats, [myStats]);
     expect(radar).toHaveLength(5);
     expect(radar.map((r) => r.category)).toEqual([
-      "スコア", "パット", "パーオン", "FWキープ", "リカバリー",
+      "スコア",
+      "パット",
+      "パーオン",
+      "FWキープ",
+      "リカバリー",
     ]);
   });
 
@@ -134,7 +144,11 @@ describe("calculateExtendedRadarData", () => {
     const radar = calculateExtendedRadarData(myStats, [myStats]);
     expect(radar).toHaveLength(5);
     expect(radar.map((r) => r.category)).toEqual([
-      "ボギー回避", "バウンスバック", "GIR時パット", "1パット率", "3パット回避",
+      "ボギー回避",
+      "バウンスバック",
+      "GIR時パット",
+      "1パット率",
+      "3パット回避",
     ]);
   });
 

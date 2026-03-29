@@ -79,8 +79,10 @@ function HalfTable({
             })}
             {(() => {
               const overPar = totalScore - totalPar;
-              const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
-              const overParColor = overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
+              const overParStr =
+                overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
+              const overParColor =
+                overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
               return (
                 <TableCell className="text-center px-1 font-bold">
                   <div>{totalScore}</div>
@@ -132,7 +134,11 @@ export function getSectionLabels(extCourseLabels: string[] = []): string[] {
   return ["OUT", "IN", ...extCourseLabels];
 }
 
-export function ScorecardTable({ scores, extCourseLabels = [], sectionLabels }: ScorecardTableProps) {
+export function ScorecardTable({
+  scores,
+  extCourseLabels = [],
+  sectionLabels,
+}: ScorecardTableProps) {
   const sorted = [...scores].sort((a, b) => a.hole_number - b.hole_number);
   const labels = sectionLabels ?? getSectionLabels(extCourseLabels);
 
@@ -161,27 +167,29 @@ export function ScorecardTable({ scores, extCourseLabels = [], sectionLabels }: 
         />
       ))}
 
-      {sections.length >= 2 && (() => {
-        const overPar = totalScore - totalPar;
-        const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
-        const overParColor = overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
-        return (
-          <div className="grid grid-cols-3 gap-3 pt-2 border-t">
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase">Score</p>
-              <p className="text-lg font-bold">{totalScore}</p>
+      {sections.length >= 2 &&
+        (() => {
+          const overPar = totalScore - totalPar;
+          const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
+          const overParColor =
+            overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
+          return (
+            <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground uppercase">Score</p>
+                <p className="text-lg font-bold">{totalScore}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground uppercase">±Par</p>
+                <p className={`text-lg font-bold ${overParColor}`}>{overParStr}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground uppercase">Putt</p>
+                <p className="text-lg font-bold">{totalPutts}</p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase">±Par</p>
-              <p className={`text-lg font-bold ${overParColor}`}>{overParStr}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[10px] text-muted-foreground uppercase">Putt</p>
-              <p className="text-lg font-bold">{totalPutts}</p>
-            </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
     </div>
   );
 }

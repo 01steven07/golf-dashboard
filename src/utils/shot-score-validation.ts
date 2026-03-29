@@ -23,7 +23,7 @@ export interface ShotScoreComputeResult {
 export function computeScoreFromShots(
   shots: Shot[],
   ob: number,
-  penalty: number,
+  penalty: number
 ): ShotScoreComputeResult {
   const teeShots = shots.filter((s) => s.type === "tee").length;
   const approachShots = shots.filter((s) => s.type === "approach").length;
@@ -56,7 +56,7 @@ export function detectShotScoreMismatch(
   score: number,
   putts: number,
   ob: number,
-  penalty: number,
+  penalty: number
 ): ShotScoreMismatch[] {
   if (shots.length === 0) return [];
 

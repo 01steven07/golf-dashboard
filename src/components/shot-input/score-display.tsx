@@ -26,23 +26,27 @@ export function ScoreDisplay({ score, par, size = "md" }: ScoreDisplayProps) {
 
   if (score === 0) {
     return (
-      <div className={cn(
-        "rounded-lg flex flex-col items-center justify-center font-bold",
-        sizeClasses[size],
-        "bg-gray-100 text-gray-400"
-      )}>
+      <div
+        className={cn(
+          "rounded-lg flex flex-col items-center justify-center font-bold",
+          sizeClasses[size],
+          "bg-gray-100 text-gray-400"
+        )}
+      >
         <span>-</span>
       </div>
     );
   }
 
   return (
-    <div className={cn(
-      "rounded-lg flex flex-col items-center justify-center font-bold",
-      sizeClasses[size],
-      info.bgColor,
-      info.color
-    )}>
+    <div
+      className={cn(
+        "rounded-lg flex flex-col items-center justify-center font-bold",
+        sizeClasses[size],
+        info.bgColor,
+        info.color
+      )}
+    >
       <span>{score}</span>
       <span className={symbolSizeClasses[size]}>{info.symbol}</span>
     </div>
@@ -61,11 +65,13 @@ export function ScoreBadge({ score, par }: { score: number; par: number }) {
   const diffText = diff === 0 ? "E" : diff > 0 ? `+${diff}` : diff.toString();
 
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium",
-      info.bgColor,
-      info.color
-    )}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium",
+        info.bgColor,
+        info.color
+      )}
+    >
       <span>{score}</span>
       <span className="text-xs">({diffText})</span>
       <span>{info.symbol}</span>

@@ -10,12 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ClubSetEditor } from "@/components/club-set-editor";
 import { ArrowLeft, Save } from "lucide-react";
-import {
-  ClubType,
-  Gender,
-  MemberRole,
-  PreferredTee,
-} from "@/types/database";
+import { ClubType, Gender, MemberRole, PreferredTee } from "@/types/database";
 import { authFetch } from "@/lib/api-client";
 
 export default function AdminMemberDetailPage() {
@@ -107,16 +102,12 @@ export default function AdminMemberDetailPage() {
           </Link>
           <div>
             <h2 className="text-2xl font-bold">部員編集</h2>
-            <p className="text-sm text-muted-foreground">
-              部員情報の確認・編集
-            </p>
+            <p className="text-sm text-muted-foreground">部員情報の確認・編集</p>
           </div>
         </div>
 
         {isLoading ? (
-          <p className="text-muted-foreground text-center py-8">
-            読み込み中...
-          </p>
+          <p className="text-muted-foreground text-center py-8">読み込み中...</p>
         ) : error && !name ? (
           <p className="text-destructive text-center py-8">{error}</p>
         ) : (
@@ -198,8 +189,7 @@ export default function AdminMemberDetailPage() {
                       {
                         value: "white",
                         label: "白",
-                        color:
-                          "bg-white text-gray-800 border-2 border-gray-300",
+                        color: "bg-white text-gray-800 border-2 border-gray-300",
                       },
                       {
                         value: "red",
@@ -215,9 +205,7 @@ export default function AdminMemberDetailPage() {
                       <button
                         key={tee.value}
                         type="button"
-                        onClick={() =>
-                          setPreferredTee(tee.value as PreferredTee)
-                        }
+                        onClick={() => setPreferredTee(tee.value as PreferredTee)}
                         className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${tee.color} ${
                           preferredTee === tee.value
                             ? "ring-2 ring-offset-2 ring-primary"
@@ -242,16 +230,10 @@ export default function AdminMemberDetailPage() {
             </Card>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
-            {success && (
-              <p className="text-sm text-green-600">{success}</p>
-            )}
+            {success && <p className="text-sm text-green-600">{success}</p>}
 
             <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/members")}
-              >
+              <Button type="button" variant="outline" onClick={() => router.push("/admin/members")}>
                 キャンセル
               </Button>
               <Button type="submit" disabled={isSaving}>

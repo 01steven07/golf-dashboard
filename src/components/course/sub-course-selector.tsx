@@ -70,9 +70,7 @@ export function SubCourseSelector({
       {/* ラウンド構成（スタート順） */}
       {selectedSubCourseIds.length > 0 && (
         <div>
-          <Label className="text-xs text-gray-500">
-            ラウンド構成（{totalHoles}H）
-          </Label>
+          <Label className="text-xs text-gray-500">ラウンド構成（{totalHoles}H）</Label>
           <div className="mt-1 space-y-1">
             {selectedSubCourseIds.map((id, idx) => {
               const sc = subCourses.find((s) => s.id === id);
@@ -82,14 +80,10 @@ export function SubCourseSelector({
                   key={`${id}-${idx}`}
                   className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5"
                 >
-                  <span className="text-xs font-bold text-green-700 w-4">
-                    {idx + 1}
-                  </span>
+                  <span className="text-xs font-bold text-green-700 w-4">{idx + 1}</span>
                   <span className="flex-1 text-sm">
                     {sc.name}
-                    <span className="text-gray-400 ml-1 text-xs">
-                      ({sc.hole_count}H)
-                    </span>
+                    <span className="text-gray-400 ml-1 text-xs">({sc.hole_count}H)</span>
                   </span>
                   <button
                     type="button"
@@ -97,9 +91,7 @@ export function SubCourseSelector({
                     disabled={idx === 0}
                     className={cn(
                       "p-1 rounded",
-                      idx === 0
-                        ? "text-gray-300"
-                        : "text-gray-500 hover:bg-gray-200"
+                      idx === 0 ? "text-gray-300" : "text-gray-500 hover:bg-gray-200"
                     )}
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
@@ -131,8 +123,8 @@ export function SubCourseSelector({
         </div>
       )}
 
-      {/* ティー選択 */}
-      {!hideTeeSelector && tees.length > 0 && (
+      {/* ティー選択（サブコース選択後に表示） */}
+      {!hideTeeSelector && tees.length > 0 && selectedSubCourseIds.length > 0 && (
         <div>
           <Label className="text-xs text-gray-500">ティー</Label>
           <div className="flex gap-1 mt-1 flex-wrap">

@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  computeScoreFromShots,
-  detectShotScoreMismatch,
-} from "./shot-score-validation";
+import { computeScoreFromShots, detectShotScoreMismatch } from "./shot-score-validation";
 import {
   Shot,
   TeeShot,

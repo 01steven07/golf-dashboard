@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  validateAddHalfInput,
-  buildScoreRecords,
-  AddHalfScoreInput,
-} from "./add-half-validation";
+import { validateAddHalfInput, buildScoreRecords, AddHalfScoreInput } from "./add-half-validation";
 
 // ======================================
 // ヘルパー

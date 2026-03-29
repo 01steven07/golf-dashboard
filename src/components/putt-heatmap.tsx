@@ -24,9 +24,7 @@ function cellColor(rate: number): string {
 }
 
 export function PuttHeatmap({ crossData, slopeData, breakData, title }: PuttHeatmapProps) {
-  const crossMap = new Map(
-    crossData.map((d) => [`${d.slope}:${d.break_dir}`, d])
-  );
+  const crossMap = new Map(crossData.map((d) => [`${d.slope}:${d.break_dir}`, d]));
   const slopeMap = new Map(slopeData.map((d) => [d.label, d]));
   const breakMap = new Map(breakData.map((d) => [d.label, d]));
 
@@ -50,16 +48,9 @@ export function PuttHeatmap({ crossData, slopeData, breakData, title }: PuttHeat
 
   return (
     <div className="space-y-2">
-      {title && (
-        <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>
-      )}
+      {title && <h4 className="text-sm font-semibold text-muted-foreground">{title}</h4>}
       <div className="flex justify-center">
-        <svg
-          viewBox={`0 0 ${svgW} ${svgH}`}
-          width={svgW}
-          height={svgH}
-          className="max-w-full"
-        >
+        <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} className="max-w-full">
           {/* Column headers (break) */}
           {BREAKS.map((brk, ci) => {
             const x = gridX + ci * (cellW + gap) + cellW / 2;
@@ -203,14 +194,7 @@ export function PuttHeatmap({ crossData, slopeData, breakData, title }: PuttHeat
           <g transform={`translate(${gridX}, ${svgH - 22})`}>
             {[10, 30, 50, 70].map((v, i) => (
               <g key={v} transform={`translate(${i * 52}, 0)`}>
-                <rect
-                  x={0}
-                  y={0}
-                  width={14}
-                  height={10}
-                  rx={2}
-                  fill={cellColor(v)}
-                />
+                <rect x={0} y={0} width={14} height={10} rx={2} fill={cellColor(v)} />
                 <text
                   x={18}
                   y={5}

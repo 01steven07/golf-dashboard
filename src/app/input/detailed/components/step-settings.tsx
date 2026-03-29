@@ -20,6 +20,8 @@ interface StepSettingsProps {
   optionalFields: OptionalFieldSettings;
   isAddMode?: boolean;
   addModeReady?: boolean;
+  hideOptionalFields?: boolean;
+  title?: string;
   onOptionalFieldsChange: (fields: OptionalFieldSettings) => void;
   onCourseSelect: (course: CourseWithDetails | null) => void;
   onManualInput: (name: string) => void;
@@ -34,13 +36,21 @@ interface StepSettingsProps {
   onDiscardDraft: () => void;
 }
 
-const OPTIONAL_FIELD_OPTIONS: { key: keyof OptionalFieldSettings; label: string; description: string }[] = [
+const OPTIONAL_FIELD_OPTIONS: {
+  key: keyof OptionalFieldSettings;
+  label: string;
+  description: string;
+}[] = [
   { key: "pinPosition", label: "ピン位置", description: "各ホールのピン位置（9分割）" },
   { key: "wind", label: "風向き", description: "ティーショット・アプローチの風向き" },
   { key: "shotDistance", label: "ショットの残り距離", description: "アプローチの残り距離（yd）" },
   { key: "puttDistance", label: "パットの残り距離", description: "パットの距離（m）" },
   { key: "shotLieSlope", label: "ライ・傾斜", description: "アプローチのライと傾斜" },
-  { key: "shotResultDirection", label: "ショットの結果方向", description: "グリーンON/外し等の細分方向" },
+  {
+    key: "shotResultDirection",
+    label: "ショットの結果方向",
+    description: "グリーンON/外し等の細分方向",
+  },
   { key: "puttLine", label: "パットのライン", description: "傾斜と曲がりの組み合わせ" },
 ];
 
@@ -51,6 +61,8 @@ export function StepSettings({
   optionalFields,
   isAddMode = false,
   addModeReady = false,
+  hideOptionalFields = false,
+  title,
   onOptionalFieldsChange,
   onCourseSelect,
   onManualInput,
@@ -66,23 +78,24 @@ export function StepSettings({
 }: StepSettingsProps) {
   const router = useRouter();
 
+  const needsSubCourse = selectedCourse && selectedCourse.sub_courses.length > 0;
+  const needsTee = selectedCourse && selectedCourse.tees.length > 0;
   const canStart = isAddMode
     ? addModeReady && roundData.subCourseIds.length > 0
-    : roundData.courseName.length > 0;
+    : roundData.courseName.length > 0 &&
+      (!needsSubCourse || roundData.subCourseIds.length > 0) &&
+      (!needsTee || roundData.teeId !== null);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
       <div className="bg-white border-b shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 -ml-2 text-gray-600"
-          >
+          <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-600">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-lg font-bold text-green-800">
-            {isAddMode ? "ハーフ追加" : "詳細入力"}
+            {title ?? (isAddMode ? "ハーフ追加" : "詳細入力")}
           </h1>
           <div className="w-10" />
         </div>
@@ -239,43 +252,40 @@ export function StepSettings({
         )}
 
         {/* 入力項目設定 */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">入力項目</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-gray-500">表示する任意項目を選択してください</p>
-            {OPTIONAL_FIELD_OPTIONS.map((opt) => (
-              <label
-                key={opt.key}
-                className="flex items-start gap-3 cursor-pointer"
-              >
-                <Checkbox
-                  checked={optionalFields[opt.key]}
-                  onCheckedChange={(checked) =>
-                    onOptionalFieldsChange({
-                      ...optionalFields,
-                      [opt.key]: !!checked,
-                    })
-                  }
-                  className="mt-0.5"
-                />
-                <div>
-                  <div className="text-sm font-medium">{opt.label}</div>
-                  <div className="text-xs text-gray-500">{opt.description}</div>
-                </div>
-              </label>
-            ))}
-          </CardContent>
-        </Card>
+        {!hideOptionalFields && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">入力項目</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-gray-500">表示する任意項目を選択してください</p>
+              {OPTIONAL_FIELD_OPTIONS.map((opt) => (
+                <label key={opt.key} className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={optionalFields[opt.key]}
+                    onCheckedChange={(checked) =>
+                      onOptionalFieldsChange({
+                        ...optionalFields,
+                        [opt.key]: !!checked,
+                      })
+                    }
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="text-sm font-medium">{opt.label}</div>
+                    <div className="text-xs text-gray-500">{opt.description}</div>
+                  </div>
+                </label>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ホール数サマリー */}
         <Card>
           <CardContent className="py-4">
             <div className="text-center text-sm text-gray-600">
-              <span className="font-bold text-green-700 text-lg">
-                {roundData.holes.length}
-              </span>
+              <span className="font-bold text-green-700 text-lg">{roundData.holes.length}</span>
               ホール のスコアを入力します
             </div>
           </CardContent>

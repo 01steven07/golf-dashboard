@@ -32,9 +32,7 @@ export function HoleDetailCard({ score }: HoleDetailCardProps) {
             <div>
               <div className="text-sm text-muted-foreground">
                 Par {score.par}
-                {score.distance && (
-                  <span className="ml-2">{score.distance}yd</span>
-                )}
+                {score.distance && <span className="ml-2">{score.distance}yd</span>}
               </div>
               <div className={`text-sm font-semibold ${sym.color}`}>
                 {sym.label} ({diffText})

@@ -1,4 +1,15 @@
-import { Club, WindDirection, LeftRight, Direction, Slope, TeeResult, ShotLie, ShotResult, PuttLine, PuttResult } from "@/types/shot";
+import {
+  Club,
+  WindDirection,
+  LeftRight,
+  Direction,
+  Slope,
+  TeeResult,
+  ShotLie,
+  ShotResult,
+  PuttLine,
+  PuttResult,
+} from "@/types/shot";
 
 export const CLUBS: { value: Club; label: string }[] = [
   // Woods

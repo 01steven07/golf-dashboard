@@ -131,12 +131,22 @@ function TeeShotDetail({ shot }: { shot: TeeShot }) {
   return (
     <div className="space-y-1 text-sm">
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span>クラブ: <strong>{shot.club}</strong></span>
-        <span>結果: <strong>{teeResultLabels[shot.result] ?? shot.result}</strong></span>
+        <span>
+          クラブ: <strong>{shot.club}</strong>
+        </span>
+        <span>
+          結果: <strong>{teeResultLabels[shot.result] ?? shot.result}</strong>
+        </span>
         {shot.result !== "ob" && shot.result !== "penalty" && (
-          <span>方向: <strong>{dirLabels[shot.resultDirection] ?? shot.resultDirection}</strong></span>
+          <span>
+            方向: <strong>{dirLabels[shot.resultDirection] ?? shot.resultDirection}</strong>
+          </span>
         )}
-        {shot.distance && <span>距離: <strong>{shot.distance}yd</strong></span>}
+        {shot.distance && (
+          <span>
+            距離: <strong>{shot.distance}yd</strong>
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <RatingStars rating={shot.rating} />
@@ -150,14 +160,24 @@ function ApproachShotDetail({ shot }: { shot: ApproachShot }) {
   return (
     <div className="space-y-1 text-sm">
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span>クラブ: <strong>{shot.club}</strong></span>
-        <span>残り: <strong>{shot.distance}yd</strong></span>
-        <span>ライ: <strong>{lieLabels[shot.lie] ?? shot.lie}</strong></span>
+        <span>
+          クラブ: <strong>{shot.club}</strong>
+        </span>
+        <span>
+          残り: <strong>{shot.distance}yd</strong>
+        </span>
+        <span>
+          ライ: <strong>{lieLabels[shot.lie] ?? shot.lie}</strong>
+        </span>
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span>結果: <strong>{getApproachResultLabel(shot.result)}</strong></span>
+        <span>
+          結果: <strong>{getApproachResultLabel(shot.result)}</strong>
+        </span>
         {shot.slope !== "flat" && (
-          <span>傾斜: <strong>{slopeLabels[shot.slope] ?? shot.slope}</strong></span>
+          <span>
+            傾斜: <strong>{slopeLabels[shot.slope] ?? shot.slope}</strong>
+          </span>
         )}
       </div>
       <div className="flex items-center gap-3">
@@ -181,13 +201,21 @@ function PuttShotDetail({ shot }: { shot: PuttShot }) {
   return (
     <div className="space-y-1 text-sm">
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span>距離: <strong>{shot.distance}m</strong></span>
-        <span>結果: <strong>{puttResultLabels[shot.result] ?? shot.result}</strong></span>
+        <span>
+          距離: <strong>{shot.distance}m</strong>
+        </span>
+        <span>
+          結果: <strong>{puttResultLabels[shot.result] ?? shot.result}</strong>
+        </span>
         {shot.slope !== "flat" && (
-          <span>傾斜: <strong>{puttSlopeLabels[shot.slope] ?? shot.slope}</strong></span>
+          <span>
+            傾斜: <strong>{puttSlopeLabels[shot.slope] ?? shot.slope}</strong>
+          </span>
         )}
         {shot.break !== "straight" && (
-          <span>曲がり: <strong>{puttBreakLabels[shot.break] ?? shot.break}</strong></span>
+          <span>
+            曲がり: <strong>{puttBreakLabels[shot.break] ?? shot.break}</strong>
+          </span>
         )}
       </div>
       <div className="flex items-center gap-3">
@@ -202,11 +230,7 @@ export function ShotDetailView({ shotsDetail }: ShotDetailViewProps) {
   const shots = parseShots(shotsDetail);
 
   if (shots.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground py-2">
-        ショット詳細データがありません
-      </div>
-    );
+    return <div className="text-sm text-muted-foreground py-2">ショット詳細データがありません</div>;
   }
 
   return (
@@ -223,11 +247,7 @@ export function ShotDetailView({ shotsDetail }: ShotDetailViewProps) {
           );
 
         const typeLabel =
-          shot.type === "tee"
-            ? "ティー"
-            : shot.type === "approach"
-              ? "ショット"
-              : "パット";
+          shot.type === "tee" ? "ティー" : shot.type === "approach" ? "ショット" : "パット";
 
         const borderColor =
           shot.type === "tee"
@@ -237,10 +257,7 @@ export function ShotDetailView({ shotsDetail }: ShotDetailViewProps) {
               : "border-l-purple-400";
 
         return (
-          <div
-            key={index}
-            className={`border-l-2 ${borderColor} pl-3 py-1`}
-          >
+          <div key={index} className={`border-l-2 ${borderColor} pl-3 py-1`}>
             <div className="flex items-center gap-1.5 mb-1">
               {icon}
               <span className="text-xs font-medium text-muted-foreground">

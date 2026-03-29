@@ -47,9 +47,12 @@ export function calculateSingleRoundStats(scores: Score[]): SingleRoundStats {
   let parCount = 0;
   let bogeyCount = 0;
   let doubleBogeyPlusCount = 0;
-  let par3Total = 0, par3Count = 0;
-  let par4Total = 0, par4Count = 0;
-  let par5Total = 0, par5Count = 0;
+  let par3Total = 0,
+    par3Count = 0;
+  let par4Total = 0,
+    par4Count = 0;
+  let par5Total = 0,
+    par5Count = 0;
   let bogeyOrWorseCount = 0;
   let doubleBogeyOrWorseCount = 0;
   let puttsOnGir = 0;
@@ -90,9 +93,16 @@ export function calculateSingleRoundStats(scores: Score[]): SingleRoundStats {
       if (s.score <= s.par) scrambleSuccess++;
     }
 
-    if (s.par === 3) { par3Total += s.score; par3Count++; }
-    else if (s.par === 4) { par4Total += s.score; par4Count++; }
-    else if (s.par === 5) { par5Total += s.score; par5Count++; }
+    if (s.par === 3) {
+      par3Total += s.score;
+      par3Count++;
+    } else if (s.par === 4) {
+      par4Total += s.score;
+      par4Count++;
+    } else if (s.par === 5) {
+      par5Total += s.score;
+      par5Count++;
+    }
 
     if (diff >= 1) bogeyOrWorseCount++;
     if (diff >= 2) doubleBogeyOrWorseCount++;
@@ -139,9 +149,11 @@ export function calculateSingleRoundStats(scores: Score[]): SingleRoundStats {
     par3Avg: par3Count > 0 ? par3Total / par3Count : 0,
     par4Avg: par4Count > 0 ? par4Total / par4Count : 0,
     par5Avg: par5Count > 0 ? par5Total / par5Count : 0,
-    bounceBackRate: bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
+    bounceBackRate:
+      bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
     bogeyAvoidance: totalHoles > 0 ? ((totalHoles - bogeyOrWorseCount) / totalHoles) * 100 : 0,
-    doubleBogeyAvoidance: totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
+    doubleBogeyAvoidance:
+      totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
     puttsPerGir: girHolesForPutts > 0 ? puttsOnGir / girHolesForPutts : 0,
     threePuttAvoidance: totalHoles > 0 ? ((totalHoles - threePuttCount) / totalHoles) * 100 : 0,
     onePuttRate: totalHoles > 0 ? (onePuttCount / totalHoles) * 100 : 0,

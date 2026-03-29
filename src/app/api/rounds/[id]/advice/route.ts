@@ -58,10 +58,7 @@ function calcClubRatings(scores: Score[]): ClubCategoryRating[] {
   }));
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
   if (isAuthError(auth)) return auth;
 
@@ -90,17 +87,22 @@ export async function POST(
 
     // ホールごとの詳細
     const sorted = [...scores].sort((a, b) => a.hole_number - b.hole_number);
-    const holeDetails = sorted.map((s) => {
-      const diff = s.score - s.par;
-      const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? "E" : String(diff);
-      return `H${s.hole_number}(Par${s.par}): ${s.score}打(${diffStr}), ${s.putts}パット, FW:${s.fairway_result ?? "-"}, OB:${s.ob}`;
-    }).join("\n");
+    const holeDetails = sorted
+      .map((s) => {
+        const diff = s.score - s.par;
+        const diffStr = diff > 0 ? `+${diff}` : diff === 0 ? "E" : String(diff);
+        return `H${s.hole_number}(Par${s.par}): ${s.score}打(${diffStr}), ${s.putts}パット, FW:${s.fairway_result ?? "-"}, OB:${s.ob}`;
+      })
+      .join("\n");
 
     // クラブ評価セクション
-    const ratingSection = clubRatings.length > 0
-      ? "\n## クラブ別自己評価(5点満点)\n" +
-        clubRatings.map((r) => `- ${r.category}: ${r.avgRating.toFixed(1)}点 (${r.count}ショット)`).join("\n")
-      : "";
+    const ratingSection =
+      clubRatings.length > 0
+        ? "\n## クラブ別自己評価(5点満点)\n" +
+          clubRatings
+            .map((r) => `- ${r.category}: ${r.avgRating.toFixed(1)}点 (${r.count}ショット)`)
+            .join("\n")
+        : "";
 
     const overPar = stats.overPar;
     const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
@@ -161,9 +163,6 @@ ${holeDetails}
     return NextResponse.json({ advice });
   } catch (error) {
     console.error("Round advice generation error:", error);
-    return NextResponse.json(
-      { error: "アドバイスの生成に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "アドバイスの生成に失敗しました" }, { status: 500 });
   }
 }

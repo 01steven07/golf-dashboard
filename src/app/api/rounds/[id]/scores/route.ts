@@ -3,23 +3,27 @@ import { supabase } from "@/lib/supabase";
 import { requireAuth, isAuthError } from "@/lib/api-auth";
 
 // PATCH: 特定ホールのスコアデータを更新
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
   if (isAuthError(auth)) return auth;
 
   try {
     const { id: roundId } = await params;
     const body = await request.json();
-    const { score_id, score, putts, fairway_result, ob, bunker, penalty, pin_position, shots_detail } = body;
+    const {
+      score_id,
+      score,
+      putts,
+      fairway_result,
+      ob,
+      bunker,
+      penalty,
+      pin_position,
+      shots_detail,
+    } = body;
 
     if (!score_id || typeof score_id !== "string") {
-      return NextResponse.json(
-        { error: "score_id は必須です" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "score_id は必須です" }, { status: 400 });
     }
 
     // round_id の所有者チェック
@@ -30,10 +34,7 @@ export async function PATCH(
       .single();
 
     if (roundError || !round) {
-      return NextResponse.json(
-        { error: "ラウンドが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "ラウンドが見つかりません" }, { status: 404 });
     }
 
     if (round.member_id !== auth.id) {
@@ -51,10 +52,7 @@ export async function PATCH(
       .single();
 
     if (scoreError || !existingScore) {
-      return NextResponse.json(
-        { error: "スコアが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "スコアが見つかりません" }, { status: 404 });
     }
 
     if (existingScore.round_id !== roundId) {
@@ -89,10 +87,7 @@ export async function PATCH(
 
     if (fairway_result !== undefined) {
       if (!["keep", "left", "right"].includes(fairway_result)) {
-        return NextResponse.json(
-          { error: "無効なフェアウェイ結果です" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "無効なフェアウェイ結果です" }, { status: 400 });
       }
       updateData.fairway_result = fairway_result;
     }
@@ -127,10 +122,7 @@ export async function PATCH(
     }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: "更新するフィールドがありません" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "更新するフィールドがありません" }, { status: 400 });
     }
 
     const { data: updatedScore, error: updateError } = await supabase
@@ -142,19 +134,13 @@ export async function PATCH(
 
     if (updateError) {
       console.error("Update score error:", updateError);
-      return NextResponse.json(
-        { error: "スコアの更新に失敗しました" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "スコアの更新に失敗しました" }, { status: 500 });
     }
 
     return NextResponse.json({ score: updatedScore });
   } catch (error) {
     console.error("Update score error:", error);
-    return NextResponse.json(
-      { error: "スコアの更新に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "スコアの更新に失敗しました" }, { status: 500 });
   }
 }
 
@@ -165,10 +151,7 @@ import {
   AddHalfScoreInput,
 } from "@/utils/add-half-validation";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(request);
   if (isAuthError(auth)) return auth;
 
@@ -189,10 +172,7 @@ export async function POST(
       .single();
 
     if (roundError || !round) {
-      return NextResponse.json(
-        { error: "ラウンドが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "ラウンドが見つかりません" }, { status: 404 });
     }
 
     if (round.member_id !== auth.id) {
@@ -211,16 +191,10 @@ export async function POST(
       .limit(1);
 
     if (existingError) {
-      return NextResponse.json(
-        { error: "既存スコアの取得に失敗しました" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "既存スコアの取得に失敗しました" }, { status: 500 });
     }
 
-    const maxHole =
-      existingScores && existingScores.length > 0
-        ? existingScores[0].hole_number
-        : 0;
+    const maxHole = existingScores && existingScores.length > 0 ? existingScores[0].hole_number : 0;
 
     // バリデーション
     const validation = validateAddHalfInput(scores, maxHole, course_label);
@@ -238,10 +212,7 @@ export async function POST(
 
     if (insertError) {
       console.error("Insert scores error:", insertError);
-      return NextResponse.json(
-        { error: "スコアの追加に失敗しました" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "スコアの追加に失敗しました" }, { status: 500 });
     }
 
     // ext_course_labels + played_sub_course_ids を更新
@@ -268,9 +239,6 @@ export async function POST(
     return NextResponse.json({ scores: insertedScores }, { status: 201 });
   } catch (error) {
     console.error("Add scores error:", error);
-    return NextResponse.json(
-      { error: "スコアの追加に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "スコアの追加に失敗しました" }, { status: 500 });
   }
 }

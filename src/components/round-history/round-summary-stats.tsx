@@ -11,7 +11,8 @@ interface RoundSummaryStatsProps {
 export function RoundSummaryStats({ summary, avgRating }: RoundSummaryStatsProps) {
   const overPar = summary.totalScore - summary.totalPar;
   const overParStr = overPar > 0 ? `+${overPar}` : overPar === 0 ? "E" : String(overPar);
-  const overParColor = overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
+  const overParColor =
+    overPar > 0 ? "text-red-600" : overPar < 0 ? "text-blue-600" : "text-gray-500";
 
   return (
     <div className="grid grid-cols-3 md:grid-cols-6 gap-3">

@@ -59,7 +59,9 @@ describe("validateScores: ホール数", () => {
 // ======================================
 describe("validateScores: フィールド別", () => {
   function single(overrides: Partial<ScoreInput>): ScoreInput[] {
-    return [{ hole_number: 1, par: 4, score: 4, putts: 2, ob: 0, bunker: 0, penalty: 0, ...overrides }];
+    return [
+      { hole_number: 1, par: 4, score: 4, putts: 2, ob: 0, bunker: 0, penalty: 0, ...overrides },
+    ];
   }
 
   // --- par ---

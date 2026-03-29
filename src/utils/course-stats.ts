@@ -216,7 +216,10 @@ export function calculateApproachClubs(scores: ScoreRow[], holeNumber: number): 
 /**
  * ピン位置別の平均オーバーパー
  */
-export function calculatePinPositionScores(scores: ScoreRow[], holeNumber: number): PinPositionScore[] {
+export function calculatePinPositionScores(
+  scores: ScoreRow[],
+  holeNumber: number
+): PinPositionScore[] {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber && s.pin_position);
   const posMap = new Map<string, { totalOverPar: number; count: number }>();
 
@@ -278,9 +281,12 @@ export function calculateCourseScoringStats(rounds: RoundScores[]): CourseScorin
   let doubleBogeyOrWorseCount = 0;
   let bounceBackOpportunities = 0;
   let bounceBackSuccess = 0;
-  let par3Total = 0, par3Count = 0;
-  let par4Total = 0, par4Count = 0;
-  let par5Total = 0, par5Count = 0;
+  let par3Total = 0,
+    par3Count = 0;
+  let par4Total = 0,
+    par4Count = 0;
+  let par5Total = 0,
+    par5Count = 0;
 
   for (const round of rounds) {
     const sorted = [...round.scores].sort((a, b) => a.hole_number - b.hole_number);
@@ -293,9 +299,16 @@ export function calculateCourseScoringStats(rounds: RoundScores[]): CourseScorin
       if (overPar >= 1) bogeyOrWorseCount++;
       if (overPar >= 2) doubleBogeyOrWorseCount++;
 
-      if (s.par === 3) { par3Total += s.score; par3Count++; }
-      else if (s.par === 4) { par4Total += s.score; par4Count++; }
-      else if (s.par === 5) { par5Total += s.score; par5Count++; }
+      if (s.par === 3) {
+        par3Total += s.score;
+        par3Count++;
+      } else if (s.par === 4) {
+        par4Total += s.score;
+        par4Count++;
+      } else if (s.par === 5) {
+        par5Total += s.score;
+        par5Count++;
+      }
 
       if (i > 0) {
         const prev = sorted[i - 1];
@@ -308,9 +321,11 @@ export function calculateCourseScoringStats(rounds: RoundScores[]): CourseScorin
   }
 
   return {
-    bounceBackRate: bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
+    bounceBackRate:
+      bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
     bogeyAvoidance: totalHoles > 0 ? ((totalHoles - bogeyOrWorseCount) / totalHoles) * 100 : 0,
-    doubleBogeyAvoidance: totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
+    doubleBogeyAvoidance:
+      totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
     par3Avg: par3Count > 0 ? par3Total / par3Count : 0,
     par4Avg: par4Count > 0 ? par4Total / par4Count : 0,
     par5Avg: par5Count > 0 ? par5Total / par5Count : 0,
@@ -355,8 +370,10 @@ export function calculateCoursePuttingStats(rounds: RoundScores[]): CoursePuttin
 export function calculateCourseShotStats(rounds: RoundScores[]): CourseShotStats {
   if (rounds.length === 0) return { girFromFairway: 0, girFromRough: 0 };
 
-  let fwHoles = 0, girFromFw = 0;
-  let roughHoles = 0, girFromRough = 0;
+  let fwHoles = 0,
+    girFromFw = 0;
+  let roughHoles = 0,
+    girFromRough = 0;
 
   for (const round of rounds) {
     for (const s of round.scores) {
@@ -384,7 +401,10 @@ export function calculateCourseShotStats(rounds: RoundScores[]): CourseShotStats
 /**
  * ホール別のパーオン率
  */
-export function calculateHoleGirRate(scores: ScoreRow[], holeNumber: number): { girRate: number; count: number } {
+export function calculateHoleGirRate(
+  scores: ScoreRow[],
+  holeNumber: number
+): { girRate: number; count: number } {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber);
   if (holeScores.length === 0) return { girRate: 0, count: 0 };
 
@@ -400,7 +420,10 @@ export function calculateHoleGirRate(scores: ScoreRow[], holeNumber: number): { 
 /**
  * ホール別の平均パット数
  */
-export function calculateHoleAvgPutts(scores: ScoreRow[], holeNumber: number): { avgPutts: number; count: number } {
+export function calculateHoleAvgPutts(
+  scores: ScoreRow[],
+  holeNumber: number
+): { avgPutts: number; count: number } {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber);
   if (holeScores.length === 0) return { avgPutts: 0, count: 0 };
 
@@ -411,7 +434,10 @@ export function calculateHoleAvgPutts(scores: ScoreRow[], holeNumber: number): {
 /**
  * ホール別のスクランブル率（パーオンしなかったがパー以上で上がった率）
  */
-export function calculateHoleScrambleRate(scores: ScoreRow[], holeNumber: number): { scrambleRate: number; opportunities: number } {
+export function calculateHoleScrambleRate(
+  scores: ScoreRow[],
+  holeNumber: number
+): { scrambleRate: number; opportunities: number } {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber);
   let opportunities = 0;
   let successes = 0;
@@ -434,7 +460,10 @@ export function calculateHoleScrambleRate(scores: ScoreRow[], holeNumber: number
 /**
  * ホール別のスコア分布
  */
-export function calculateHoleScoreDistribution(scores: ScoreRow[], holeNumber: number): ScoreDistribution {
+export function calculateHoleScoreDistribution(
+  scores: ScoreRow[],
+  holeNumber: number
+): ScoreDistribution {
   const holeScores = scores.filter((s) => s.hole_number === holeNumber);
   return calculateScoreDistribution(holeScores);
 }

@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Shot, HoleData } from "@/types/shot";
-import {
-  isCupIn,
-  isOnGreen,
-  getShotAddWarning,
-  getHoleWarnings,
-} from "./shot-validation";
+import { isCupIn, isOnGreen, getShotAddWarning, getHoleWarnings } from "./shot-validation";
 
 // ヘルパー: 最小限のショットを生成
 function teeShot(result: "fairway" | "rough" | "bunker" | "ob" | "penalty" = "fairway"): Shot {
@@ -31,7 +26,7 @@ function approachShot(result: string = "on-center"): Shot {
     distance: 150,
     rating: 3,
     note: "",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 

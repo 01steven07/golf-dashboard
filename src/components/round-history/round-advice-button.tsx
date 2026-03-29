@@ -67,13 +67,15 @@ export function RoundAdviceButton({ roundId }: RoundAdviceButtonProps) {
       {advice && (
         <div className="space-y-3">
           <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-            <div className="prose prose-sm max-w-none
+            <div
+              className="prose prose-sm max-w-none
               prose-headings:text-green-800 prose-headings:text-sm prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-1
               prose-p:text-gray-700 prose-p:my-1 prose-p:leading-relaxed
               prose-li:text-gray-700 prose-li:my-0.5
               prose-ul:my-1 prose-ol:my-1
               prose-strong:text-green-800
-            ">
+            "
+            >
               <ReactMarkdown>{advice}</ReactMarkdown>
             </div>
           </div>

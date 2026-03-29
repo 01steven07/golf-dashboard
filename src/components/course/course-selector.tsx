@@ -6,7 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Search, X, Loader2 } from "lucide-react";
-import { setCourseCache, getCourseCache, setCourseDetailCache, getCourseDetailCache } from "@/lib/course-cache";
+import {
+  setCourseCache,
+  getCourseCache,
+  setCourseDetailCache,
+  getCourseDetailCache,
+} from "@/lib/course-cache";
 
 interface CourseSelectorProps {
   onCourseSelect: (course: CourseWithDetails | null) => void;
@@ -14,11 +19,7 @@ interface CourseSelectorProps {
   courseName: string;
 }
 
-export function CourseSelector({
-  onCourseSelect,
-  onManualInput,
-  courseName,
-}: CourseSelectorProps) {
+export function CourseSelector({ onCourseSelect, onManualInput, courseName }: CourseSelectorProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
@@ -145,9 +146,7 @@ export function CourseSelector({
           }}
           className={cn(
             "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-            mode === "select"
-              ? "bg-green-600 text-white"
-              : "bg-gray-100 text-gray-600"
+            mode === "select" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"
           )}
         >
           登録済み
@@ -163,9 +162,7 @@ export function CourseSelector({
           }}
           className={cn(
             "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-            mode === "manual"
-              ? "bg-green-600 text-white"
-              : "bg-gray-100 text-gray-600"
+            mode === "manual" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600"
           )}
         >
           手動入力
@@ -176,13 +173,9 @@ export function CourseSelector({
         <div>
           <Label className="text-xs text-gray-500">コース</Label>
           {isLoading ? (
-            <div className="h-9 flex items-center text-sm text-gray-400">
-              読み込み中...
-            </div>
+            <div className="h-9 flex items-center text-sm text-gray-400">読み込み中...</div>
           ) : courses.length === 0 ? (
-            <div className="text-sm text-gray-400">
-              登録済みコースがありません
-            </div>
+            <div className="text-sm text-gray-400">登録済みコースがありません</div>
           ) : (
             <div ref={containerRef} className="relative">
               {/* 選択済み表示 or 検索ボックス */}
@@ -198,7 +191,11 @@ export function CourseSelector({
                     {selectedCourse.name}
                     {selectedCourse.pref ? ` (${selectedCourse.pref})` : ""}
                   </span>
-                  <button type="button" onClick={handleClear} className="ml-2 text-gray-400 hover:text-gray-600">
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="ml-2 text-gray-400 hover:text-gray-600"
+                  >
                     <X className="h-4 w-4" />
                   </button>
                 </div>

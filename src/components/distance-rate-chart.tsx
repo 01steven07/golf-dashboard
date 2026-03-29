@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 export interface DistanceRateData {
   label: string;
@@ -21,11 +14,7 @@ interface DistanceRateChartProps {
   color?: string;
 }
 
-export function DistanceRateChart({
-  data,
-  title,
-  color = "#22c55e",
-}: DistanceRateChartProps) {
+export function DistanceRateChart({ data, title, color = "#22c55e" }: DistanceRateChartProps) {
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
@@ -46,18 +35,8 @@ export function DistanceRateChart({
               tick={{ fontSize: 11 }}
               tickFormatter={(v: number) => `${v}%`}
             />
-            <YAxis
-              type="category"
-              dataKey="label"
-              width={70}
-              tick={{ fontSize: 11 }}
-            />
-            <Tooltip
-              formatter={(value) => [
-                `${Number(value).toFixed(1)}%`,
-                "成功率",
-              ]}
-            />
+            <YAxis type="category" dataKey="label" width={70} tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(value) => [`${Number(value).toFixed(1)}%`, "成功率"]} />
             <Bar dataKey="rate" fill={color} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>

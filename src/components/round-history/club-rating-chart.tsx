@@ -16,12 +16,20 @@ interface CategoryRating {
 }
 
 const CLUB_CATEGORIES: { category: string; clubs: Club[]; color: string }[] = [
-  { category: "ドライバー", clubs: ["1W"], color: "#f87171" },         // red-400
-  { category: "ウッド", clubs: ["3W", "5W", "7W"], color: "#fb923c" },  // orange-400
+  { category: "ドライバー", clubs: ["1W"], color: "#f87171" }, // red-400
+  { category: "ウッド", clubs: ["3W", "5W", "7W"], color: "#fb923c" }, // orange-400
   { category: "UT", clubs: ["UT2", "UT3", "UT4", "UT5", "UT6", "UT7"], color: "#fbbf24" }, // amber-400
-  { category: "アイアン", clubs: ["2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW"], color: "#34d399" }, // emerald-400
-  { category: "ウェッジ", clubs: ["46", "48", "50", "52", "54", "56", "58", "60"], color: "#38bdf8" }, // sky-400
-  { category: "パター", clubs: ["PT"], color: "#c084fc" },             // purple-400
+  {
+    category: "アイアン",
+    clubs: ["2I", "3I", "4I", "5I", "6I", "7I", "8I", "9I", "PW"],
+    color: "#34d399",
+  }, // emerald-400
+  {
+    category: "ウェッジ",
+    clubs: ["46", "48", "50", "52", "54", "56", "58", "60"],
+    color: "#38bdf8",
+  }, // sky-400
+  { category: "パター", clubs: ["PT"], color: "#c084fc" }, // purple-400
 ];
 
 function getRatingLabel(rating: number): string {
@@ -50,7 +58,12 @@ function RatingBarChart({ data }: { data: CategoryRating[] }) {
   const totalHeight = data.length * (barHeight + gap) - gap + 4;
 
   return (
-    <svg width="100%" height={totalHeight} viewBox={`0 0 ${totalWidth} ${totalHeight}`} preserveAspectRatio="xMinYMin meet">
+    <svg
+      width="100%"
+      height={totalHeight}
+      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+      preserveAspectRatio="xMinYMin meet"
+    >
       {/* Grid lines at 1,2,3,4,5 */}
       {[1, 2, 3, 4, 5].map((v) => {
         const x = labelWidth + (v / 5) * chartWidth;
@@ -68,7 +81,14 @@ function RatingBarChart({ data }: { data: CategoryRating[] }) {
         );
       })}
       {/* Baseline */}
-      <line x1={labelWidth} y1={0} x2={labelWidth} y2={totalHeight} stroke="#d1d5db" strokeWidth={0.5} />
+      <line
+        x1={labelWidth}
+        y1={0}
+        x2={labelWidth}
+        y2={totalHeight}
+        stroke="#d1d5db"
+        strokeWidth={0.5}
+      />
 
       {data.map((d, i) => {
         const y = i * (barHeight + gap);
@@ -165,7 +185,9 @@ export function ClubRatingChart({ scores }: ClubRatingChartProps) {
   return (
     <div className="space-y-3">
       {/* Overall badge */}
-      <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${getRatingBgColor(overallAvg)}`}>
+      <div
+        className={`flex items-center justify-between px-3 py-2 rounded-lg border ${getRatingBgColor(overallAvg)}`}
+      >
         <span className="text-xs font-medium">総合評価</span>
         <div className="flex items-center gap-1.5">
           <span className="text-lg font-bold">{overallAvg.toFixed(1)}</span>
@@ -182,10 +204,7 @@ export function ClubRatingChart({ scores }: ClubRatingChartProps) {
       {/* Shot counts */}
       <div className="flex flex-wrap gap-2">
         {categoryRatings.map((cr) => (
-          <span
-            key={cr.category}
-            className="text-[10px] text-muted-foreground"
-          >
+          <span key={cr.category} className="text-[10px] text-muted-foreground">
             {cr.category}: {cr.count}打
           </span>
         ))}

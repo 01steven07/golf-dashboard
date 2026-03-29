@@ -30,25 +30,18 @@ export function CompactBarList({
       ? (v: number) => `${v.toFixed(1)}%`
       : (v: number) => (v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2)));
 
-  const maxAbs =
-    mode === "value"
-      ? Math.max(...items.map((d) => Math.abs(d.value)), 0.01)
-      : 100;
+  const maxAbs = mode === "value" ? Math.max(...items.map((d) => Math.abs(d.value)), 0.01) : 100;
 
   return (
     <div>
-      <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-        {title}
-      </h4>
+      <h4 className="text-sm font-semibold text-muted-foreground mb-2">{title}</h4>
       <div className="space-y-2">
         {items.map((item) => (
           <div key={item.label} className="space-y-0.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">{item.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground/60 text-[10px]">
-                  n={item.count}
-                </span>
+                <span className="text-muted-foreground/60 text-[10px]">n={item.count}</span>
                 <span
                   className="font-semibold tabular-nums"
                   style={{
@@ -62,7 +55,7 @@ export function CompactBarList({
                         : undefined,
                   }}
                 >
-                  {format(mode === "rate" ? item.value ?? item.count : item.value)}
+                  {format(mode === "rate" ? (item.value ?? item.count) : item.value)}
                 </span>
               </div>
             </div>
@@ -86,11 +79,8 @@ export function CompactBarList({
                         className="absolute right-0 top-0 h-full rounded-l-full"
                         style={{
                           width:
-                            item.value === 0
-                              ? "2px"
-                              : `${(Math.abs(item.value) / maxAbs) * 100}%`,
-                          backgroundColor:
-                            item.value === 0 ? "var(--muted-foreground)" : "#22c55e",
+                            item.value === 0 ? "2px" : `${(Math.abs(item.value) / maxAbs) * 100}%`,
+                          backgroundColor: item.value === 0 ? "var(--muted-foreground)" : "#22c55e",
                           opacity: item.value === 0 ? 0.3 : 0.8,
                         }}
                       />
@@ -103,11 +93,8 @@ export function CompactBarList({
                         className="absolute left-0 top-0 h-full rounded-r-full"
                         style={{
                           width:
-                            item.value === 0
-                              ? "2px"
-                              : `${(Math.abs(item.value) / maxAbs) * 100}%`,
-                          backgroundColor:
-                            item.value === 0 ? "var(--muted-foreground)" : "#ef4444",
+                            item.value === 0 ? "2px" : `${(Math.abs(item.value) / maxAbs) * 100}%`,
+                          backgroundColor: item.value === 0 ? "var(--muted-foreground)" : "#ef4444",
                           opacity: item.value === 0 ? 0.3 : 0.8,
                         }}
                       />

@@ -16,19 +16,13 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Fetch members error:", error);
-      return NextResponse.json(
-        { error: "部員一覧の取得に失敗しました" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "部員一覧の取得に失敗しました" }, { status: 500 });
     }
 
     return NextResponse.json({ members });
   } catch (error) {
     console.error("Fetch members error:", error);
-    return NextResponse.json(
-      { error: "部員一覧の取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "部員一覧の取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -41,31 +35,19 @@ export async function DELETE(request: NextRequest) {
     const { memberId } = await request.json();
 
     if (!memberId) {
-      return NextResponse.json(
-        { error: "memberId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "memberId is required" }, { status: 400 });
     }
 
-    const { error } = await supabase
-      .from("members")
-      .delete()
-      .eq("id", memberId);
+    const { error } = await supabase.from("members").delete().eq("id", memberId);
 
     if (error) {
       console.error("Delete member error:", error);
-      return NextResponse.json(
-        { error: "部員の削除に失敗しました" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "部員の削除に失敗しました" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete member error:", error);
-    return NextResponse.json(
-      { error: "部員の削除に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "部員の削除に失敗しました" }, { status: 500 });
   }
 }

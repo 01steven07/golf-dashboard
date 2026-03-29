@@ -69,9 +69,7 @@ export default function AdminMembersPage() {
         return;
       }
 
-      setMembers((prev) =>
-        prev.map((m) => (m.id === member.id ? { ...m, role: newRole } : m))
-      );
+      setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, role: newRole } : m)));
     } catch {
       alert("権限の変更に失敗しました");
     }
@@ -122,29 +120,21 @@ export default function AdminMembersPage() {
           </Link>
           <div>
             <h2 className="text-2xl font-bold">部員管理</h2>
-            <p className="text-sm text-muted-foreground">
-              部員の一覧・権限管理・削除
-            </p>
+            <p className="text-sm text-muted-foreground">部員の一覧・権限管理・削除</p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">
-              部員一覧（{members.length}名）
-            </CardTitle>
+            <CardTitle className="text-lg">部員一覧（{members.length}名）</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-muted-foreground text-center py-8">
-                読み込み中...
-              </p>
+              <p className="text-muted-foreground text-center py-8">読み込み中...</p>
             ) : error ? (
               <p className="text-destructive text-center py-8">{error}</p>
             ) : members.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                部員がいません
-              </p>
+              <p className="text-muted-foreground text-center py-8">部員がいません</p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -153,9 +143,7 @@ export default function AdminMembersPage() {
                       <TableHead>名前</TableHead>
                       <TableHead className="w-[60px]">学年</TableHead>
                       <TableHead className="w-[80px]">権限</TableHead>
-                      <TableHead className="w-[120px] text-right">
-                        操作
-                      </TableHead>
+                      <TableHead className="w-[120px] text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -171,13 +159,7 @@ export default function AdminMembersPage() {
                         </TableCell>
                         <TableCell>{gradeLabel(member.grade)}</TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              member.role === "admin"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
+                          <Badge variant={member.role === "admin" ? "default" : "secondary"}>
                             {member.role === "admin" ? "管理者" : "部員"}
                           </Badge>
                         </TableCell>
@@ -191,11 +173,7 @@ export default function AdminMembersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              title={
-                                member.role === "admin"
-                                  ? "管理者権限を解除"
-                                  : "管理者に変更"
-                              }
+                              title={member.role === "admin" ? "管理者権限を解除" : "管理者に変更"}
                               onClick={() => handleToggleRole(member)}
                             >
                               {member.role === "admin" ? (
@@ -225,9 +203,13 @@ export default function AdminMembersPage() {
         </Card>
         <ConfirmDialog
           open={pendingDelete !== null}
-          onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+          onOpenChange={(open) => {
+            if (!open) setPendingDelete(null);
+          }}
           title="部員を削除しますか？"
-          description={pendingDelete ? `${pendingDelete.name} を削除します。この操作は取り消せません。` : ""}
+          description={
+            pendingDelete ? `${pendingDelete.name} を削除します。この操作は取り消せません。` : ""
+          }
           confirmLabel="削除する"
           variant="destructive"
           onConfirm={executeDelete}

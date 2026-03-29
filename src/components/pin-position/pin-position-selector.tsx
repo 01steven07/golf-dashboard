@@ -22,11 +22,7 @@ const positions: { id: PinPosition; label: string }[] = [
   { id: "front-right", label: "手前右" },
 ];
 
-export function PinPositionSelector({
-  value,
-  onChange,
-  size = "md",
-}: PinPositionSelectorProps) {
+export function PinPositionSelector({ value, onChange, size = "md" }: PinPositionSelectorProps) {
   const handleClick = (pos: PinPosition) => {
     onChange(value === pos ? null : pos);
   };
@@ -36,8 +32,7 @@ export function PinPositionSelector({
   return (
     <div className="flex flex-col items-center gap-0.5">
       <div className="text-[10px] text-gray-400 flex items-center gap-1">
-        <Flag className="w-3 h-3" />
-        奥
+        <Flag className="w-3 h-3" />奥
       </div>
       <div className="grid grid-cols-3 gap-0.5 w-full max-w-[240px]">
         {positions.map((pos) => {

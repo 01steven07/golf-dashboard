@@ -32,27 +32,19 @@ export function ScoreSummaryBar({
       {sectionScores.map((section) => (
         <div key={section.name}>
           <div className="text-xs text-gray-500">{section.name}</div>
-          <div className="font-bold text-green-700">
-            {section.score || "-"}
-          </div>
+          <div className="font-bold text-green-700">{section.score || "-"}</div>
         </div>
       ))}
       <div>
         <div className="text-xs text-gray-500">TOTAL</div>
-        <div className="font-bold text-lg text-green-800">
-          {totalScore || "-"}
-        </div>
+        <div className="font-bold text-lg text-green-800">{totalScore || "-"}</div>
       </div>
       <div>
         <div className="text-xs text-gray-500">±Par</div>
         <div
           className={cn(
             "font-bold",
-            diff > 0
-              ? "text-red-600"
-              : diff < 0
-                ? "text-blue-600"
-                : "text-gray-600"
+            diff > 0 ? "text-red-600" : diff < 0 ? "text-blue-600" : "text-gray-600"
           )}
         >
           {totalScore ? (diff > 0 ? `+${diff}` : diff) : "-"}
@@ -60,9 +52,7 @@ export function ScoreSummaryBar({
       </div>
       <div>
         <div className="text-xs text-gray-500">Putt</div>
-        <div className="font-bold text-purple-700">
-          {totalPutts || "-"}
-        </div>
+        <div className="font-bold text-purple-700">{totalPutts || "-"}</div>
       </div>
     </div>
   );

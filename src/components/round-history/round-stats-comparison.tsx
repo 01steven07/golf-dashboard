@@ -93,10 +93,7 @@ function getRankColor(rank: number, total: number): string {
   return "text-red-700 bg-red-100";
 }
 
-function buildStatRows(
-  stats: SingleRoundStats,
-  compare: ComparisonResult | null
-): StatRow[] {
+function buildStatRows(stats: SingleRoundStats, compare: ComparisonResult | null): StatRow[] {
   const c = compare?.avg ?? null;
   const r = compare?.rankings ?? null;
   const row = (
@@ -120,21 +117,77 @@ function buildStatRows(
     row("スコア", "avg_score", stats.totalScore, "avg_score", "score", true),
     row("パット", "avg_putts", stats.totalPutts, "avg_putts", "strokes", true),
     row("グリーンオン率", "gir_rate", stats.girRate, "gir_rate", "percent", false),
-    row("FWキープ率", "fairway_keep_rate", stats.fairwayKeepRate, "fairway_keep_rate", "percent", false),
+    row(
+      "FWキープ率",
+      "fairway_keep_rate",
+      stats.fairwayKeepRate,
+      "fairway_keep_rate",
+      "percent",
+      false
+    ),
     row("リカバリー率", "scramble_rate", stats.scrambleRate, "scramble_rate", "percent", false),
     row("バーディー数", "birdie_count", stats.birdieCount, "birdie_count", "count", false),
     row("OB数", "ob_count", stats.obCount, "ob_count", "count", true),
     row("Par3平均", "par3_avg", stats.par3Avg, "par3_avg", "strokes", true),
     row("Par4平均", "par4_avg", stats.par4Avg, "par4_avg", "strokes", true),
     row("Par5平均", "par5_avg", stats.par5Avg, "par5_avg", "strokes", true),
-    row("ボギー回避率", "bogey_avoidance", stats.bogeyAvoidance, "bogey_avoidance", "percent", false),
-    row("ダボ回避率", "double_bogey_avoidance", stats.doubleBogeyAvoidance, "double_bogey_avoidance", "percent", false),
-    row("バウンスバック率", "bounce_back_rate", stats.bounceBackRate, "bounce_back_rate", "percent", false),
-    row("グリーンオン時パット", "putts_per_gir", stats.puttsPerGir, "putts_per_gir", "strokes", true),
-    row("3パット回避率", "three_putt_avoidance", stats.threePuttAvoidance, "three_putt_avoidance", "percent", false),
+    row(
+      "ボギー回避率",
+      "bogey_avoidance",
+      stats.bogeyAvoidance,
+      "bogey_avoidance",
+      "percent",
+      false
+    ),
+    row(
+      "ダボ回避率",
+      "double_bogey_avoidance",
+      stats.doubleBogeyAvoidance,
+      "double_bogey_avoidance",
+      "percent",
+      false
+    ),
+    row(
+      "バウンスバック率",
+      "bounce_back_rate",
+      stats.bounceBackRate,
+      "bounce_back_rate",
+      "percent",
+      false
+    ),
+    row(
+      "グリーンオン時パット",
+      "putts_per_gir",
+      stats.puttsPerGir,
+      "putts_per_gir",
+      "strokes",
+      true
+    ),
+    row(
+      "3パット回避率",
+      "three_putt_avoidance",
+      stats.threePuttAvoidance,
+      "three_putt_avoidance",
+      "percent",
+      false
+    ),
     row("1パット率", "one_putt_rate", stats.onePuttRate, "one_putt_rate", "percent", false),
-    row("FWからグリーンオン", "gir_from_fairway", stats.girFromFairway, "gir_from_fairway", "percent", false),
-    row("ラフからグリーンオン", "gir_from_rough", stats.girFromRough, "gir_from_rough", "percent", false),
+    row(
+      "FWからグリーンオン",
+      "gir_from_fairway",
+      stats.girFromFairway,
+      "gir_from_fairway",
+      "percent",
+      false
+    ),
+    row(
+      "ラフからグリーンオン",
+      "gir_from_rough",
+      stats.girFromRough,
+      "gir_from_rough",
+      "percent",
+      false
+    ),
   ];
 }
 
@@ -182,11 +235,12 @@ export function RoundStatsComparison({ roundId, scores }: RoundStatsComparisonPr
               onClick={() => available && setMode(m.key)}
               disabled={!available && !isLoading}
               className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all
-                ${isActive
-                  ? "bg-white shadow-sm text-foreground"
-                  : available
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-muted-foreground/40 cursor-not-allowed"
+                ${
+                  isActive
+                    ? "bg-white shadow-sm text-foreground"
+                    : available
+                      ? "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/40 cursor-not-allowed"
                 }`}
             >
               {m.label}
@@ -231,9 +285,7 @@ export function RoundStatsComparison({ roundId, scores }: RoundStatsComparisonPr
                   key={row.statKey}
                   className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/30"
                 >
-                  <span className="text-xs text-muted-foreground w-24 shrink-0">
-                    {row.label}
-                  </span>
+                  <span className="text-xs text-muted-foreground w-24 shrink-0">{row.label}</span>
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold w-12 text-right">
                       {formatVal(row.value, row.format)}
@@ -259,7 +311,8 @@ export function RoundStatsComparison({ roundId, scores }: RoundStatsComparisonPr
                       <span
                         className={`text-[10px] font-bold px-1 py-0.5 rounded w-14 text-center ${getRankColor(row.rank.rank, row.rank.total)}`}
                       >
-                        {row.rank.rank}/{row.rank.total}{currentModeLabel?.rankLabel === "人中" ? "人" : "R"}
+                        {row.rank.rank}/{row.rank.total}
+                        {currentModeLabel?.rankLabel === "人中" ? "人" : "R"}
                       </span>
                     ) : (
                       <span className="w-14 text-center text-[10px] text-muted-foreground">-</span>

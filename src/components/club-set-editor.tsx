@@ -71,7 +71,20 @@ const CLUB_CATEGORIES: ClubCategory[] = [
 
 // Standard 14-club preset
 const STANDARD_PRESET: ClubType[] = [
-  "1W", "3W", "5W", "UT5", "5I", "6I", "7I", "8I", "9I", "PW", "50", "54", "58", "PT"
+  "1W",
+  "3W",
+  "5W",
+  "UT5",
+  "5I",
+  "6I",
+  "7I",
+  "8I",
+  "9I",
+  "PW",
+  "50",
+  "54",
+  "58",
+  "PT",
 ];
 
 export function ClubSetEditor({ value, onChange, disabled }: ClubSetEditorProps) {
@@ -139,11 +152,7 @@ export function ClubSetEditor({ value, onChange, disabled }: ClubSetEditorProps)
       {/* 選択数表示 */}
       <div className="text-sm text-muted-foreground">
         選択中: <span className="font-bold text-foreground">{value.length}本</span>
-        {value.length > 14 && (
-          <span className="text-orange-500 ml-2">
-            (ルール上限は14本です)
-          </span>
-        )}
+        {value.length > 14 && <span className="text-orange-500 ml-2">(ルール上限は14本です)</span>}
       </div>
     </div>
   );

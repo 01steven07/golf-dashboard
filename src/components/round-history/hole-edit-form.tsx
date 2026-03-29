@@ -60,17 +60,29 @@ const FW_OPTIONS: { value: FairwayResult; label: string }[] = [
 function getShotSummary(shot: Shot): string {
   if (shot.type === "tee") {
     const resultLabels: Record<string, string> = {
-      fairway: "FW", rough: "ラフ", bunker: "バンカー", ob: "OB", penalty: "ペナ",
+      fairway: "FW",
+      rough: "ラフ",
+      bunker: "バンカー",
+      ob: "OB",
+      penalty: "ペナ",
     };
     return `${shot.club} → ${resultLabels[shot.result] ?? shot.result}`;
   }
   if (shot.type === "approach") {
-    const cat = shot.result.startsWith("on-") ? "ON" : shot.result.startsWith("miss-") ? "外し" : shot.result;
+    const cat = shot.result.startsWith("on-")
+      ? "ON"
+      : shot.result.startsWith("miss-")
+        ? "外し"
+        : shot.result;
     return `${shot.club} ${shot.distance}yd → ${cat}`;
   }
   if (shot.note === "OK") return "OKパット";
   const puttLabels: Record<string, string> = {
-    in: "IN", front: "ショート", back: "オーバー", left: "左", right: "右",
+    in: "IN",
+    front: "ショート",
+    back: "オーバー",
+    left: "左",
+    right: "右",
   };
   return `${shot.distance}m → ${puttLabels[shot.result] ?? shot.result}`;
 }
@@ -112,9 +124,15 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
   const addShot = (type: "tee" | "approach" | "putt") => {
     let newShot: Shot;
     switch (type) {
-      case "tee": newShot = createDefaultTeeShot(); break;
-      case "approach": newShot = createDefaultApproachShot(); break;
-      case "putt": newShot = createDefaultPutt(); break;
+      case "tee":
+        newShot = createDefaultTeeShot();
+        break;
+      case "approach":
+        newShot = createDefaultApproachShot();
+        break;
+      case "putt":
+        newShot = createDefaultPutt();
+        break;
     }
     setShots((prev) => [...prev, newShot]);
     setExpandedShot(shots.length);
@@ -324,23 +342,28 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
             if (shot.type === "putt") puttNum++;
 
             const isExpanded = expandedShot === index;
-            const icon = shot.type === "tee"
-              ? <Flag className="w-3.5 h-3.5 text-green-600 shrink-0" />
-              : shot.type === "approach"
-                ? <Target className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                : <Circle className="w-3.5 h-3.5 text-purple-600 shrink-0" />;
+            const icon =
+              shot.type === "tee" ? (
+                <Flag className="w-3.5 h-3.5 text-green-600 shrink-0" />
+              ) : shot.type === "approach" ? (
+                <Target className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              ) : (
+                <Circle className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+              );
 
-            const borderColor = shot.type === "tee"
-              ? "border-green-200"
-              : shot.type === "approach"
-                ? "border-blue-200"
-                : "border-purple-200";
+            const borderColor =
+              shot.type === "tee"
+                ? "border-green-200"
+                : shot.type === "approach"
+                  ? "border-blue-200"
+                  : "border-purple-200";
 
-            const bgColor = shot.type === "tee"
-              ? "bg-green-50"
-              : shot.type === "approach"
-                ? "bg-blue-50"
-                : "bg-purple-50";
+            const bgColor =
+              shot.type === "tee"
+                ? "bg-green-50"
+                : shot.type === "approach"
+                  ? "bg-blue-50"
+                  : "bg-purple-50";
 
             return (
               <Card key={index} className={`border ${borderColor} overflow-hidden`}>
@@ -349,7 +372,11 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
                   onClick={() => setExpandedShot(isExpanded ? null : index)}
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
-                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-500 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-500 shrink-0" />}
+                    {isExpanded ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                    )}
                     {icon}
                     <span className="text-xs font-medium truncate">
                       {index + 1}. {getShotSummary(shot)}
@@ -357,9 +384,38 @@ export function HoleEditForm({ score, onSave, onCancel }: HoleEditFormProps) {
                   </div>
                   {isExpanded && (
                     <div className="flex items-center gap-0.5 shrink-0">
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "up"); }} disabled={index === 0} className="p-0.5 text-gray-500 hover:bg-white/50 rounded disabled:opacity-30"><ArrowUp className="w-3.5 h-3.5" /></button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveShot(index, "down"); }} disabled={index === shots.length - 1} className="p-0.5 text-gray-500 hover:bg-white/50 rounded disabled:opacity-30"><ArrowDown className="w-3.5 h-3.5" /></button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); removeShot(index); }} className="p-0.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveShot(index, "up");
+                        }}
+                        disabled={index === 0}
+                        className="p-0.5 text-gray-500 hover:bg-white/50 rounded disabled:opacity-30"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveShot(index, "down");
+                        }}
+                        disabled={index === shots.length - 1}
+                        className="p-0.5 text-gray-500 hover:bg-white/50 rounded disabled:opacity-30"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeShot(index);
+                        }}
+                        className="p-0.5 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   )}
                 </div>

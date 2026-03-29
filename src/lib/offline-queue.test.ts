@@ -129,9 +129,7 @@ describe("offline-queue: isNetworkError", () => {
   });
 
   it('TypeError("NetworkError when attempting...") → true', () => {
-    expect(isNetworkError(new TypeError("NetworkError when attempting to fetch"))).toBe(
-      true,
-    );
+    expect(isNetworkError(new TypeError("NetworkError when attempting to fetch"))).toBe(true);
   });
 
   it('TypeError("Network request failed") → true', () => {

@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Pencil, Eye, PlusCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { useAuth } from "@/contexts/auth-context";
 import { supabase } from "@/lib/supabase";
-import { authFetch } from "@/lib/api-client";
-import { Score, FairwayResult } from "@/types/database";
-import { Shot } from "@/types/shot";
+import { Score } from "@/types/database";
 import { calculateRoundSummary, formatRoundDate } from "@/utils/round-stats";
 import { parseShots } from "@/utils/course-stats";
 import { fetchSectionLabelsFromIds } from "@/utils/fetch-section-labels";
@@ -22,8 +20,6 @@ import { ScorecardTable } from "@/components/round-history/scorecard-table";
 import { ScoreDistributionChart } from "@/components/round-history/score-distribution-chart";
 import { HoleSelector } from "@/components/round-history/hole-selector";
 import { HoleDetailCard } from "@/components/round-history/hole-detail-card";
-import { HoleEditForm } from "@/components/round-history/hole-edit-form";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ClubRatingChart } from "@/components/round-history/club-rating-chart";
 import { RoundStatsComparison } from "@/components/round-history/round-stats-comparison";
 import { RoundAdviceButton } from "@/components/round-history/round-advice-button";
@@ -97,19 +93,7 @@ function RoundDetailContent() {
   const [sectionLabels, setSectionLabels] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedHole, setSelectedHole] = useState(1);
-  const [pendingSaveData, setPendingSaveData] = useState<{
-    score_id: string;
-    score: number;
-    putts: number;
-    fairway_result: FairwayResult;
-    ob: number;
-    bunker: number;
-    penalty: number;
-    pin_position: string | null;
-    shots_detail: Shot[] | null;
-  } | null>(null);
 
   useEffect(() => {
     if (!member || !roundId) return;
@@ -132,7 +116,12 @@ function RoundDetailContent() {
         }
         if (!cancelled) {
           setSectionLabels(
-            resolvedLabels ?? getFallbackSectionLabels(data.out_course_name, data.in_course_name, data.ext_course_labels)
+            resolvedLabels ??
+              getFallbackSectionLabels(
+                data.out_course_name,
+                data.in_course_name,
+                data.ext_course_labels
+              )
           );
         }
       })
@@ -144,56 +133,10 @@ function RoundDetailContent() {
         }
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [member, roundId]);
-
-  const refreshRound = async () => {
-    if (!member || !roundId) return;
-    try {
-      const data = await fetchRoundData(roundId, member.id);
-      setRound(data);
-    } catch (err) {
-      console.error("Failed to refresh round:", err);
-    }
-  };
-
-  const handleSaveHole = async (data: {
-    score_id: string;
-    score: number;
-    putts: number;
-    fairway_result: FairwayResult;
-    ob: number;
-    bunker: number;
-    penalty: number;
-    pin_position: string | null;
-    shots_detail: Shot[] | null;
-  }) => {
-    setPendingSaveData(data);
-  };
-
-  const executeSaveHole = async () => {
-    if (!pendingSaveData) return;
-    const data = pendingSaveData;
-    setPendingSaveData(null);
-
-    try {
-      const res = await authFetch(`/api/rounds/${roundId}/scores`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "保存に失敗しました");
-      }
-
-      await refreshRound();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "保存に失敗しました";
-      alert(message);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -214,9 +157,7 @@ function RoundDetailContent() {
           ラウンド履歴
         </Link>
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            {error}
-          </CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{error}</CardContent>
         </Card>
       </div>
     );
@@ -230,7 +171,8 @@ function RoundDetailContent() {
 
   // 平均星評価を算出
   const avgRating = (() => {
-    let total = 0, count = 0;
+    let total = 0,
+      count = 0;
     for (const s of scores) {
       for (const shot of parseShots(s.shots_detail)) {
         total += shot.rating;
@@ -240,9 +182,7 @@ function RoundDetailContent() {
     return count > 0 ? total / count : null;
   })();
   const selectedScore = scores.find((s) => s.hole_number === selectedHole);
-  const maxHoleNumber = scores.length > 0
-    ? Math.max(...scores.map((s) => s.hole_number))
-    : 0;
+  const maxHoleNumber = scores.length > 0 ? Math.max(...scores.map((s) => s.hole_number)) : 0;
   const canAddHalf = maxHoleNumber > 0 && maxHoleNumber % 9 === 0 && maxHoleNumber + 9 <= 36;
 
   return (
@@ -261,9 +201,7 @@ function RoundDetailContent() {
         <div>
           <h2 className="text-xl font-bold">{courseName}</h2>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-sm text-muted-foreground">
-              {formatRoundDate(round.date)}
-            </span>
+            <span className="text-sm text-muted-foreground">{formatRoundDate(round.date)}</span>
             {round.tee_color && (
               <Badge variant="outline" className="text-xs">
                 {round.tee_color}
@@ -275,43 +213,25 @@ function RoundDetailContent() {
               </Badge>
             )}
             {sectionLabels && sectionLabels.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {sectionLabels.join(" / ")}
-              </span>
+              <span className="text-xs text-muted-foreground">{sectionLabels.join(" / ")}</span>
             )}
           </div>
         </div>
 
         <div className="flex gap-2">
-          {canAddHalf && !isEditMode && (
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
+          {canAddHalf && (
+            <Button variant="outline" size="sm" asChild>
               <Link href={`/input/detailed?addToRound=${roundId}`}>
                 <PlusCircle className="w-4 h-4 mr-1" />
                 ハーフ追加
               </Link>
             </Button>
           )}
-          <Button
-            variant={isEditMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsEditMode((prev) => !prev)}
-            className={isEditMode ? "bg-green-600 hover:bg-green-700" : ""}
-          >
-            {isEditMode ? (
-              <>
-                <Eye className="w-4 h-4 mr-1" />
-                閲覧モード
-              </>
-            ) : (
-              <>
-                <Pencil className="w-4 h-4 mr-1" />
-                編集
-              </>
-            )}
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/input/detailed?editRound=${roundId}`}>
+              <Pencil className="w-4 h-4 mr-1" />
+              編集
+            </Link>
           </Button>
         </div>
       </div>
@@ -325,41 +245,23 @@ function RoundDetailContent() {
           <CardTitle>スコアカード</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScorecardTable scores={scores} extCourseLabels={round.ext_course_labels} sectionLabels={sectionLabels ?? undefined} />
+          <ScorecardTable
+            scores={scores}
+            extCourseLabels={round.ext_course_labels}
+            sectionLabels={sectionLabels ?? undefined}
+          />
         </CardContent>
       </Card>
 
       {/* Hole selector + detail */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            ホール詳細
-            {isEditMode && (
-              <Badge variant="secondary" className="ml-2 text-xs">
-                編集モード
-              </Badge>
-            )}
-          </CardTitle>
+          <CardTitle>ホール詳細</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <HoleSelector
-            scores={scores}
-            selectedHole={selectedHole}
-            onSelect={setSelectedHole}
-          />
+          <HoleSelector scores={scores} selectedHole={selectedHole} onSelect={setSelectedHole} />
 
-          {selectedScore && (
-            isEditMode ? (
-              <HoleEditForm
-                key={selectedScore.id}
-                score={selectedScore}
-                onSave={handleSaveHole}
-                onCancel={() => setIsEditMode(false)}
-              />
-            ) : (
-              <HoleDetailCard score={selectedScore} />
-            )
-          )}
+          {selectedScore && <HoleDetailCard score={selectedScore} />}
         </CardContent>
       </Card>
 
@@ -403,16 +305,6 @@ function RoundDetailContent() {
           <RoundAdviceButton roundId={roundId} />
         </CardContent>
       </Card>
-
-      <ConfirmDialog
-        open={pendingSaveData !== null}
-        onOpenChange={(open) => { if (!open) setPendingSaveData(null); }}
-        title="ホールデータを保存しますか？"
-        description="編集内容を保存します。"
-        confirmLabel="保存する"
-        variant="confirm"
-        onConfirm={executeSaveHole}
-      />
     </div>
   );
 }

@@ -91,9 +91,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
 
     for (const round of latestRounds) {
       // Sort scores by hole_number for bounce back calculation
-      const sortedScores = [...round.scores].sort(
-        (a, b) => a.hole_number - b.hole_number
-      );
+      const sortedScores = [...round.scores].sort((a, b) => a.hole_number - b.hole_number);
 
       // Per-round accumulators for 18H normalization
       let roundScore = 0;
@@ -162,10 +160,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
           if (score.fairway_result === "keep") {
             fairwayApproachHoles++;
             if (isGir) girFromFairwayCount++;
-          } else if (
-            score.fairway_result === "left" ||
-            score.fairway_result === "right"
-          ) {
+          } else if (score.fairway_result === "left" || score.fairway_result === "right") {
             roughApproachHoles++;
             if (isGir) girFromRoughCount++;
           }
@@ -186,9 +181,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
         // shots_detail dependent: サンドセーブ & 飛距離
         const shots = parseShots(score.shots_detail ?? null);
         if (shots.length > 0) {
-          const approachShots = shots.filter(
-            (s): s is ParsedApproachShot => s.type === "approach"
-          );
+          const approachShots = shots.filter((s): s is ParsedApproachShot => s.type === "approach");
 
           // Sand save
           const hasGreensideBunker = approachShots.some(
@@ -212,9 +205,7 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
           }
 
           // Putt make % by distance
-          const puttShots = shots.filter(
-            (s): s is ParsedPuttShot => s.type === "putt"
-          );
+          const puttShots = shots.filter((s): s is ParsedPuttShot => s.type === "putt");
           for (const putt of puttShots) {
             if (putt.distance <= 0) continue;
             for (const bucket of puttBuckets) {
@@ -260,67 +251,55 @@ export function calculateMemberStats(rounds: RoundData[]): MemberStats[] {
       avg_score: normalizedScoreSum / roundCount,
       avg_putts: normalizedPuttsSum / roundCount,
       gir_rate: totalHoles > 0 ? (girCount / totalHoles) * 100 : 0,
-      fairway_keep_rate:
-        fairwayHoles > 0 ? (fairwayKeepCount / fairwayHoles) * 100 : 0,
+      fairway_keep_rate: fairwayHoles > 0 ? (fairwayKeepCount / fairwayHoles) * 100 : 0,
       avg_birdies: normalizedBirdieSum / roundCount,
       scramble_rate:
-        scrambleOpportunities > 0
-          ? (scrambleSuccess / scrambleOpportunities) * 100
-          : 0,
+        scrambleOpportunities > 0 ? (scrambleSuccess / scrambleOpportunities) * 100 : 0,
       // Scoring
       par3_avg: par3Count > 0 ? par3Total / par3Count : 0,
       par4_avg: par4Count > 0 ? par4Total / par4Count : 0,
       par5_avg: par5Count > 0 ? par5Total / par5Count : 0,
       bounce_back_rate:
-        bounceBackOpportunities > 0
-          ? (bounceBackSuccess / bounceBackOpportunities) * 100
-          : 0,
-      bogey_avoidance:
-        totalHoles > 0
-          ? ((totalHoles - bogeyOrWorseCount) / totalHoles) * 100
-          : 0,
+        bounceBackOpportunities > 0 ? (bounceBackSuccess / bounceBackOpportunities) * 100 : 0,
+      bogey_avoidance: totalHoles > 0 ? ((totalHoles - bogeyOrWorseCount) / totalHoles) * 100 : 0,
       double_bogey_avoidance:
-        totalHoles > 0
-          ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100
-          : 0,
+        totalHoles > 0 ? ((totalHoles - doubleBogeyOrWorseCount) / totalHoles) * 100 : 0,
       // Putting
       putts_per_gir: girHolesForPutts > 0 ? puttsOnGir / girHolesForPutts : 0,
-      three_putt_avoidance:
-        totalHoles > 0
-          ? ((totalHoles - threePuttCount) / totalHoles) * 100
-          : 0,
-      one_putt_rate:
-        totalHoles > 0 ? (onePuttCount / totalHoles) * 100 : 0,
+      three_putt_avoidance: totalHoles > 0 ? ((totalHoles - threePuttCount) / totalHoles) * 100 : 0,
+      one_putt_rate: totalHoles > 0 ? (onePuttCount / totalHoles) * 100 : 0,
       // Shot
       gir_from_fairway:
-        fairwayApproachHoles > 0
-          ? (girFromFairwayCount / fairwayApproachHoles) * 100
-          : 0,
-      gir_from_rough:
-        roughApproachHoles > 0
-          ? (girFromRoughCount / roughApproachHoles) * 100
-          : 0,
+        fairwayApproachHoles > 0 ? (girFromFairwayCount / fairwayApproachHoles) * 100 : 0,
+      gir_from_rough: roughApproachHoles > 0 ? (girFromRoughCount / roughApproachHoles) * 100 : 0,
       sand_save_rate:
-        sandSaveOpportunities > 0
-          ? (sandSaveSuccess / sandSaveOpportunities) * 100
-          : null,
+        sandSaveOpportunities > 0 ? (sandSaveSuccess / sandSaveOpportunities) * 100 : null,
       avg_driving_distance:
-        drivingDistanceCount > 0
-          ? drivingDistanceTotal / drivingDistanceCount
-          : null,
+        drivingDistanceCount > 0 ? drivingDistanceTotal / drivingDistanceCount : null,
       // Putt distance stats
-      putt_make_1m: puttBuckets[0].attempts > 0 ? (puttBuckets[0].makes / puttBuckets[0].attempts) * 100 : null,
-      putt_make_1_2m: puttBuckets[1].attempts > 0 ? (puttBuckets[1].makes / puttBuckets[1].attempts) * 100 : null,
-      putt_make_2_5m: puttBuckets[2].attempts > 0 ? (puttBuckets[2].makes / puttBuckets[2].attempts) * 100 : null,
-      putt_make_5_10m: puttBuckets[3].attempts > 0 ? (puttBuckets[3].makes / puttBuckets[3].attempts) * 100 : null,
-      putt_make_10m_plus: puttBuckets[4].attempts > 0 ? (puttBuckets[4].makes / puttBuckets[4].attempts) * 100 : null,
+      putt_make_1m:
+        puttBuckets[0].attempts > 0 ? (puttBuckets[0].makes / puttBuckets[0].attempts) * 100 : null,
+      putt_make_1_2m:
+        puttBuckets[1].attempts > 0 ? (puttBuckets[1].makes / puttBuckets[1].attempts) * 100 : null,
+      putt_make_2_5m:
+        puttBuckets[2].attempts > 0 ? (puttBuckets[2].makes / puttBuckets[2].attempts) * 100 : null,
+      putt_make_5_10m:
+        puttBuckets[3].attempts > 0 ? (puttBuckets[3].makes / puttBuckets[3].attempts) * 100 : null,
+      putt_make_10m_plus:
+        puttBuckets[4].attempts > 0 ? (puttBuckets[4].makes / puttBuckets[4].attempts) * 100 : null,
       // GIR distance stats
-      gir_dist_100: girBuckets[0].attempts > 0 ? (girBuckets[0].greenOns / girBuckets[0].attempts) * 100 : null,
-      gir_dist_100_125: girBuckets[1].attempts > 0 ? (girBuckets[1].greenOns / girBuckets[1].attempts) * 100 : null,
-      gir_dist_125_150: girBuckets[2].attempts > 0 ? (girBuckets[2].greenOns / girBuckets[2].attempts) * 100 : null,
-      gir_dist_150_175: girBuckets[3].attempts > 0 ? (girBuckets[3].greenOns / girBuckets[3].attempts) * 100 : null,
-      gir_dist_175_200: girBuckets[4].attempts > 0 ? (girBuckets[4].greenOns / girBuckets[4].attempts) * 100 : null,
-      gir_dist_200_plus: girBuckets[5].attempts > 0 ? (girBuckets[5].greenOns / girBuckets[5].attempts) * 100 : null,
+      gir_dist_100:
+        girBuckets[0].attempts > 0 ? (girBuckets[0].greenOns / girBuckets[0].attempts) * 100 : null,
+      gir_dist_100_125:
+        girBuckets[1].attempts > 0 ? (girBuckets[1].greenOns / girBuckets[1].attempts) * 100 : null,
+      gir_dist_125_150:
+        girBuckets[2].attempts > 0 ? (girBuckets[2].greenOns / girBuckets[2].attempts) * 100 : null,
+      gir_dist_150_175:
+        girBuckets[3].attempts > 0 ? (girBuckets[3].greenOns / girBuckets[3].attempts) * 100 : null,
+      gir_dist_175_200:
+        girBuckets[4].attempts > 0 ? (girBuckets[4].greenOns / girBuckets[4].attempts) * 100 : null,
+      gir_dist_200_plus:
+        girBuckets[5].attempts > 0 ? (girBuckets[5].greenOns / girBuckets[5].attempts) * 100 : null,
     });
   }
 
@@ -360,10 +339,7 @@ export type RankingCategory =
   | "gir_dist_200_plus";
 
 /** MemberStatsからカテゴリに対応する数値を取得 */
-export function getStatNumericValue(
-  stat: MemberStats,
-  category: RankingCategory
-): number {
+export function getStatNumericValue(stat: MemberStats, category: RankingCategory): number {
   switch (category) {
     case "gross":
       return stat.avg_score;
@@ -449,15 +425,10 @@ function hasDetailData(stat: MemberStats, category: RankingCategory): boolean {
 /**
  * カテゴリに応じてソートされたランキングを返す
  */
-export function getRankedStats(
-  stats: MemberStats[],
-  category: RankingCategory
-): MemberStats[] {
+export function getRankedStats(stats: MemberStats[], category: RankingCategory): MemberStats[] {
   const def = getStatDefinition(category);
   // requiresDetail なカテゴリはデータがある部員のみ対象
-  const filtered = def?.requiresDetail
-    ? stats.filter((s) => hasDetailData(s, category))
-    : stats;
+  const filtered = def?.requiresDetail ? stats.filter((s) => hasDetailData(s, category)) : stats;
   const sorted = [...filtered];
 
   sorted.sort((a, b) => {
@@ -472,10 +443,7 @@ export function getRankedStats(
 /**
  * カテゴリに応じた値を取得
  */
-export function getStatValue(
-  stat: MemberStats,
-  category: RankingCategory
-): string {
+export function getStatValue(stat: MemberStats, category: RankingCategory): string {
   const def = getStatDefinition(category);
   if (!def) return "-";
   if (def.requiresDetail && !hasDetailData(stat, category)) return "-";
@@ -642,9 +610,7 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
       if (shots.length === 0) continue;
 
       // Sand save: approach shot from bunker near the green, then check if par or better
-      const approachShots = shots.filter(
-        (s): s is ParsedApproachShot => s.type === "approach"
-      );
+      const approachShots = shots.filter((s): s is ParsedApproachShot => s.type === "approach");
       const hasGreensideBunker = approachShots.some(
         (s) => (s.lie === "left-bunker" || s.lie === "right-bunker") && s.distance <= 50
       );
@@ -668,9 +634,7 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
       }
 
       // Putt make % by distance: each putt shot
-      const puttShots = shots.filter(
-        (s): s is ParsedPuttShot => s.type === "putt"
-      );
+      const puttShots = shots.filter((s): s is ParsedPuttShot => s.type === "putt");
       for (const putt of puttShots) {
         if (putt.distance <= 0) continue;
         for (const bucket of puttBuckets) {
@@ -877,12 +841,10 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     });
 
   return {
-    sand_save_rate: sandSaveOpportunities > 0
-      ? (sandSaveSuccess / sandSaveOpportunities) * 100
-      : null,
-    avg_driving_distance: drivingDistanceCount > 0
-      ? drivingDistanceTotal / drivingDistanceCount
-      : null,
+    sand_save_rate:
+      sandSaveOpportunities > 0 ? (sandSaveSuccess / sandSaveOpportunities) * 100 : null,
+    avg_driving_distance:
+      drivingDistanceCount > 0 ? drivingDistanceTotal / drivingDistanceCount : null,
     make_pct_by_distance: makePctByDistance,
     gir_by_distance: girByDistance,
     gir_by_lie: girByLie,
@@ -896,4 +858,3 @@ export function calculateDetailedStats(rounds: DetailedRoundData[]): DetailedMem
     avg_rating_putt: puttRatingCount > 0 ? puttRatingTotal / puttRatingCount : null,
   };
 }
-

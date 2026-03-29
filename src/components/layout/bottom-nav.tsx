@@ -21,16 +21,16 @@ export function BottomNav() {
   // 詳細入力ページでは専用フッターがあるため非表示
   if (pathname.startsWith("/input/detailed")) return null;
 
-  const filteredNavItems = navItems.filter(
-    (item) => !item.adminOnly || member?.role === "admin"
-  );
+  const filteredNavItems = navItems.filter((item) => !item.adminOnly || member?.role === "admin");
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50">
       <div className="flex items-center h-16">
         {filteredNavItems.map((item) => {
           const isActive =
-            item.href === "/" || item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            item.href === "/" || item.exact
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

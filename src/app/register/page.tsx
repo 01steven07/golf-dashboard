@@ -28,7 +28,20 @@ export default function RegisterPage() {
 
   // Step 2: Club set
   const [clubs, setClubs] = useState<ClubType[]>([
-    "1W", "3W", "5W", "UT5", "5I", "6I", "7I", "8I", "9I", "PW", "50", "54", "58", "PT"
+    "1W",
+    "3W",
+    "5W",
+    "UT5",
+    "5I",
+    "6I",
+    "7I",
+    "8I",
+    "9I",
+    "PW",
+    "50",
+    "54",
+    "58",
+    "PT",
   ]);
 
   // UI state
@@ -184,7 +197,11 @@ export default function RegisterPage() {
                     {[
                       { value: "black", label: "黒", color: "bg-gray-800 text-white" },
                       { value: "blue", label: "青", color: "bg-blue-500 text-white" },
-                      { value: "white", label: "白", color: "bg-white text-gray-800 border-2 border-gray-300" },
+                      {
+                        value: "white",
+                        label: "白",
+                        color: "bg-white text-gray-800 border-2 border-gray-300",
+                      },
                       { value: "red", label: "赤", color: "bg-red-500 text-white" },
                       { value: "green", label: "緑", color: "bg-green-500 text-white" },
                     ].map((tee) => (
@@ -246,21 +263,12 @@ export default function RegisterPage() {
 
             <div className="flex gap-2">
               {step === 2 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevStep}
-                  className="flex-1"
-                >
+                <Button type="button" variant="outline" onClick={handlePrevStep} className="flex-1">
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   戻る
                 </Button>
               )}
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="flex-1" disabled={isLoading}>
                 {step === 1 ? (
                   <>
                     次へ

@@ -6,31 +6,60 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  CourseFormData,
-  TeeFormData,
-  SubCourseFormData,
-  HoleFormData,
-} from "@/types/course";
+import { CourseFormData, TeeFormData, SubCourseFormData, HoleFormData } from "@/types/course";
 import { CourseHoleTable } from "./course-hole-table";
 import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api-client";
-import {
-  Plus,
-  Trash2,
-  Loader2,
-  Globe,
-  Save,
-} from "lucide-react";
+import { Plus, Trash2, Loader2, Globe, Save } from "lucide-react";
 
 const PREFS = [
-  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
-  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
-  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
-  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
-  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
-  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
-  "熊本県","大分県","宮崎県","鹿児島県","沖縄県",
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  "埼玉県",
+  "千葉県",
+  "東京都",
+  "神奈川県",
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県",
 ];
 
 function createDefaultHoles(count: number): HoleFormData[] {
@@ -156,10 +185,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
   const addTee = () => {
     handleFormDataChange({
       ...formData,
-      tees: [
-        ...formData.tees,
-        { name: "", color: "", sort_order: formData.tees.length },
-      ],
+      tees: [...formData.tees, { name: "", color: "", sort_order: formData.tees.length }],
     });
   };
 
@@ -190,11 +216,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
     });
   };
 
-  const updateSubCourse = (
-    index: number,
-    field: string,
-    value: string | number
-  ) => {
+  const updateSubCourse = (index: number, field: string, value: string | number) => {
     const updated = [...formData.sub_courses];
     if (field === "hole_count") {
       const newCount = Number(value);
@@ -274,10 +296,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
         ...formData,
         name: result.course_name || formData.name,
         pref: result.pref || formData.pref,
-        green_types:
-          result.green_types.length > 0
-            ? result.green_types
-            : formData.green_types,
+        green_types: result.green_types.length > 0 ? result.green_types : formData.green_types,
         tees:
           result.tees.length > 0
             ? result.tees.map((name: string, i: number) => ({
@@ -306,11 +325,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
                   sort_order: i,
                   holes: sc.holes.map((h) => ({
                     hole_number: h.hole_number,
-                    par: (h.par >= 3 && h.par <= 6 ? h.par : 4) as
-                      | 3
-                      | 4
-                      | 5
-                      | 6,
+                    par: (h.par >= 3 && h.par <= 6 ? h.par : 4) as 3 | 4 | 5 | 6,
                     handicap: h.handicap,
                     distances: h.distances || {},
                   })),
@@ -402,9 +417,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
           <div className="flex gap-2">
             <Input
               value={formData.source_url}
-              onChange={(e) =>
-                handleFormDataChange({ ...formData, source_url: e.target.value })
-              }
+              onChange={(e) => handleFormDataChange({ ...formData, source_url: e.target.value })}
               placeholder="ゴルフ場のコース紹介ページURL"
               className="flex-1"
             />
@@ -414,11 +427,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
               disabled={!formData.source_url || isScraping}
               variant="outline"
             >
-              {isScraping ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "取得"
-              )}
+              {isScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : "取得"}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -437,9 +446,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             <Label>コース名 *</Label>
             <Input
               value={formData.name}
-              onChange={(e) =>
-                handleFormDataChange({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => handleFormDataChange({ ...formData, name: e.target.value })}
               placeholder="○○ゴルフクラブ"
             />
           </div>
@@ -447,9 +454,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
             <Label>都道府県</Label>
             <select
               value={formData.pref}
-              onChange={(e) =>
-                handleFormDataChange({ ...formData, pref: e.target.value })
-              }
+              onChange={(e) => handleFormDataChange({ ...formData, pref: e.target.value })}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <option value="">選択してください</option>
@@ -528,12 +533,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
         <CardHeader>
           <CardTitle className="text-base flex items-center justify-between">
             コース構成
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addSubCourse}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={addSubCourse}>
               <Plus className="w-4 h-4 mr-1" />
               追加
             </Button>
@@ -554,9 +554,7 @@ export function CourseForm({ initialData, courseId }: CourseFormProps) {
                   <Input
                     type="number"
                     value={sc.hole_count}
-                    onChange={(e) =>
-                      updateSubCourse(i, "hole_count", e.target.value)
-                    }
+                    onChange={(e) => updateSubCourse(i, "hole_count", e.target.value)}
                     className="w-16"
                     min={1}
                     max={18}

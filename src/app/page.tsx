@@ -156,9 +156,7 @@ export default function DashboardPage() {
                             className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                           >
                             <div className="flex items-center gap-3">
-                              <Badge className={getRankBadgeColor(index + 1)}>
-                                {index + 1}
-                              </Badge>
+                              <Badge className={getRankBadgeColor(index + 1)}>{index + 1}</Badge>
                               <div>
                                 <p className="font-medium">{stat.member_name}</p>
                                 <p className="text-xs text-muted-foreground">
@@ -167,9 +165,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-bold">
-                                {getStatValue(stat, category)}
-                              </p>
+                              <p className="text-lg font-bold">{getStatValue(stat, category)}</p>
                             </div>
                           </div>
                         ))}
@@ -182,7 +178,6 @@ export default function DashboardPage() {
           })}
         </Tabs>
       )}
-
     </div>
   );
 }
