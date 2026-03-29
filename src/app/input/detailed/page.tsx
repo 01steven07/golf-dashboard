@@ -299,20 +299,14 @@ function DetailedInputContent() {
     (course: CourseWithDetails | null) => {
       setSelectedCourse(course);
       if (course) {
-        const allSubCourseIds = course.sub_courses.map((sc) => sc.id);
-        const defaultTee = course.tees.length > 0 ? course.tees[0] : null;
-        const teeName = defaultTee?.name ?? null;
-
-        const newHoles = createHolesFromCourse(course.sub_courses, allSubCourseIds, teeName);
-
         updateRoundData((prev) => ({
           ...prev,
           courseId: course.id,
           courseName: course.name,
-          teeColor: defaultTee?.name ?? "White",
-          teeId: defaultTee?.id ?? null,
-          subCourseIds: allSubCourseIds,
-          holes: newHoles,
+          teeColor: "",
+          teeId: null,
+          subCourseIds: [],
+          holes: [],
         }));
         setCurrentHole(1);
       } else {

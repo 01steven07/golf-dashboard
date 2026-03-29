@@ -78,9 +78,13 @@ export function StepSettings({
 }: StepSettingsProps) {
   const router = useRouter();
 
+  const needsSubCourse = selectedCourse && selectedCourse.sub_courses.length > 0;
+  const needsTee = selectedCourse && selectedCourse.tees.length > 0;
   const canStart = isAddMode
     ? addModeReady && roundData.subCourseIds.length > 0
-    : roundData.courseName.length > 0;
+    : roundData.courseName.length > 0 &&
+      (!needsSubCourse || roundData.subCourseIds.length > 0) &&
+      (!needsTee || roundData.teeId !== null);
 
   return (
     <div className="min-h-screen bg-gray-50">

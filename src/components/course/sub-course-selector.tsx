@@ -123,8 +123,8 @@ export function SubCourseSelector({
         </div>
       )}
 
-      {/* ティー選択 */}
-      {!hideTeeSelector && tees.length > 0 && (
+      {/* ティー選択（サブコース選択後に表示） */}
+      {!hideTeeSelector && tees.length > 0 && selectedSubCourseIds.length > 0 && (
         <div>
           <Label className="text-xs text-gray-500">ティー</Label>
           <div className="flex gap-1 mt-1 flex-wrap">
